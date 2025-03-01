@@ -1,6 +1,6 @@
 ---
-name: task template
-about: Task 티켓 템플릿
+name: Tickets
+about: Basic Ticket Template
 title: ''
 labels: ''
 assignees: ''
