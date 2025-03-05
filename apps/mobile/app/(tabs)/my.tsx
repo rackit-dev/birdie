@@ -1,12 +1,10 @@
-import { StyleSheet, ScrollView } from "react-native";
+import { StyleSheet } from "react-native";
 import { Text, View } from "@/components/Themed";
 
-export default function TabOneScreen() {
+export default function MyScreen() {
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <Text style={styles.title}>Home</Text>
-      </ScrollView>
+      <Text style={styles.title}>my</Text>
     </View>
   );
 }
@@ -18,9 +16,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 300,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#f84200",
-    backgroundColor: "skyblue",
   },
 });
