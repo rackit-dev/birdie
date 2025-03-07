@@ -1,12 +1,11 @@
 import React from "react";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Pressable, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link, Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
-import { Pressable, View } from "react-native";
 
 import Colors from "@/constants/Colors";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useThemeColor } from "@/components/Themed";
 
 export default function TabLayout() {
@@ -17,6 +16,7 @@ export default function TabLayout() {
         headerShown: false,
         headerStyle: {
           backgroundColor: useThemeColor({}, "headerBackground"),
+          height: 105,
         },
         headerTintColor: useThemeColor({}, "headerText"),
 
@@ -34,7 +34,7 @@ export default function TabLayout() {
           ["index", "like"].includes(route.name) ? (
             <BlurView
               intensity={90}
-              tint="default"
+              tint="light"
               style={{
                 position: "absolute",
                 bottom: 0,
@@ -64,6 +64,7 @@ export default function TabLayout() {
         options={{
           title: "HOME",
           headerShown: true,
+          headerTitle: "",
           tabBarIcon: ({ color }) => (
             <Ionicons name="grid" size={21} color={color} />
           ),
@@ -74,18 +75,36 @@ export default function TabLayout() {
             marginTop: 2.5,
           },
           headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors["light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 16,
+              }}
+            >
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons name="search-outline" size={25} color="black" />
+                  )}
+                </Pressable>
+              </Link>
+
+              <View style={{ width: 15 }} />
+
+              <Link href="/cart" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons
+                      name="bag-outline"
+                      size={25}
+                      color={Colors["light"].text}
+                      style={{ opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            </View>
           ),
         }}
       />
@@ -93,8 +112,10 @@ export default function TabLayout() {
         name="category"
         options={{
           title: "CATEGORY",
+          headerShown: true,
+          headerTitle: "",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="list" size={26} color={color} />
+            <Ionicons name="list-outline" size={26} color={color} />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -102,6 +123,38 @@ export default function TabLayout() {
           tabBarIconStyle: {
             marginTop: 2.5,
           },
+          headerRight: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 16,
+              }}
+            >
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons name="search-outline" size={25} color="black" />
+                  )}
+                </Pressable>
+              </Link>
+
+              <View style={{ width: 15 }} />
+
+              <Link href="/cart" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons
+                      name="bag-outline"
+                      size={25}
+                      color={Colors["light"].text}
+                      style={{ opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -109,7 +162,7 @@ export default function TabLayout() {
         options={{
           title: "SEARCH",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="search" size={22} color={color} />
+            <Ionicons name="search-outline" size={22} color={color} />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -128,7 +181,7 @@ export default function TabLayout() {
           title: "LIKE",
           headerShown: true,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="heart" size={22} color={color} />
+            <Ionicons name="heart-outline" size={22} color={color} />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -146,7 +199,7 @@ export default function TabLayout() {
           title: "MY",
           headerShown: true,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={22} color={color} />
+            <Ionicons name="person-outline" size={22} color={color} />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
