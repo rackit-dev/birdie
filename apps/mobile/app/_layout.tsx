@@ -11,9 +11,9 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { View, Text, Pressable } from "react-native";
-
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { customFonts } from "@/constants/Fonts";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -29,8 +29,8 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  const [fontsLoaded, error] = useFonts({
+    ...customFonts,
     ...FontAwesome.font,
   });
 
@@ -40,12 +40,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -86,7 +86,7 @@ function RootLayoutNav() {
                 <Text
                   style={{
                     fontSize: 18,
-                    fontWeight: "bold",
+                    fontFamily: "P-Bold",
                     color: Colors["light"].text,
                     marginLeft: 8,
                   }}

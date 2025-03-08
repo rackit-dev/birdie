@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, View, Image } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link, Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
@@ -65,8 +65,12 @@ export default function TabLayout() {
           title: "HOME",
           headerShown: true,
           headerTitle: "",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="grid" size={21} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={21}
+              color={color}
+            />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -74,6 +78,20 @@ export default function TabLayout() {
           tabBarIconStyle: {
             marginTop: 2.5,
           },
+          headerLeft: () => (
+            <View>
+              <Image
+                source={require("../../assets/images/logo.png")}
+                style={{
+                  width: 100,
+                  height: 90,
+                  marginLeft: 8,
+                  marginBottom: 5,
+                }}
+                resizeMode="contain"
+              />
+            </View>
+          ),
           headerRight: () => (
             <View
               style={{
@@ -161,8 +179,12 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "SEARCH",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="search-outline" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "search" : "search-outline"}
+              size={22}
+              color={color}
+            />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -180,8 +202,12 @@ export default function TabLayout() {
         options={{
           title: "LIKE",
           headerShown: true,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="heart-outline" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "heart" : "heart-outline"}
+              size={22}
+              color={color}
+            />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
@@ -198,8 +224,12 @@ export default function TabLayout() {
         options={{
           title: "MY",
           headerShown: true,
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person-outline" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={22}
+              color={color}
+            />
           ),
           tabBarLabelStyle: {
             marginTop: 2.5,
