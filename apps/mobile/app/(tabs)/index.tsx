@@ -1,32 +1,125 @@
 import { StyleSheet, FlatList, Image } from "react-native";
 import { Text, View } from "@/components/Themed";
+import { useState, useEffect } from "react";
 
-const shuffleArray = (array) => {
+type Product = {
+  image: number;
+  brand: string;
+  name: string;
+  price: string;
+};
+
+const itemData: Product[] = [
+  {
+    image: require("../../assets/images/items/shoes1.jpg"),
+    brand: "나이키",
+    name: "에어 맥스 90",
+    price: "150,000원",
+  },
+  {
+    image: require("../../assets/images/items/shoes2.jpg"),
+    brand: "아디다스",
+    name: "울트라부스트",
+    price: "180,000원",
+  },
+  {
+    image: require("../../assets/images/items/shoes3.jpg"),
+    brand: "푸마",
+    name: "RS-X",
+    price: "130,000원",
+  },
+  {
+    image: require("../../assets/images/items/shoes4.jpg"),
+    brand: "뉴발란스",
+    name: "574",
+    price: "140,000원",
+  },
+  {
+    image: require("../../assets/images/items/shoes5.jpg"),
+    brand: "리복",
+    name: "클럽 C",
+    price: "120,000원",
+  },
+  {
+    image: require("../../assets/images/items/shoes6.jpg"),
+    brand: "반스",
+    name: "올드스쿨",
+    price: "110,000원",
+  },
+  {
+    image: require("../../assets/images/items/shorts1.jpg"),
+    brand: "나이키",
+    name: "스포츠 반바지",
+    price: "50,000원",
+  },
+  {
+    image: require("../../assets/images/items/shorts2.jpg"),
+    brand: "아디다스",
+    name: "트레이닝 반바지",
+    price: "55,000원",
+  },
+  {
+    image: require("../../assets/images/items/shirt1.jpg"),
+    brand: "푸마",
+    name: "운동용 티셔츠",
+    price: "45,000원",
+  },
+  {
+    image: require("../../assets/images/items/shirt2.jpg"),
+    brand: "뉴발란스",
+    name: "러닝 티셔츠",
+    price: "60,000원",
+  },
+  {
+    image: require("../../assets/images/items/bag1.jpg"),
+    brand: "나이키",
+    name: "체육관 가방",
+    price: "80,000원",
+  },
+  {
+    image: require("../../assets/images/items/outer1.jpg"),
+    brand: "아디다스",
+    name: "윈드브레이커",
+    price: "200,000원",
+  },
+  {
+    image: require("../../assets/images/items/racket1.jpg"),
+    brand: "요넥스",
+    name: "배드민턴 라켓",
+    price: "250,000원",
+  },
+  {
+    image: require("../../assets/images/items/racket2.jpg"),
+    brand: "윌슨",
+    name: "테니스 라켓",
+    price: "270,000원",
+  },
+  {
+    image: require("../../assets/images/items/racket3.jpg"),
+    brand: "헤드",
+    name: "테니스 라켓",
+    price: "260,000원",
+  },
+  {
+    image: require("../../assets/images/items/racket4.jpg"),
+    brand: "바볼랏",
+    name: "테니스 라켓",
+    price: "280,000원",
+  },
+];
+
+const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
 };
 
 export default function TabOneScreen() {
-  const itemImages = [
-    require("../../assets/images/items/shoes1.jpg"),
-    require("../../assets/images/items/shoes2.jpg"),
-    require("../../assets/images/items/shoes3.jpg"),
-    require("../../assets/images/items/shoes4.jpg"),
-    require("../../assets/images/items/shoes5.jpg"),
-    require("../../assets/images/items/shoes6.jpg"),
-    require("../../assets/images/items/shorts1.jpg"),
-    require("../../assets/images/items/shorts2.jpg"),
-    require("../../assets/images/items/shirt1.jpg"),
-    require("../../assets/images/items/shirt2.jpg"),
-    require("../../assets/images/items/bag1.jpg"),
-    require("../../assets/images/items/outer1.jpg"),
-    require("../../assets/images/items/racket1.jpg"),
-    require("../../assets/images/items/racket2.jpg"),
-    require("../../assets/images/items/racket3.jpg"),
-    require("../../assets/images/items/racket4.jpg"),
-  ];
+  const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
+  const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
 
-  const shuffledImages1 = shuffleArray([...itemImages]);
-  const shuffledImages2 = shuffleArray([...itemImages]);
+  useEffect(() => {
+    setShuffledImages1(shuffleArray([...itemData]));
+    setShuffledImages2(shuffleArray([...itemData]));
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -52,7 +145,18 @@ export default function TabOneScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageGrid}
               renderItem={({ item }) => (
-                <Image source={item} style={styles.itemImage} />
+                <View style={styles.productContainer}>
+                  <Image
+                    source={item.image}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.itemTextBox}>
+                    <Text style={styles.brandText}>{item.brand}</Text>
+                    <Text style={styles.nameText}>{item.name}</Text>
+                    <Text style={styles.priceText}>{item.price}</Text>
+                  </View>
+                </View>
               )}
             />
           </>
@@ -70,7 +174,18 @@ export default function TabOneScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageGrid}
               renderItem={({ item }) => (
-                <Image source={item} style={styles.itemImage} />
+                <View style={styles.productContainer}>
+                  <Image
+                    source={item.image}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                  />
+                  <View style={{ alignItems: "flex-start" }}>
+                    <Text style={styles.brandText}>{item.brand}</Text>
+                    <Text style={styles.nameText}>{item.name}</Text>
+                    <Text style={styles.priceText}>{item.price}</Text>
+                  </View>
+                </View>
               )}
             />
           </>
@@ -91,14 +206,15 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   imageContainer: {
-    width: "100%",
+    width: "95%",
     aspectRatio: 5 / 5,
-    backgroundColor: "#ddd",
-    marginBottom: 30,
+    marginBottom: 35,
+    alignSelf: "center",
   },
   image: {
     width: "100%",
     height: "100%",
+    borderRadius: 10,
   },
   textContainer: {
     width: "100%",
@@ -108,19 +224,43 @@ const styles = StyleSheet.create({
   font: {
     fontFamily: "P-Extra-Bold",
     fontSize: 24,
-    marginBottom: 5,
+    marginBottom: 10,
   },
   imageGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    width: 1100,
     paddingHorizontal: 10,
     marginBottom: 50,
+    width: 1095,
+  },
+  productContainer: {
+    width: 120,
+    height: 200,
+    alignItems: "flex-start",
+    marginHorizontal: 5,
   },
   itemImage: {
     width: 120,
-    aspectRatio: 1,
+    height: 120,
     borderRadius: 8,
-    margin: 5,
+    marginBottom: 5,
+  },
+  itemTextBox: {
+    marginLeft: 5,
+  },
+  brandText: {
+    fontFamily: "P-Bold",
+    fontSize: 14,
+    color: "#333",
+    marginVertical: 3,
+  },
+  nameText: {
+    fontFamily: "P-Medium",
+    fontSize: 14,
+    marginBottom: 7,
+  },
+  priceText: {
+    fontFamily: "P-Black",
+    fontSize: 14,
   },
 });
