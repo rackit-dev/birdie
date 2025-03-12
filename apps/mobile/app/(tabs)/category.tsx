@@ -64,12 +64,11 @@ export default function CategoryScreen() {
         style={{
           width: "100%",
           height: 0.7,
-          backgroundColor: "#BCBCBC",
+          backgroundColor: "#ededed",
         }}
       />
       <View style={{ flex: 1, flexDirection: "row" }}>
         <View style={styles.listContainer}>
-          {/* 왼쪽: 용품 종류 */}
           <FlatList
             data={categories}
             keyExtractor={(item) => item.id}
@@ -93,7 +92,6 @@ export default function CategoryScreen() {
         </View>
 
         <View style={styles.brandContainer}>
-          {/* 오른쪽: 브랜드 목록 */}
           <FlatList
             data={brands[selectedCategory]}
             keyExtractor={(item, index) => index.toString()}

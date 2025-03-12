@@ -141,6 +141,34 @@ export default function TabLayout() {
           tabBarIconStyle: {
             marginTop: 2.5,
           },
+          headerLeft: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                width: "170%",
+                height: 33,
+                backgroundColor: "#f5f5f5",
+                borderRadius: 25,
+                marginLeft: 27,
+              }}
+            >
+              <View
+                style={{
+                  marginRight: 11,
+                  marginTop: 4,
+                }}
+              >
+                <Link href="/modal" asChild>
+                  <Pressable>
+                    {({ pressed }) => (
+                      <Ionicons name="search-outline" size={25} color="black" />
+                    )}
+                  </Pressable>
+                </Link>
+              </View>
+            </View>
+          ),
           headerRight: () => (
             <View
               style={{
@@ -149,14 +177,6 @@ export default function TabLayout() {
                 marginRight: 16,
               }}
             >
-              <Link href="/modal" asChild>
-                <Pressable>
-                  {({ pressed }) => (
-                    <Ionicons name="search-outline" size={25} color="black" />
-                  )}
-                </Pressable>
-              </Link>
-
               <View style={{ width: 15 }} />
 
               <Link href="/cart" asChild>
@@ -216,6 +236,36 @@ export default function TabLayout() {
                   )}
                 </Pressable>
               </Link>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  width: "123%",
+                  height: 33,
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 25,
+                  marginLeft: 6,
+                }}
+              >
+                <View
+                  style={{
+                    marginRight: 11,
+                    marginTop: 4,
+                  }}
+                >
+                  <Link href="/modal" asChild>
+                    <Pressable>
+                      {({ pressed }) => (
+                        <Ionicons
+                          name="search-outline"
+                          size={25}
+                          color="black"
+                        />
+                      )}
+                    </Pressable>
+                  </Link>
+                </View>
+              </View>
             </View>
           ),
         }}
