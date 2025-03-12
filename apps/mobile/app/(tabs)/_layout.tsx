@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, View, Image } from "react-native";
+import { Pressable, View, Image, Text } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link, Tabs } from "expo-router";
 import { BlurView } from "expo-blur";
@@ -179,6 +179,8 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "SEARCH",
+          headerShown: true,
+          headerTitle: "",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "search" : "search-outline"}
@@ -195,6 +197,27 @@ export default function TabLayout() {
             marginLeft: 3,
           },
           tabBarStyle: { display: "none" },
+          headerLeft: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Link href="/(tabs)" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons
+                      name="chevron-back-outline"
+                      size={29}
+                      color={Colors["light"].text}
+                      style={{ opacity: pressed ? 0.5 : 1, marginLeft: 10 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -202,6 +225,7 @@ export default function TabLayout() {
         options={{
           title: "LIKE",
           headerShown: true,
+          headerTitle: "",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "heart" : "heart-outline"}
@@ -217,6 +241,38 @@ export default function TabLayout() {
             marginTop: 2.5,
             marginLeft: 4,
           },
+          headerRight: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 16,
+              }}
+            >
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons name="search-outline" size={25} color="black" />
+                  )}
+                </Pressable>
+              </Link>
+
+              <View style={{ width: 15 }} />
+
+              <Link href="/cart" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons
+                      name="bag-outline"
+                      size={25}
+                      color={Colors["light"].text}
+                      style={{ opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -224,6 +280,7 @@ export default function TabLayout() {
         options={{
           title: "MY",
           headerShown: true,
+          headerTitle: "",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
@@ -237,6 +294,38 @@ export default function TabLayout() {
           tabBarIconStyle: {
             marginTop: 2.5,
           },
+          headerRight: () => (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 16,
+              }}
+            >
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons name="search-outline" size={25} color="black" />
+                  )}
+                </Pressable>
+              </Link>
+
+              <View style={{ width: 15 }} />
+
+              <Link href="/cart" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <Ionicons
+                      name="bag-outline"
+                      size={25}
+                      color={Colors["light"].text}
+                      style={{ opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            </View>
+          ),
         }}
       />
     </Tabs>

@@ -188,6 +188,141 @@ export default function TabOneScreen() {
                 </View>
               )}
             />
+
+            <View
+              style={{ width: "100%", height: 550, backgroundColor: "#f9f9f9" }}
+            >
+              <Text
+                style={{
+                  marginTop: 30,
+                  marginLeft: 17,
+                  fontFamily: "P-Bold",
+                  fontSize: 16,
+                }}
+              >
+                고객센터 1588-1588
+              </Text>
+              <Text
+                style={{
+                  marginTop: 15,
+                  marginLeft: 17,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                  color: "#B0B0B0",
+                }}
+              >
+                운영시간 평일 10:00 - 18:00 (토-일, 공휴일 휴무)
+              </Text>
+              <Text
+                style={{
+                  marginLeft: 17,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                  color: "#B0B0B0",
+                }}
+              >
+                점심시간 평일 13:00 - 14:00
+              </Text>
+              <Text
+                style={{
+                  marginTop: 15,
+                  marginLeft: 17,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                }}
+              >
+                자주 묻는 질문
+              </Text>
+              <Text
+                style={{
+                  marginTop: 15,
+                  marginLeft: 17,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                }}
+              >
+                1:1 문의
+              </Text>
+              <View
+                style={{
+                  marginTop: 30,
+                  marginBottom: 30,
+                  width: "92%",
+                  height: 0.7,
+                  backgroundColor: "#BCBCBC",
+                  alignSelf: "center",
+                }}
+              />
+              <Text
+                style={{
+                  marginLeft: 17,
+                  fontFamily: "P-Bold",
+                  fontSize: 14,
+                  color: "grey",
+                }}
+              >
+                사업자 정보
+              </Text>
+              <Text
+                style={{
+                  marginTop: 25,
+                  marginLeft: 17,
+                  fontFamily: "P-Bold",
+                  fontSize: 14,
+                  color: "grey",
+                }}
+              >
+                법적 고지사항
+              </Text>
+              <View
+                style={{
+                  marginTop: 30,
+                  marginBottom: 30,
+                  width: "92%",
+                  height: 0.7,
+                  backgroundColor: "#BCBCBC",
+                  alignSelf: "center",
+                }}
+              />
+              <Text
+                style={{
+                  marginLeft: 17,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                  color: "grey",
+                }}
+              >
+                이용약관
+              </Text>
+              <Text
+                style={{
+                  marginTop: 20,
+                  marginLeft: 17,
+                  fontFamily: "P-Bold",
+                  fontSize: 14,
+                }}
+              >
+                개인정보처리방침
+              </Text>
+              <Text
+                style={{
+                  marginTop: 20,
+                  marginLeft: 17,
+                  marginRight: 20,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                  color: "grey",
+                }}
+              >
+                일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
+                통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
+                있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기
+                바랍니다. 일부 상품의 경우 주식회사 ----는 통신판매의 당사자가
+                아닌 통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이
+                제한될 수 있으므로, 각 상품 페이지에서 구체적인 내용을
+                확인하시기 바랍니다. 어쩌구
+              </Text>
+            </View>
           </>
         }
         data={[]}
@@ -231,7 +366,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     paddingHorizontal: 10,
     marginBottom: 50,
-    width: 1095,
+    width: 1070,
   },
   productContainer: {
     width: 120,
