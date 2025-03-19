@@ -145,20 +145,29 @@ export default function TabLayout() {
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "flex-end",
+                justifyContent: "flex-start",
+                alignItems: "center",
                 width: "170%",
                 height: 33,
                 backgroundColor: "#f5f5f5",
                 borderRadius: 25,
                 marginLeft: 27,
+                paddingLeft: 15,
               }}
             >
-              <View
+              <Text
                 style={{
-                  marginRight: 11,
-                  marginTop: 4,
+                  fontFamily: "P-Medium",
+                  fontSize: 14,
+                  color: "#888",
+                  flex: 1,
                 }}
+                numberOfLines={1}
               >
+                지금이 기회! 배드민턴 용품 세일
+              </Text>
+
+              <View style={{ marginRight: 8, marginTop: -1 }}>
                 <Link href="/modal" asChild>
                   <Pressable>
                     {({ pressed }) => (
@@ -236,23 +245,33 @@ export default function TabLayout() {
                   )}
                 </Pressable>
               </Link>
+
               <View
                 style={{
                   flexDirection: "row",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   width: "123%",
                   height: 33,
                   backgroundColor: "#f5f5f5",
                   borderRadius: 25,
                   marginLeft: 6,
+                  paddingLeft: 15,
+                  paddingRight: 10,
                 }}
               >
-                <View
+                <Text
                   style={{
-                    marginRight: 11,
-                    marginTop: 4,
+                    fontSize: 14,
+                    color: "#888",
+                    flex: 1,
                   }}
+                  numberOfLines={1}
                 >
+                  지금이 기회! 배드민턴 용품 세일
+                </Text>
+
+                <View>
                   <Link href="/modal" asChild>
                     <Pressable>
                       {({ pressed }) => (
@@ -275,7 +294,7 @@ export default function TabLayout() {
         options={{
           title: "LIKE",
           headerShown: true,
-          headerTitle: "",
+          headerTitle: "좋아요",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "heart" : "heart-outline"}

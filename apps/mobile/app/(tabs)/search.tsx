@@ -15,7 +15,7 @@ export default function SearchScreen() {
             backgroundColor: "#ededed",
             alignSelf: "center",
           }}
-        />
+        ></View>
         <Text style={{ ...styles.font, marginBottom: 30 }}>
           지금 많이 찾는 의류 브랜드
         </Text>

@@ -1,8 +1,12 @@
-import { StyleSheet, FlatList, Image } from "react-native";
+import { StyleSheet, FlatList, Image, Pressable } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { useState, useEffect } from "react";
+import useLikeStore from "@/store/useLikeStore";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import ItemCard from "@/components/ItemCard";
 
 type Product = {
+  id: string;
   image: number;
   brand: string;
   name: string;
@@ -11,96 +15,112 @@ type Product = {
 
 const itemData: Product[] = [
   {
+    id: "nike-airmax90",
     image: require("../../assets/images/items/shoes1.jpg"),
     brand: "나이키",
     name: "에어 맥스 90",
     price: "150,000원",
   },
   {
+    id: "adidas-ultraboost",
     image: require("../../assets/images/items/shoes2.jpg"),
     brand: "아디다스",
     name: "울트라부스트",
     price: "180,000원",
   },
   {
+    id: "puma-rsx",
     image: require("../../assets/images/items/shoes3.jpg"),
     brand: "푸마",
     name: "RS-X",
     price: "130,000원",
   },
   {
+    id: "newbalance-574",
     image: require("../../assets/images/items/shoes4.jpg"),
     brand: "뉴발란스",
     name: "574",
     price: "140,000원",
   },
   {
+    id: "reebok-clubc",
     image: require("../../assets/images/items/shoes5.jpg"),
     brand: "리복",
     name: "클럽 C",
     price: "120,000원",
   },
   {
+    id: "vans-oldskool",
     image: require("../../assets/images/items/shoes6.jpg"),
     brand: "반스",
     name: "올드스쿨",
     price: "110,000원",
   },
   {
+    id: "nike-sportshorts",
     image: require("../../assets/images/items/shorts1.jpg"),
     brand: "나이키",
     name: "스포츠 반바지",
     price: "50,000원",
   },
   {
+    id: "adidas-trainingshorts",
     image: require("../../assets/images/items/shorts2.jpg"),
     brand: "아디다스",
     name: "트레이닝 반바지",
     price: "55,000원",
   },
   {
+    id: "puma-sportshirt",
     image: require("../../assets/images/items/shirt1.jpg"),
     brand: "푸마",
     name: "운동용 티셔츠",
     price: "45,000원",
   },
   {
+    id: "newbalance-runningshirt",
     image: require("../../assets/images/items/shirt2.jpg"),
     brand: "뉴발란스",
     name: "러닝 티셔츠",
     price: "60,000원",
   },
   {
+    id: "nike-gymbag",
     image: require("../../assets/images/items/bag1.jpg"),
     brand: "나이키",
     name: "체육관 가방",
     price: "80,000원",
   },
   {
+    id: "adidas-windbreaker",
     image: require("../../assets/images/items/outer1.jpg"),
     brand: "아디다스",
     name: "윈드브레이커",
     price: "200,000원",
   },
   {
+    id: "yonex-badmintonracket",
     image: require("../../assets/images/items/racket1.jpg"),
     brand: "요넥스",
     name: "배드민턴 라켓",
     price: "250,000원",
   },
   {
+    id: "wilson-tennisracket",
     image: require("../../assets/images/items/racket2.jpg"),
     brand: "윌슨",
     name: "테니스 라켓",
     price: "270,000원",
   },
   {
+    id: "head-tennisracket",
     image: require("../../assets/images/items/racket3.jpg"),
     brand: "헤드",
     name: "테니스 라켓",
     price: "260,000원",
   },
   {
+    id: "babolat-tennisracket",
     image: require("../../assets/images/items/racket4.jpg"),
     brand: "바볼랏",
     name: "테니스 라켓",
@@ -115,6 +135,7 @@ const shuffleArray = (array: Product[]) => {
 export default function TabOneScreen() {
   const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
+  const { likedItems, toggleLike } = useLikeStore();
 
   useEffect(() => {
     setShuffledImages1(shuffleArray([...itemData]));
@@ -144,20 +165,19 @@ export default function TabOneScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageGrid}
-              renderItem={({ item }) => (
-                <View style={styles.productContainer}>
-                  <Image
-                    source={item.image}
-                    style={styles.itemImage}
-                    resizeMode="cover"
+              extraData={likedItems}
+              renderItem={({ item }) => {
+                const isLiked = likedItems.some(
+                  (liked) => liked.id === item.id
+                );
+                return (
+                  <ItemCard
+                    item={item}
+                    isLiked={isLiked}
+                    toggleLike={toggleLike}
                   />
-                  <View style={styles.itemTextBox}>
-                    <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText}>{item.name}</Text>
-                    <Text style={styles.priceText}>{item.price}</Text>
-                  </View>
-                </View>
-              )}
+                );
+              }}
             />
           </>
         }
