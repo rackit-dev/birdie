@@ -11,6 +11,7 @@ class UserService:
     def __init__(self):
         self.user_repo: IUserRepository = UserRepository()
         self.ulid = ULID()
+        self.crypto = Crpyto()
 
     def create_user(self, name: str, email: str, password: str):
         _user = None
@@ -29,7 +30,7 @@ class UserService:
             id=self.ulid.generate(),
             name=name,
             email=email,
-            password=password,
+            password=self.crypto.encrypt(password),
             created_at=now,
             updated_at=now,
         )
