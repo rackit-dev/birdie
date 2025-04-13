@@ -18,7 +18,6 @@ class UserRepository(IUserRepository):
         )
 
         with SessionLocal() as db:
-            db = SessionLocal()
             db.add(new_user)
             db.commit()
 
