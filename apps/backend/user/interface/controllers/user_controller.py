@@ -18,6 +18,6 @@ def create_user(user: CreateUserBody):
     created_user = user_service.create_user(
         name=user.name,
         email=user.email,
-        password=user.password,
+        password=user.password
     )
     return created_user
