@@ -1,0 +1,27 @@
+[project]
+name = "birdie"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Hojoong Jang",email = "hojoong310@gmail.com"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "fastapi (==0.111.0)",
+    "uvicorn[standard] (>=0.34.0,<0.35.0)",
+    "py-ulid (>=1.0.3,<2.0.0)",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+    "sqlalchemy (>=2.0.40,<3.0.0)",
+    "mysqlclient (>=2.2.7,<3.0.0)",
+    "alembic (>=1.15.2,<2.0.0)",
+    "bcrypt (<4.1.0)",
+    "dependency-injector (==4.41.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
