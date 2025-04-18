@@ -1,6 +1,7 @@
+from datetime import datetime
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 from containers import Container
 from user.application.user_service import UserService
@@ -9,12 +10,20 @@ router = APIRouter(prefix="/users")
 
 
 class CreateUserBody(BaseModel):
+    name: str = Field(min_length=2, max_length=32)
+    email: EmailStr = Field(max_length=64)
+    password: str = Field(min_length=8, max_length=32)
+
+
+class UserResponse(BaseModel):
+    id: str
     name: str
     email: str
-    password: str
+    created_at: datetime
+    updated_at: datetime
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, response_model=UserResponse)
 @inject
 def create_user(
     user: CreateUserBody,
@@ -29,8 +38,8 @@ def create_user(
 
 
 class UpdateUserBody(BaseModel):
-    name: str | None = None
-    password: str | None = None
+    name: str | None = Field(min_length=2, max_length=32, default=None)
+    password: str | None = Field(min_length=8, max_length=32, default=None)
 
 
 @router.put("/{user_id}")
@@ -49,7 +58,12 @@ def update_user(
     return user
 
 
-@router.get("")
+class GetUsersResponse(BaseModel):
+    total_count: int
+    page: int
+    users: list[UserResponse]
+
+@router.get("", response_model=GetUsersResponse)
 @inject
 def get_users(
     page: int = 1,
