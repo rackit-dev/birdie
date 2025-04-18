@@ -32,6 +32,7 @@ class UpdateUserBody(BaseModel):
     name: str | None = None
     password: str | None = None
 
+
 @router.put("/{user_id}")
 @inject
 def update_user(
@@ -46,3 +47,15 @@ def update_user(
     )
 
     return user
+
+
+@router.get("")
+@inject
+def get_users(
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    users = user_service.get_users()
+
+    return {
+        "users": users,
+    }
