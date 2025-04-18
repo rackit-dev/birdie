@@ -56,13 +56,20 @@ def get_users(
     itmes_per_page: int = 10,
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    total_count, users = user_service.get_users(
-        page=page, 
-        items_per_page=itmes_per_page
-    )
+    total_count, users = user_service.get_users(page, itmes_per_page)
 
     return {
         "total_count": total_count,
         "page": page,
         "users": users,
     }
+
+@router.delete("", status_code=204)
+@inject
+def delete_user(
+    user_id: str,
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    # TODO: 다른 유저를 삭제할 수 없도록 토큰에서 유저 아이디를 추출한다.
+
+    user_service.delete_user(user_id)
