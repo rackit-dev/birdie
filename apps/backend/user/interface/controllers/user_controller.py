@@ -1,9 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
 from containers import Container
+from common.auth import CurrentUser, get_current_user, get_admin_user
 from user.application.user_service import UserService
 
 router = APIRouter(prefix="/users")
@@ -42,17 +45,17 @@ class UpdateUserBody(BaseModel):
     password: str | None = Field(min_length=8, max_length=32, default=None)
 
 
-@router.put("/{user_id}")
+@router.put("", response_model=UserResponse)
 @inject
 def update_user(
-    user_id: str,
-    user: UpdateUserBody,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    body: UpdateUserBody,
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user = user_service.update_user(
-        user_id=user_id,
-        name=user.name,
-        password=user.password,
+        user_id=current_user.id,
+        name=body.name,
+        password=body.password,
     )
 
     return user
@@ -62,6 +65,7 @@ class GetUsersResponse(BaseModel):
     total_count: int
     page: int
     users: list[UserResponse]
+
 
 @router.get("", response_model=GetUsersResponse)
 @inject
@@ -78,12 +82,31 @@ def get_users(
         "users": users,
     }
 
+
 @router.delete("", status_code=204)
 @inject
 def delete_user(
-    user_id: str,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    # TODO: 다른 유저를 삭제할 수 없도록 토큰에서 유저 아이디를 추출한다.
+    user_service.delete_user(current_user.id)
 
-    user_service.delete_user(user_id)
+
+@router.post("/login")
+@inject
+def user_login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    access_token = user_service.login(
+        email=form_data.username,
+        password=form_data.password,
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/social-login")
+@inject
+def user_social_login():
+    pass
