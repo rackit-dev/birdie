@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     database_username: str
     database_password: str
+    database_host: str
+    database_schema: str
     jwt_secret: str
 
 
