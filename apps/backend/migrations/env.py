@@ -7,6 +7,7 @@ from alembic import context
 
 import database
 import database_models
+from config import get_settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -16,6 +17,12 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+settings = get_settings()
+config.set_main_option("DATABASE_USERNAME", settings.database_username)
+config.set_main_option("DATABASE_PASSWORD", settings.database_password)
+config.set_main_option("DATABASE_HOST", settings.database_host)
+config.set_main_option("DATABASE_SCHEMA", settings.database_schema)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
