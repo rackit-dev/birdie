@@ -15,7 +15,6 @@ import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { customFonts } from "@/constants/Fonts";
 import * as AuthSession from "expo-auth-session";
-import { KAKAO_REST_API_KEY } from "@env";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -112,6 +111,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     authorizationEndpoint: "https://kauth.kakao.com/oauth/authorize",
     tokenEndpoint: "https://kauth.kakao.com/oauth/token",
   };
+
+  const KAKAO_REST_API_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
