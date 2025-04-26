@@ -8,24 +8,21 @@ import {
 import { useFonts } from "expo-font";
 import { Stack, Link } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { View, Text, Pressable } from "react-native";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { customFonts } from "@/constants/Fonts";
+import * as AuthSession from "expo-auth-session";
+import { KAKAO_REST_API_KEY } from "@env";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
+  initialRouteName: "login",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -34,7 +31,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -49,6 +47,10 @@ export default function RootLayout() {
     return null;
   }
 
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
+  }
+
   return <RootLayoutNav />;
 }
 
@@ -57,7 +59,7 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack initialRouteName="(tabs)">
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen
@@ -100,5 +102,109 @@ function RootLayoutNav() {
         />
       </Stack>
     </ThemeProvider>
+  );
+}
+
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const redirectUri = `https://auth.expo.io/@ung26/mobile`;
+
+  const discovery = {
+    authorizationEndpoint: "https://kauth.kakao.com/oauth/authorize",
+    tokenEndpoint: "https://kauth.kakao.com/oauth/token",
+  };
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: KAKAO_REST_API_KEY,
+      scopes: [],
+      redirectUri,
+      responseType: AuthSession.ResponseType.Code,
+    },
+    discovery
+  );
+
+  useEffect(() => {
+    if (response?.type === "success" && response.params?.code) {
+      const authorizationCode = response.params.code;
+      console.log("카카오 인증 성공, Authorization Code:", authorizationCode);
+
+      // TODO: authorizationCode를 백엔드로 보내서 accessToken 받아야 함
+      onLogin();
+    } else if (response?.type === "error") {
+      console.error("카카오 인증 에러:", response.error);
+    }
+  }, [response]);
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "white",
+        paddingHorizontal: 20,
+      }}
+    >
+      <Text style={{ fontSize: 32, fontWeight: "bold", marginBottom: 40 }}>
+        로그인
+      </Text>
+
+      {/* TODO: 카카오 로그인 버튼 */}
+      <Pressable
+        onPress={() => promptAsync()}
+        disabled={!request}
+        style={{
+          width: "100%",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 14,
+          backgroundColor: "#FEE500",
+          borderRadius: 8,
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ color: "#3C1E1E", fontSize: 16, fontWeight: "bold" }}>
+          카카오로 로그인
+        </Text>
+      </Pressable>
+
+      {/* TODO: 구글 로그인 버튼 (나중에 연결 예정) */}
+      <Pressable
+        onPress={onLogin}
+        style={{
+          width: "100%",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 14,
+          backgroundColor: "#4285F4",
+          borderRadius: 8,
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
+          Google로 로그인
+        </Text>
+      </Pressable>
+
+      {/* 네이버 로그인 버튼 (나중에 연결 예정) */}
+      <Pressable
+        onPress={onLogin}
+        style={{
+          width: "100%",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 14,
+          backgroundColor: "#03C75A",
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
+          네이버로 로그인
+        </Text>
+      </Pressable>
+    </View>
   );
 }
