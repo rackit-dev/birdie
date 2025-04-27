@@ -2,13 +2,15 @@ import { View, Text, Pressable, Alert } from "react-native";
 import { useState } from "react";
 import { WebView } from "react-native-webview";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store"; // ✅ SecureStore 추가
 
 export default function LoginScreen() {
   const [showWebView, setShowWebView] = useState(false);
   const router = useRouter();
 
   const KAKAO_REST_API_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
-  const REDIRECT_URI = "http://localhost:8081"; // 추후 실제 빌드 시 수정 필요
+  const REDIRECT_URI = "http://localhost:8081"; // 추후 빌드 시 변경 필요
+
   const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${KAKAO_REST_API_KEY}&redirect_uri=${REDIRECT_URI}`;
 
   const handleWebViewNavigationStateChange = async (navState: any) => {
@@ -34,12 +36,19 @@ export default function LoginScreen() {
           );
 
           const tokenResult = await tokenResponse.json();
-          console.log("카카오 토큰 응답:", tokenResult);
 
           if (tokenResult.access_token) {
-            // 토큰 확인용
             console.log("Access Token:", tokenResult.access_token);
             console.log("Refresh Token:", tokenResult.refresh_token);
+
+            await SecureStore.setItemAsync(
+              "access_token",
+              tokenResult.access_token
+            );
+            await SecureStore.setItemAsync(
+              "refresh_token",
+              tokenResult.refresh_token
+            );
 
             setShowWebView(false);
             router.replace("/(tabs)");
@@ -61,7 +70,7 @@ export default function LoginScreen() {
     return (
       <WebView
         source={{ uri: kakaoAuthUrl }}
-        incognito={true}
+        incognito
         onNavigationStateChange={handleWebViewNavigationStateChange}
         startInLoadingState
         javaScriptEnabled

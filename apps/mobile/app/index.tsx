@@ -1,32 +1,54 @@
 import { View, Image } from "react-native";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 export default function LoadingScreen() {
   const router = useRouter();
+  const [checkingToken, setCheckingToken] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/login");
-    }, 1500);
+    const checkLoginStatus = async () => {
+      try {
+        const accessToken = await SecureStore.getItemAsync("access_token");
 
-    return () => clearTimeout(timer);
+        // 토큰 저장 확인
+        console.log("Stored access token:", accessToken);
+
+        if (accessToken) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.error("토큰 확인 중 에러:", error);
+        router.replace("/login");
+      } finally {
+        setCheckingToken(false);
+      }
+    };
+
+    checkLoginStatus();
   }, []);
 
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "white",
-      }}
-    >
-      <Image
-        source={require("@/assets/images/logo.png")}
-        style={{ width: 200, height: 200 }}
-        resizeMode="contain"
-      />
-    </View>
-  );
+  if (checkingToken) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "white",
+        }}
+      >
+        <Image
+          source={require("@/assets/images/logo.png")}
+          style={{ width: 200, height: 200 }}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
+  return null;
 }
