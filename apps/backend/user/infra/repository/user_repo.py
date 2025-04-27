@@ -1,4 +1,6 @@
 from fastapi import HTTPException
+import requests
+
 from database import SessionLocal
 from utils.db_utils import row_to_dict
 from user.domain.repository.user_repo import IUserRepository
@@ -12,6 +14,7 @@ class UserRepository(IUserRepository):
             id=user.id,
             email=user.email,
             name=user.name,
+            provider=user.provider,
             password=user.password,
             memo=user.memo,
             created_at=user.created_at,
@@ -31,7 +34,7 @@ class UserRepository(IUserRepository):
         
         return UserVO(**row_to_dict(user))
     
-    def find_by_id(self, id):
+    def find_by_id(self, id) -> UserVO:
         with SessionLocal() as db:
             user = db.query(User).filter(User.id == id).first()
         
@@ -39,6 +42,28 @@ class UserRepository(IUserRepository):
             raise HTTPException(status_code=422)
 
         return UserVO(**row_to_dict(user))
+
+    def find_by_social_token(self, provider, social_token):
+        """
+        social 도메인 별로 확인해서
+        있으면 유저 정보 리턴
+        없으면 NOT FOUND 리턴 -> user service에서 create social user 메소드 실행
+        """
+        social_response = None
+        try:
+            if provider == "KAKAO":
+                social_response = requests.get(
+                    url="https://kapi.kakao.com/v2/user/me",
+                    headers={"Authorization": f"Bearer {social_token}"}
+                ).json()
+            elif provider == "GOOGLE":
+                pass
+            elif provider == "APPLE":
+                pass
+        except:
+            raise HTTPException(status_code=422)
+
+        return social_response
     
     def update(self, user_vo: UserVO):
         with SessionLocal() as db:

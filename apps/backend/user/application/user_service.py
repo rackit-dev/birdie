@@ -21,10 +21,9 @@ class UserService:
 
     def create_user(
         self, 
-        name: str, 
+        name: str,
         email: str,
         password: str,
-        memo: str | None = None, 
     ):
         _user = None
 
@@ -41,9 +40,11 @@ class UserService:
         user: User = User(
             id=self.ulid.generate(),
             name=name,
+            provider=None,
+            provider_id=None,
             email=email,
             password=self.crypto.encrypt(password),
-            memo=memo,
+            memo=None,
             created_at=now,
             updated_at=now,
         )
@@ -90,10 +91,15 @@ class UserService:
 
         return access_token
     
-    def social_login(self, email: str, social_token: str):
+    def social_login(self, provider: str, social_token: str):
+        #user = self.user_repo.find_by_social_token(provider, social_access_token)
+        test = self.user_repo.find_by_social_token(provider, social_token)
+
+        """
         access_token = create_access_token(
-            payload=None, #TODO
+            payload={"user_id": user.id},
             role=Role.USER,
         )
-        
-        return access_token
+        """
+
+        return test

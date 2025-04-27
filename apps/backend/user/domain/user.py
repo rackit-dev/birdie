@@ -6,9 +6,10 @@ from datetime import datetime
 class User:
     id: str
     name: str
+    provider: str | None
+    provider_id: str | None
     email: str
-    password: str
+    password: str | None
     memo: str | None
     created_at: datetime
     updated_at: datetime
-    

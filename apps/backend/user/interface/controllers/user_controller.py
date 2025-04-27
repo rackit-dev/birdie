@@ -37,6 +37,7 @@ def create_user(
         email=user.email,
         password=user.password
     )
+
     return created_user
 
 
@@ -72,6 +73,7 @@ class GetUsersResponse(BaseModel):
 def get_users(
     page: int = 1,
     itmes_per_page: int = 10,
+    current_user: CurrentUser = Depends(get_admin_user),
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     total_count, users = user_service.get_users(page, itmes_per_page)
@@ -108,5 +110,14 @@ def user_login(
 
 @router.post("/social-login")
 @inject
-def user_social_login():
-    pass
+def social_login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    access_token = user_service.social_login(
+        provider=form_data.username,
+        social_token=form_data.password
+    )
+
+    #return {"access_token": access_token, "token_type": "bearer"}
+    return access_token

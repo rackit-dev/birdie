@@ -20,6 +20,10 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
+    def find_by_social_token(self, provider: str, social_token: str) -> User:
+        raise NotImplementedError
+    
+    @abstractmethod
     def update(self, user: User):
         raise NotImplementedError
     
