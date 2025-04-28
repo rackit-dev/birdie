@@ -43,7 +43,6 @@ def create_user(
 
 class UpdateUserBody(BaseModel):
     name: str | None = Field(min_length=2, max_length=32, default=None)
-    password: str | None = Field(min_length=8, max_length=32, default=None)
 
 
 @router.put("", response_model=UserResponse)
@@ -56,11 +55,28 @@ def update_user(
     user = user_service.update_user(
         user_id=current_user.id,
         name=body.name,
-        password=body.password,
     )
 
     return user
 
+class UpdateAdminBody(BaseModel):
+    name: str | None = Field(min_length=2, max_length=32, default=None)
+    password: str | None = Field(min_length=8, max_length=32, default=None)
+
+@router.put("/admin", response_model=UserResponse)
+@inject
+def update_admin(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    body: UpdateAdminBody,
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user = user_service.update_user(
+        user_id=current_user.id,
+        name=body.name,
+        password=body.password,
+    )
+    
+    return user
 
 class GetUsersResponse(BaseModel):
     total_count: int
@@ -93,6 +109,13 @@ def delete_user(
 ):
     user_service.delete_user(current_user.id)
 
+@router.delete("/admin", status_code=204)
+@inject
+def delete_admin(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_service.delete_user(current_user.id)
 
 @router.post("/login")
 @inject
@@ -119,5 +142,4 @@ def social_login(
         social_token=form_data.password
     )
 
-    #return {"access_token": access_token, "token_type": "bearer"}
-    return access_token
+    return {"access_token": access_token, "token_type": "bearer"}

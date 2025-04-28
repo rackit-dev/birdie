@@ -10,7 +10,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(32), nullable=False)
     provider: Mapped[str] = mapped_column(String(32), nullable=True)
     provider_id: Mapped[str] = mapped_column(String(32), nullable=True)
-    email: Mapped[str] = mapped_column(String(64), nullable=False, unique=True) 
+    email: Mapped[str] = mapped_column(String(64), nullable=False) 
     password: Mapped[str] = mapped_column(String(64), nullable=True)
     memo: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False) 

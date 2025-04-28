@@ -20,6 +20,10 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
+    def get_social_user_info(self, provider: str, social_token: str):
+        raise NotImplementedError
+    
+    @abstractmethod
     def find_by_social_token(self, provider: str, social_token: str) -> User:
         raise NotImplementedError
     

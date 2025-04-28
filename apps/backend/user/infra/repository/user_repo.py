@@ -15,6 +15,7 @@ class UserRepository(IUserRepository):
             email=user.email,
             name=user.name,
             provider=user.provider,
+            provider_id=user.provider_id,
             password=user.password,
             memo=user.memo,
             created_at=user.created_at,
@@ -27,7 +28,10 @@ class UserRepository(IUserRepository):
 
     def find_by_email(self, email: str) -> UserVO:
         with SessionLocal() as db:
-            user = db.query(User).filter(User.email == email).first()
+            user = db.query(User).filter(
+                User.email == email,
+                User.provider == None
+            ).first()
         
         if not user:
             raise HTTPException(status_code=422)
@@ -42,14 +46,8 @@ class UserRepository(IUserRepository):
             raise HTTPException(status_code=422)
 
         return UserVO(**row_to_dict(user))
-
-    def find_by_social_token(self, provider, social_token):
-        """
-        social 도메인 별로 확인해서
-        있으면 유저 정보 리턴
-        없으면 NOT FOUND 리턴 -> user service에서 create social user 메소드 실행
-        """
-        social_response = None
+    
+    def get_social_user_info(self, provider, social_token):
         try:
             if provider == "KAKAO":
                 social_response = requests.get(
@@ -62,8 +60,23 @@ class UserRepository(IUserRepository):
                 pass
         except:
             raise HTTPException(status_code=422)
-
+        
         return social_response
+
+    def find_by_social_token(self, provider, social_token) -> UserVO:
+        social_response = self.get_social_user_info(provider, social_token)
+        social_id = social_response["id"]
+
+        with SessionLocal() as db:
+            user = db.query(User).filter(
+                User.provider == provider,
+                User.provider_id == social_id,
+            ).first()
+
+        if not user:
+            return None
+        
+        return UserVO(**row_to_dict(user)) 
     
     def update(self, user_vo: UserVO):
         with SessionLocal() as db:

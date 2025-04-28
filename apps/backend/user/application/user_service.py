@@ -24,7 +24,7 @@ class UserService:
         name: str,
         email: str,
         password: str,
-    ):
+    ) -> User:
         _user = None
 
         try:
@@ -44,6 +44,25 @@ class UserService:
             provider_id=None,
             email=email,
             password=self.crypto.encrypt(password),
+            memo=None,
+            created_at=now,
+            updated_at=now,
+        )
+        self.user_repo.save(user)
+
+        return user
+    
+    def _create_social_user(self, provider: str, social_token: str) -> User:
+        social_response = self.user_repo.get_social_user_info(provider, social_token)
+        
+        now = datetime.now()
+        user: User = User(
+            id=self.ulid.generate(),
+            name=social_response["kakao_account"]["profile"]["nickname"],
+            provider="KAKAO",
+            provider_id=social_response["id"],
+            email=social_response["kakao_account"]["email"],
+            password=None,
             memo=None,
             created_at=now,
             updated_at=now,
@@ -92,14 +111,14 @@ class UserService:
         return access_token
     
     def social_login(self, provider: str, social_token: str):
-        #user = self.user_repo.find_by_social_token(provider, social_access_token)
-        test = self.user_repo.find_by_social_token(provider, social_token)
+        user = self.user_repo.find_by_social_token(provider, social_token)
 
-        """
+        if not user:
+            user = self._create_social_user(provider, social_token)
+
         access_token = create_access_token(
             payload={"user_id": user.id},
             role=Role.USER,
         )
-        """
-
-        return test
+        
+        return access_token
