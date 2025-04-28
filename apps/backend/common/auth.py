@@ -42,8 +42,8 @@ def decode_access_token(token: str):
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     
-oauth2_pwd_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", scheme_name="PasswordToken")
-# oauth2_social_scheme = OAuth2PasswordBearer(tokenUrl="/users/social-login", scheme_name="SocialToken")
+oauth2_admin_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", scheme_name="admin_auth")
+oauth2_social_scheme = OAuth2PasswordBearer(tokenUrl="/users/social-login", scheme_name="social_auth")
 
 
 @dataclass
@@ -64,13 +64,16 @@ def _extract_user_from_token(token: str) -> tuple[str, str]:
     return user_id, role
 
 
-def get_current_user(token: Annotated[str, Depends(oauth2_pwd_scheme)]): #TODO -> social_scheme
+def get_current_user(token: Annotated[str, Depends(oauth2_social_scheme)]):
     user_id, role = _extract_user_from_token(token)
+
+    if role != Role.USER:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     return CurrentUser(user_id, Role(role))
 
 
-def get_admin_user(token: Annotated[str, Depends(oauth2_pwd_scheme)]):
+def get_admin_user(token: Annotated[str, Depends(oauth2_admin_scheme)]):
     user_id, role = _extract_user_from_token(token)
 
     if role != Role.ADMIN:

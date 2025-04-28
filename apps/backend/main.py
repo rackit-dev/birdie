@@ -11,6 +11,7 @@ app.container = Container()
 
 app.include_router(user_routers)
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request,

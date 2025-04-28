@@ -37,12 +37,12 @@ def create_user(
         email=user.email,
         password=user.password
     )
+
     return created_user
 
 
 class UpdateUserBody(BaseModel):
     name: str | None = Field(min_length=2, max_length=32, default=None)
-    password: str | None = Field(min_length=8, max_length=32, default=None)
 
 
 @router.put("", response_model=UserResponse)
@@ -55,9 +55,29 @@ def update_user(
     user = user_service.update_user(
         user_id=current_user.id,
         name=body.name,
-        password=body.password,
     )
 
+    return user
+
+
+class UpdateAdminBody(BaseModel):
+    name: str | None = Field(min_length=2, max_length=32, default=None)
+    password: str | None = Field(min_length=8, max_length=32, default=None)
+
+
+@router.put("/admin", response_model=UserResponse)
+@inject
+def update_admin(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    body: UpdateAdminBody,
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user = user_service.update_user(
+        user_id=current_user.id,
+        name=body.name,
+        password=body.password,
+    )
+    
     return user
 
 
@@ -72,6 +92,7 @@ class GetUsersResponse(BaseModel):
 def get_users(
     page: int = 1,
     itmes_per_page: int = 10,
+    current_user: CurrentUser = Depends(get_admin_user),
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     total_count, users = user_service.get_users(page, itmes_per_page)
@@ -87,6 +108,15 @@ def get_users(
 @inject
 def delete_user(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_service.delete_user(current_user.id)
+
+
+@router.delete("/admin", status_code=204)
+@inject
+def delete_admin(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_user(current_user.id)
@@ -108,5 +138,13 @@ def user_login(
 
 @router.post("/social-login")
 @inject
-def user_social_login():
-    pass
+def social_login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    access_token = user_service.social_login(
+        provider=form_data.username,
+        social_token=form_data.password
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
