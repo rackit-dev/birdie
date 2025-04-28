@@ -59,6 +59,7 @@ def update_user(
 
     return user
 
+
 class UpdateAdminBody(BaseModel):
     name: str | None = Field(min_length=2, max_length=32, default=None)
     password: str | None = Field(min_length=8, max_length=32, default=None)
@@ -77,6 +78,7 @@ def update_admin(
     )
     
     return user
+
 
 class GetUsersResponse(BaseModel):
     total_count: int
@@ -109,6 +111,7 @@ def delete_user(
 ):
     user_service.delete_user(current_user.id)
 
+
 @router.delete("/admin", status_code=204)
 @inject
 def delete_admin(
@@ -116,6 +119,7 @@ def delete_admin(
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_user(current_user.id)
+
 
 @router.post("/login")
 @inject
