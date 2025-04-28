@@ -64,6 +64,7 @@ class UpdateAdminBody(BaseModel):
     name: str | None = Field(min_length=2, max_length=32, default=None)
     password: str | None = Field(min_length=8, max_length=32, default=None)
 
+
 @router.put("/admin", response_model=UserResponse)
 @inject
 def update_admin(
