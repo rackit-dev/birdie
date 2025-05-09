@@ -59,7 +59,7 @@ class UserRepository(IUserRepository):
             elif provider == "APPLE":
                 pass
         except:
-            raise HTTPException(status_code=422)
+            raise HTTPException(status_code=502)
         
         return social_response
 
