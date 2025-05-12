@@ -22,11 +22,6 @@ class ProductRepository(IProductRepository):
             updated_at=product.updated_at,
         )
 
-        """
-        TODO
-        product.name으로 s3 products/ 에 사진 업로드
-        """
-
         with SessionLocal() as db:
             db.add(new_product)
             db.commit()
@@ -41,6 +36,9 @@ class ProductRepository(IProductRepository):
             raise HTTPException(status_code=422)
         
         return ProductVO(**row_to_dict(product))
+    
+    def upload_img(self, name, image):
+        pass
     
     def update(self, user):
         return super().update(user)

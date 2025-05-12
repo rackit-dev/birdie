@@ -44,6 +44,7 @@ def create_product(
         discount_rate=discount_rate,
         category_main=category_main,
         category_sub=category_sub,
+        image=image,
     )
 
     return created_product

@@ -1,7 +1,6 @@
 from sqlalchemy import String, Integer, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
-from typing import Optional
 
 
 class Product(Base):

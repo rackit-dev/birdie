@@ -1,6 +1,6 @@
 from datetime import datetime
 from dependency_injector.wiring import inject
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from ulid import ULID
 
 from product.domain.product import Product
@@ -24,7 +24,8 @@ class ProductService:
         discount_rate: int,
         category_main: str,
         category_sub: str,
-    ) -> Product: # autogenerate id, prdct_num, is_active, createat, updateat
+        image: UploadFile,
+    ) -> Product:
         _product = None
 
         try:
@@ -51,5 +52,7 @@ class ProductService:
             updated_at=now,
         )
         self.product_repo.save(product)
+
+        self.product_repo.upload_img(image)
 
         return product
