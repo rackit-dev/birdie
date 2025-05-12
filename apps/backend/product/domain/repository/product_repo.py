@@ -10,7 +10,8 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def find_by_name(self, name: str) -> Product:
         """
-        이름으로 유저 검색
+        이름으로 상품 검색.
+        검색한 상품이 없을 경우 422 에러를 발생시킴.
         """
     
     @abstractmethod
