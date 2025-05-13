@@ -34,7 +34,8 @@ def create_product(
     discount_rate: Annotated[int, Form(gt=0, le=100)],
     category_main: Annotated[str, Form(min_length=2, max_length=32)],
     category_sub: Annotated[str, Form(min_length=2, max_length=32)],
-    image: UploadFile = File(...),
+    image_thumbnail: UploadFile = File(...),
+    image_detail: UploadFile = File(...),
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     created_product = product_service.create_product(
@@ -44,7 +45,8 @@ def create_product(
         discount_rate=discount_rate,
         category_main=category_main,
         category_sub=category_sub,
-        image=image,
+        image_thumbnail=image_thumbnail,
+        image_detail=image_detail,
     )
 
     return created_product

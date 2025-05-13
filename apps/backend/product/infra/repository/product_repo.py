@@ -9,7 +9,7 @@ from product.infra.db_models.product import Product
 
 
 class ProductRepository(IProductRepository):
-    def save(self, product: ProductVO, image: UploadFile):
+    def save(self, product: ProductVO, image_thumbnail: UploadFile, image_detail: UploadFile):
         new_product = Product(
             id=product.id,
             name=product.name,
@@ -26,7 +26,7 @@ class ProductRepository(IProductRepository):
         with SessionLocal() as db:
             try:
                 db.add(new_product)
-                self._upload_img(product.name, image)
+                self._upload_img(product.name, image_thumbnail, image_detail)
                 db.commit()
             except Exception as e:
                 db.rollback()
@@ -43,17 +43,24 @@ class ProductRepository(IProductRepository):
         
         return ProductVO(**row_to_dict(product))
     
-    def _upload_img(self, name: str, image: UploadFile):
-        file_extension = image.filename.split(".")[-1]
-        object_key = f"products/{name}/testimg.{file_extension}"
+    def _upload_img(self, name: str, image_thumbnail: UploadFile, image_detail: UploadFile):
+        thumbnail_extension = image_thumbnail.filename.split(".")[-1]
+        detail_extension = image_detail.filename.split(".")[-1]
+        thumbnail_key = f"products/{name}/thumbnail.{thumbnail_extension}"
+        detail_key = f"products/{name}/detail.{detail_extension}"
         
         with bucket_session() as s3:
             s3.upload_fileobj(
-                image.file,
+                image_thumbnail.file,
                 "birdie-image-bucket",
-                object_key,
+                thumbnail_key,
             )
-       
+            s3.upload_fileobj(
+                image_detail.file,
+                "birdie-image-bucket",
+                detail_key,
+            )
+        
     def update(self, user):
         return super().update(user)
     

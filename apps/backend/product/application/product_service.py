@@ -24,7 +24,8 @@ class ProductService:
         discount_rate: int,
         category_main: str,
         category_sub: str,
-        image: UploadFile,
+        image_thumbnail: UploadFile,
+        image_detail: UploadFile,
     ) -> Product:
         _product = None
 
@@ -51,6 +52,6 @@ class ProductService:
             created_at=now,
             updated_at=now,
         )
-        self.product_repo.save(product, image)
+        self.product_repo.save(product, image_thumbnail, image_detail)
 
         return product
