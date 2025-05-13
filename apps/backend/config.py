@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     database_host: str
     database_schema: str
     jwt_secret: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_region: str
 
 
 @lru_cache

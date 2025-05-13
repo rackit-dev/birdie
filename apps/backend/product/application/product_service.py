@@ -51,8 +51,6 @@ class ProductService:
             created_at=now,
             updated_at=now,
         )
-        self.product_repo.save(product)
-
-        self.product_repo.upload_img(image)
+        self.product_repo.save(product, image)
 
         return product

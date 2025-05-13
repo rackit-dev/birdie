@@ -1,1 +1,0 @@
-from boto3 import resource
