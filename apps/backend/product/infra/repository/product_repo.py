@@ -83,4 +83,19 @@ class ProductRepository(IProductRepository):
         return super().update(user)
     
     def delete(self, id):
-        return super().delete(id)
+        with SessionLocal() as db:
+            product = db.query(Product).filter(Product.id == id).first()
+            
+            if not product:
+                raise HTTPException(status_code=422)
+
+            try:
+                db.delete(product)
+                #self._delete_img(product.name)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to Delete Product.")
+    
+    def _delete_img(self, name):
+        return super()._delete_img(name)

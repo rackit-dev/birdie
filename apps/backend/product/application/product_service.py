@@ -61,3 +61,9 @@ class ProductService:
         products = self.product_repo.get_products(page, items_per_page)
 
         return products
+    
+    def update_product(self, ):
+        pass
+
+    def delete_product(self, product_id: str):
+        self.product_repo.delete(product_id)

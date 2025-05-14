@@ -38,3 +38,7 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def delete(self, id: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def _delete_img(self, name: str):
+        raise NotImplementedError

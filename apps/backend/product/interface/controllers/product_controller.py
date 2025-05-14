@@ -12,6 +12,7 @@ router = APIRouter(prefix="/products")
 
 
 class ProductResponse(BaseModel):
+    id: str
     product_number: int
     name: str
     price_whole: int
@@ -35,7 +36,7 @@ def create_product(
     category_sub: Annotated[str, Form(min_length=2, max_length=32)],
     image_thumbnail: UploadFile = File(...),
     image_detail: List[UploadFile] = File(...),
-    #NEED ADMIN AUTHORIZE (TOKEN)
+    #NEED ADMIN TOKEN
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     created_product = product_service.create_product(
@@ -73,3 +74,13 @@ def get_products(
         "page": page,
         "products": products,
     }
+
+
+@router.delete("", status_code=204)
+@inject
+def delete_product(
+    product_id: str,
+    #NEED ADMIN TOKEN
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product(product_id)
