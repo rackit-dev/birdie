@@ -12,8 +12,16 @@ router = APIRouter(prefix="/products")
 
 
 class ProductResponse(BaseModel):
-    id: str
+    product_number: int
     name: str
+    price_whole: int
+    price_sell: int
+    discount_rate: int
+    is_active: bool
+    category_main: str
+    category_sub: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @router.post("", status_code=201, response_model=ProductResponse)
@@ -27,6 +35,7 @@ def create_product(
     category_sub: Annotated[str, Form(min_length=2, max_length=32)],
     image_thumbnail: UploadFile = File(...),
     image_detail: List[UploadFile] = File(...),
+    #NEED ADMIN AUTHORIZE (TOKEN)
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     created_product = product_service.create_product(
@@ -41,3 +50,26 @@ def create_product(
     )
 
     return created_product
+
+
+class GetProductsResponse(BaseModel):
+    total_count: int
+    page: int
+    products: list[ProductResponse]
+
+
+@router.get("", response_model=GetProductsResponse)
+@inject
+def get_products(
+    page: int = 1,
+    items_per_page: int = 10,
+    #NO NEED TO AUTORIZE
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, products = product_service.get_products(page, items_per_page)
+    
+    return {
+        "total_count": total_count,
+        "page": page,
+        "products": products,
+    }

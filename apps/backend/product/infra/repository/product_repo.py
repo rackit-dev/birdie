@@ -10,7 +10,7 @@ from product.infra.db_models.product import Product
 
 
 class ProductRepository(IProductRepository):
-    def save(self, product: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]):
+    def save(self, product: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]) -> ProductVO:
         new_product = Product(
             id=product.id,
             name=product.name,
@@ -27,11 +27,16 @@ class ProductRepository(IProductRepository):
         with SessionLocal() as db:
             try:
                 db.add(new_product)
+                db.flush()
+                db.refresh(new_product)
+                db.expunge(new_product)
                 self._upload_img(product.name, image_thumbnail, image_detail)
                 db.commit()
             except Exception as e:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to Save Product.")
+        
+        return ProductVO(**row_to_dict(new_product))
             
     def find_by_name(self, name: str) -> ProductVO:
         with SessionLocal() as db:
@@ -63,12 +68,19 @@ class ProductRepository(IProductRepository):
                     "birdie-image-bucket",
                     key,
                 )
+
+    def get_products(self, page: int = 1, items_per_page: int = 10) -> tuple[int, list[ProductVO]]:
+        with SessionLocal() as db:
+            query = db.query(Product)
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            products = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [ProductVO(**row_to_dict(product)) for product in products]
         
     def update(self, user):
         return super().update(user)
-    
-    def get_products(self, page, items_per_page):
-        return super().get_products(page, items_per_page)
     
     def delete(self, id):
         return super().delete(id)

@@ -53,6 +53,11 @@ class ProductService:
             created_at=now,
             updated_at=now,
         )
-        self.product_repo.save(product, image_thumbnail, image_detail)
+        new_product = self.product_repo.save(product, image_thumbnail, image_detail)
 
-        return product
+        return new_product
+    
+    def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
+        products = self.product_repo.get_products(page, items_per_page)
+
+        return products

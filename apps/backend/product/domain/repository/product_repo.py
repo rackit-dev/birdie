@@ -7,7 +7,7 @@ from product.domain.product import Product
 
 class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
-    def save(self, product: Product):
+    def save(self, product: Product) -> Product:
         raise NotImplementedError
     
     @abstractmethod
@@ -28,11 +28,11 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def update(self, user: Product):
+    def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
         raise NotImplementedError
     
     @abstractmethod
-    def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
+    def update(self, user: Product):
         raise NotImplementedError
     
     @abstractmethod
