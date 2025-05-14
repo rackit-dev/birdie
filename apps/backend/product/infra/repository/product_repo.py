@@ -91,11 +91,25 @@ class ProductRepository(IProductRepository):
 
             try:
                 db.delete(product)
-                #self._delete_img(product.name)
+                self._delete_img(product.name)
                 db.commit()
             except Exception as e:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to Delete Product.")
     
-    def _delete_img(self, name):
-        return super()._delete_img(name)
+    def _delete_img(self, name: str):
+        prefix = f"products/{name}/"
+        bucket_name = "birdie-image-bucket"
+
+        with bucket_session() as s3:
+            objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+
+            if "Contents" not in objects:
+                return  # NO CONTENTS
+
+            delete_keys = [{"Key": obj["Key"]} for obj in objects["Contents"]]
+
+            s3.delete_objects(
+                Bucket=bucket_name,
+                Delete={"Objects": delete_keys}
+            )
