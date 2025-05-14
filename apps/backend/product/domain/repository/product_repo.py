@@ -1,3 +1,4 @@
+from typing import List
 from abc import ABCMeta, abstractmethod
 from fastapi import UploadFile
 
@@ -22,7 +23,7 @@ class IProductRepository(metaclass=ABCMeta):
             self,
             name: str,
             image_thumbnail: UploadFile,
-            image_detail: UploadFile,
+            image_detail: List[UploadFile],
         ):
         raise NotImplementedError
     
