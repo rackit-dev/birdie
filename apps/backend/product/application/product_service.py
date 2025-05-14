@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from dependency_injector.wiring import inject
 from fastapi import HTTPException, UploadFile
 from ulid import ULID
@@ -25,7 +26,7 @@ class ProductService:
         category_main: str,
         category_sub: str,
         image_thumbnail: UploadFile,
-        image_detail: UploadFile,
+        image_detail: List[UploadFile],
     ) -> Product:
         _product = None
 

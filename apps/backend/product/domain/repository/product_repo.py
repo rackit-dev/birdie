@@ -15,6 +15,7 @@ class IProductRepository(metaclass=ABCMeta):
         이름으로 상품 검색.
         검색한 상품이 없을 경우 422 에러를 발생시킴.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def _upload_img(

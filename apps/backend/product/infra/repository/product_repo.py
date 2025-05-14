@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import HTTPException, UploadFile
 
 from database import SessionLocal
@@ -9,7 +10,7 @@ from product.infra.db_models.product import Product
 
 
 class ProductRepository(IProductRepository):
-    def save(self, product: ProductVO, image_thumbnail: UploadFile, image_detail: UploadFile):
+    def save(self, product: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]):
         new_product = Product(
             id=product.id,
             name=product.name,
@@ -43,11 +44,9 @@ class ProductRepository(IProductRepository):
         
         return ProductVO(**row_to_dict(product))
     
-    def _upload_img(self, name: str, image_thumbnail: UploadFile, image_detail: UploadFile):
+    def _upload_img(self, name: str, image_thumbnail: UploadFile, image_detail: List[UploadFile]):
         thumbnail_extension = image_thumbnail.filename.split(".")[-1]
-        detail_extension = image_detail.filename.split(".")[-1]
         thumbnail_key = f"products/{name}/thumbnail.{thumbnail_extension}"
-        detail_key = f"products/{name}/detail.{detail_extension}"
         
         with bucket_session() as s3:
             s3.upload_fileobj(
@@ -55,11 +54,15 @@ class ProductRepository(IProductRepository):
                 "birdie-image-bucket",
                 thumbnail_key,
             )
-            s3.upload_fileobj(
-                image_detail.file,
-                "birdie-image-bucket",
-                detail_key,
-            )
+
+            for i, image in enumerate(image_detail, start=1):
+                extension = image.filename.split(".")[-1]
+                key = f"products/{name}/detail_{i}.{extension}"
+                s3.upload_fileobj(
+                    image.file,
+                    "birdie-image-bucket",
+                    key,
+                )
         
     def update(self, user):
         return super().update(user)
