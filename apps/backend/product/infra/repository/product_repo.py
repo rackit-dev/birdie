@@ -78,9 +78,40 @@ class ProductRepository(IProductRepository):
             products = query.limit(items_per_page).offset(offset).all()
 
         return total_count, [ProductVO(**row_to_dict(product)) for product in products]
+    
+    def update(self, product_vo: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]) -> ProductVO:
+        with SessionLocal() as db:
+            product = db.query(Product).filter(Product.id == product_vo.id).first()
         
-    def update(self, user):
-        return super().update(user)
+        if not product:
+            raise HTTPException(status_code=422)
+        
+        product.name = product_vo.name
+        product.price_whole = product_vo.price_whole
+        product.price_sell = product_vo.price_sell
+        product.discount_rate = product_vo.discount_rate
+        product.is_active = product_vo.is_active
+        product.category_main = product_vo.category_main
+        product.category_sub = product_vo.category_sub
+        product.updated_at = product_vo.updated_at
+
+        try:
+            db.add(product)
+            # TODO S3 IMAGE MODIFY LOGIC TODO
+            db.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to Update Product.")
+        
+        return product
+    
+    def find_by_id(self, id) -> ProductVO:
+        with SessionLocal() as db:
+            product = db.query(Product).filter(Product.id == id).first()
+
+        if not product:
+            raise HTTPException(status_code=422)
+        
+        return ProductVO(**row_to_dict(product))
     
     def delete(self, id):
         with SessionLocal() as db:

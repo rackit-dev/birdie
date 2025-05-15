@@ -7,7 +7,14 @@ from product.domain.product import Product
 
 class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
-    def save(self, product: Product) -> Product:
+    def save(self, 
+             product: Product,
+             image_thumbnail: UploadFile,
+             image_detail: List[UploadFile],
+        ) -> Product:
+        """
+        DB 트랜잭션 도중 오류에 대해서 500 에러 발생.
+        """
         raise NotImplementedError
     
     @abstractmethod
@@ -31,12 +38,35 @@ class IProductRepository(metaclass=ABCMeta):
     def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
         raise NotImplementedError
     
+    """
     @abstractmethod
-    def update(self, user: Product):
+    def get_product(self, id: str) -> Product:
+        raise NotImplementedError
+    """
+
+    @abstractmethod
+    def update(self,
+             product: Product,
+             image_thumbnail: UploadFile,
+             image_detail: List[UploadFile],
+        ) -> Product:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def find_by_id(self, id: str) -> Product:
+        """
+        ID로 상품 검색.
+        검색한 상품이 없을 경우 422 에러 발생.
+        """
         raise NotImplementedError
     
     @abstractmethod
     def delete(self, id: str):
+        """
+        ID로 상품 검색.
+        검색한 상품이 없을 경우 422 에러 발생.
+        DB 트랜잭션 도중 오류에 대해서 500 에러 발생.        
+        """
         raise NotImplementedError
     
     @abstractmethod

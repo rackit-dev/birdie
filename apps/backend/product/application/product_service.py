@@ -62,8 +62,45 @@ class ProductService:
 
         return products
     
-    def update_product(self, ):
-        pass
+    def update_product(
+            self,
+            product_id: str,
+            name: str,
+            price_whole: int,
+            price_sell: int,
+            discount_rate: int,
+            is_active: bool,
+            category_main: str,
+            category_sub: str,
+            image_thumbnail: UploadFile,
+            image_detail: List[UploadFile],
+    ) -> Product:
+        product = self.product_repo.find_by_id(product_id)
+
+        _product = None
+        try:
+            _product = self.product_repo.find_by_name(name)
+        except HTTPException as e:
+            if e.status_code != 422:
+                raise e
+            
+        if _product:
+            raise HTTPException(status_code=422)
+
+        # TODO S3 IMAGE MODIFY LOGIC...
+
+        product.name = name
+        product.price_whole = price_whole
+        product.price_sell = price_sell
+        product.discount_rate = discount_rate
+        product.is_active = is_active
+        product.category_main = category_main
+        product.category_sub = category_sub
+        product.updated_at = datetime.now()
+
+        self.product_repo.update(product, image_thumbnail, image_detail)
+
+        return product
 
     def delete_product(self, product_id: str):
         self.product_repo.delete(product_id)

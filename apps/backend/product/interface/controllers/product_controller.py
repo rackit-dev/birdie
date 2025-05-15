@@ -76,6 +76,38 @@ def get_products(
     }
 
 
+@router.put("", response_model=ProductResponse)
+@inject
+def update_product( 
+    id: Annotated[str, Form(min_length=26, max_length=26)],
+    name: Annotated[str, Form(min_length=2, max_length=128)],
+    price_whole: Annotated[int, Form(ge=0, le=99999999)],
+    price_sell: Annotated[int, Form(gt=0, le=99999999)],
+    discount_rate: Annotated[int, Form(ge=0, le=100)],
+    is_active: Annotated[bool, Form()],
+    category_main: Annotated[str, Form(min_length=2, max_length=32)],
+    category_sub: Annotated[str, Form(min_length=2, max_length=32)],
+    image_thumbnail: UploadFile = File(...),
+    image_detail: List[UploadFile] = File(...),
+    #NEED ADMIN TOKEN
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product = product_service.update_product(
+        product_id=id,
+        name=name,
+        price_whole=price_whole,
+        price_sell=price_sell,
+        discount_rate=discount_rate,
+        is_active=is_active,
+        category_main=category_main,
+        category_sub=category_sub,
+        image_thumbnail=image_thumbnail,
+        image_detail=image_detail,
+    )
+
+    return product
+
+
 @router.delete("", status_code=204)
 @inject
 def delete_product(

@@ -76,7 +76,7 @@ class UserService:
         user_id: str,
         name: str | None = None,
         password: str | None = None,
-    ):
+    ) -> User:
         user = self.user_repo.find_by_id(user_id)
 
         if name:
