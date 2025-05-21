@@ -10,6 +10,9 @@ export default function LoadingScreen() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
+        // 로그인화면테스트용: 기존 저장된 토큰 삭제
+        await SecureStore.deleteItemAsync("access_token");
+
         const accessToken = await SecureStore.getItemAsync("access_token");
 
         // 토큰 저장 확인
