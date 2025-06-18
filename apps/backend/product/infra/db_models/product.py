@@ -1,5 +1,5 @@
-from sqlalchemy import String, Integer, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 
@@ -17,3 +17,24 @@ class Product(Base):
     category_sub: Mapped[str] = mapped_column(String(32), nullable=False)
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
+    options: Mapped[list["ProductOption"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
+
+class ProductOption(Base):
+    __tablename__ = "ProductOption"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # UUID
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    option: Mapped[str] = mapped_column(String(32), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    product: Mapped["Product"] = relationship(back_populates="options")

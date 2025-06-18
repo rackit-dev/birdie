@@ -2,7 +2,7 @@ from typing import List
 from abc import ABCMeta, abstractmethod
 from fastapi import UploadFile
 
-from product.domain.product import Product
+from product.domain.product import Product, ProductOption
 
 
 class IProductRepository(metaclass=ABCMeta):
@@ -33,17 +33,11 @@ class IProductRepository(metaclass=ABCMeta):
             image_detail: List[UploadFile],
         ):
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
         raise NotImplementedError
     
-    """
-    @abstractmethod
-    def get_product(self, id: str) -> Product:
-        raise NotImplementedError
-    """
-
     @abstractmethod
     def update(self,
              product: Product,
@@ -72,3 +66,17 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def _delete_img(self, name: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def save_options(self, options: List[ProductOption]) -> tuple[int, list[ProductOption]]:
+        raise NotImplementedError
+    
+    """
+    @abstractmethod
+    def update_product_options(self, ):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_product_detail(self, ):
+        raise NotImplementedError
+    """

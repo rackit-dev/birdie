@@ -15,3 +15,13 @@ class Product:
     category_sub: str    # 소분류
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class ProductOption:
+    id: str
+    product_id: str
+    option: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime

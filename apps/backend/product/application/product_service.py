@@ -4,7 +4,7 @@ from dependency_injector.wiring import inject
 from fastapi import HTTPException, UploadFile
 from ulid import ULID
 
-from product.domain.product import Product
+from product.domain.product import Product, ProductOption
 from product.domain.repository.product_repo import IProductRepository
 
 
@@ -87,8 +87,6 @@ class ProductService:
         if _product:
             raise HTTPException(status_code=422)
 
-        # TODO S3 IMAGE MODIFY LOGIC...
-
         product.name = name
         product.price_whole = price_whole
         product.price_sell = price_sell
@@ -104,3 +102,26 @@ class ProductService:
 
     def delete_product(self, product_id: str):
         self.product_repo.delete(product_id)
+
+    def create_product_options(
+            self,
+            product_id: str,
+            options: List[str],
+    ) -> tuple[int, list[ProductOption]]:
+        product_option_list = []
+
+        for option in options:
+            now = datetime.now()
+            product_option: ProductOption = ProductOption(
+                id=self.ulid.generate(),
+                product_id=product_id,
+                option=option,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+            product_option_list.append(product_option)
+
+        self.product_repo.save_options(product_option_list)
+        
+        return len(product_option_list), product_option_list

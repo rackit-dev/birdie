@@ -116,3 +116,30 @@ def delete_product(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product(product_id)
+
+
+class CreateProductOptionBody(BaseModel):
+    product_id: str = Field(min_length=10, max_length=32)
+    options: list[str] = Field(min_length=1, max_length=10)
+
+
+class ProductOptionResponse(BaseModel):
+    total_count: int
+    options: list
+
+
+@router.post("/options", status_code=201, response_model=ProductOptionResponse)
+@inject
+def create_product_option(
+    product_option: CreateProductOptionBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_options = product_service.create_product_options(
+        product_option.product_id,
+        product_option.options,
+    )
+
+    return {
+        "total_count": total_count,
+        "options": product_options,
+    }

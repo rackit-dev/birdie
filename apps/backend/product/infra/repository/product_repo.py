@@ -6,7 +6,8 @@ from aws import bucket_session
 from utils.db_utils import row_to_dict
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
-from product.infra.db_models.product import Product
+from product.domain.product import ProductOption as ProductOptionVO
+from product.infra.db_models.product import Product, ProductOption
 
 
 class ProductRepository(IProductRepository):
@@ -144,3 +145,21 @@ class ProductRepository(IProductRepository):
                 Bucket=bucket_name,
                 Delete={"Objects": delete_keys}
             )
+
+    def save_options(self, product_options: List[ProductOptionVO]):
+        with SessionLocal() as db:
+            try:
+                for product_option in product_options:
+                    new_option = ProductOption(
+                        id=product_option.id,
+                        product_id=product_option.product_id,
+                        option=product_option.option,
+                        is_active=product_option.is_active,
+                        created_at=product_option.created_at,
+                        updated_at=product_option.updated_at,
+                    )
+                    db.add(new_option)
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save product options")
