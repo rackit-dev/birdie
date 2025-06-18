@@ -176,6 +176,36 @@ class ProductRepository(IProductRepository):
 
         return total_count, [ProductOptionVO(**row_to_dict(product_option)) for product_option in product_options]
     
+    def update_option(self, product_option_vo: ProductOptionVO) -> ProductOption:
+        with SessionLocal() as db:
+            product_option = db.query(ProductOption).filter(ProductOption.id == product_option_vo.id).first()
+        
+        if not product_option:
+            raise HTTPException(status_code=422)
+        
+        product_option.option = product_option_vo.option
+        product_option.is_active = product_option_vo.is_active
+        product_option.updated_at = product_option_vo.updated_at
+
+        try:
+            db.add(product_option)
+            db.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to Update product option.")
+
+        return product_option
+    
+    
+    def find_by_optionid(self, id) -> ProductOptionVO:
+        with SessionLocal() as db:
+            product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
+
+        if not product_option:
+            raise HTTPException(status_code=422)
+        
+        return ProductOptionVO(**row_to_dict(product_option))
+    
+    
     def delete_option(self, id):
         with SessionLocal() as db:
             product_option = db.query(ProductOption).filter(ProductOption.id == id).first()

@@ -131,5 +131,16 @@ class ProductService:
 
         return product_options
     
+    def update_product_option(self, id: str, option: str, is_active: bool) -> ProductOption:
+        product_option = self.product_repo.find_by_optionid(id)
+
+        product_option.option = option
+        product_option.is_active = is_active
+        product_option.updated_at = datetime.now()
+
+        self.product_repo.update_option(product_option)
+
+        return product_option
+    
     def delete_product_option(self, product_option_id: str):
         self.product_repo.delete_option(product_option_id)

@@ -124,11 +124,20 @@ class CreateProductOptionBody(BaseModel):
 
 
 class ProductOptionResponse(BaseModel):
+    id: str
+    product_id: str
+    option: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    
+
+class ProductOptionsResponse(BaseModel):
     total_count: int
-    options: list
+    product_options: list
 
 
-@router.post("/options", status_code=201, response_model=ProductOptionResponse)
+@router.post("/options", status_code=201, response_model=ProductOptionsResponse)
 @inject
 def create_product_option(
     product_option: CreateProductOptionBody,
@@ -141,11 +150,17 @@ def create_product_option(
 
     return {
         "total_count": total_count,
-        "options": product_options,
+        "product_options": product_options,
     }
 
 
-@router.get("/options", response_model=ProductOptionResponse)
+class UpdateProductOptionBody(BaseModel):
+    id: str = Field(min_length=10, max_length=32)
+    option: str = Field(min_length=1, max_length=10)
+    is_active: bool
+
+
+@router.get("/options", response_model=ProductOptionsResponse)
 @inject
 def get_product_option(
     product_id: str,
@@ -155,14 +170,23 @@ def get_product_option(
 
     return {
         "total_count": total_count,
-        "options": product_options,
+        "product_options": product_options,
     }
 
 
-"""
-@router.put("/options", )
+@router.put("/options", response_model=ProductOptionResponse)
 @inject
-"""
+def update_product_option(
+    body: UpdateProductOptionBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_option = product_service.update_product_option(
+        id=body.id,
+        option=body.option,
+        is_active=body.is_active,
+    )
+
+    return product_option
 
 
 @router.delete("/options", status_code=204)

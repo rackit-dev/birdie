@@ -75,11 +75,13 @@ class IProductRepository(metaclass=ABCMeta):
     def get_options(self, product_id: str) -> tuple[int, list[ProductOption]]:
         raise NotImplementedError
 
-    """
     @abstractmethod
-    def update_option(self, ):
+    def update_option(self, product_option: ProductOption) -> ProductOption:
         raise NotImplementedError
-    """
+
+    @abstractmethod
+    def find_by_optionid(self, id: str) -> ProductOption:
+        raise NotImplementedError
 
     @abstractmethod
     def delete_option(self, product_option_id: str):
