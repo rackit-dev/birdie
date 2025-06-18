@@ -127,6 +127,9 @@ class ProductService:
         return len(product_option_list), product_option_list
     
     def get_product_options(self, product_id: str) -> tuple[int, list[Product]]:
-        product_options = self.product_repo.get_product_options(product_id)
+        product_options = self.product_repo.get_options(product_id)
 
         return product_options
+    
+    def delete_product_option(self, product_option_id: str):
+        self.product_repo.delete_option(product_option_id)

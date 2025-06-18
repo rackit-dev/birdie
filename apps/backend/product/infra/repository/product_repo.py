@@ -101,7 +101,7 @@ class ProductRepository(IProductRepository):
             # TODO S3 IMAGE MODIFY LOGIC TODO
             db.commit()
         except Exception as e:
-            raise HTTPException(status_code=500, detail="Failed to Update Product.")
+            raise HTTPException(status_code=500, detail="Failed to Update product.")
         
         return product
     
@@ -127,7 +127,7 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except Exception as e:
                 db.rollback()
-                raise HTTPException(status_code=500, detail="Failed to Delete Product.")
+                raise HTTPException(status_code=500, detail="Failed to Delete product.")
     
     def _delete_img(self, name: str):
         prefix = f"products/{name}/"
@@ -162,9 +162,9 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except Exception:
                 db.rollback()
-                raise HTTPException(status_code=500, detail="Failed to save product options")
+                raise HTTPException(status_code=500, detail="Failed to save product options.")
 
-    def get_product_options(self, product_id) -> tuple[int, List[ProductOptionVO]]:
+    def get_options(self, product_id) -> tuple[int, List[ProductOptionVO]]:
         with SessionLocal() as db:
             product_options = db.query(ProductOption).filter(
                 ProductOption.product_id == product_id
@@ -175,3 +175,16 @@ class ProductRepository(IProductRepository):
                 raise HTTPException(status_code=422)
 
         return total_count, [ProductOptionVO(**row_to_dict(product_option)) for product_option in product_options]
+    
+    def delete_option(self, id):
+        with SessionLocal() as db:
+            product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
+            
+            if not product_option:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_option)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product option.")

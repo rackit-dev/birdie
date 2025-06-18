@@ -157,4 +157,18 @@ def get_product_option(
         "total_count": total_count,
         "options": product_options,
     }
-    
+
+
+"""
+@router.put("/options", )
+@inject
+"""
+
+
+@router.delete("/options", status_code=204)
+@inject
+def delete_product_option(
+    product_option_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_option(product_option_id)
