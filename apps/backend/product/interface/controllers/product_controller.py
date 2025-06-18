@@ -143,3 +143,18 @@ def create_product_option(
         "total_count": total_count,
         "options": product_options,
     }
+
+
+@router.get("/options", response_model=ProductOptionResponse)
+@inject
+def get_product_option(
+    product_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_options = product_service.get_product_options(product_id)
+
+    return {
+        "total_count": total_count,
+        "options": product_options,
+    }
+    

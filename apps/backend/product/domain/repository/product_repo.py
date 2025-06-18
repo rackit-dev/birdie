@@ -71,12 +71,12 @@ class IProductRepository(metaclass=ABCMeta):
     def save_options(self, options: List[ProductOption]) -> tuple[int, list[ProductOption]]:
         raise NotImplementedError
     
+    @abstractmethod
+    def get_product_options(self, product_id: str) -> tuple[int, list[ProductOption]]:
+        raise NotImplementedError
+
     """
     @abstractmethod
     def update_product_options(self, ):
-        raise NotImplementedError
-    
-    @abstractmethod
-    def get_product_detail(self, ):
         raise NotImplementedError
     """

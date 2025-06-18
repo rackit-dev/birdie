@@ -125,3 +125,8 @@ class ProductService:
         self.product_repo.save_options(product_option_list)
         
         return len(product_option_list), product_option_list
+    
+    def get_product_options(self, product_id: str) -> tuple[int, list[Product]]:
+        product_options = self.product_repo.get_product_options(product_id)
+
+        return product_options
