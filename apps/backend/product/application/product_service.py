@@ -62,6 +62,11 @@ class ProductService:
 
         return products
     
+    def get_products_by_category(self, page: int, items_per_page: int, category_main: str, category_sub) -> tuple[int, list[Product]]:
+        products = self.product_repo.get_products_by_category(page, items_per_page, category_main, category_sub)
+
+        return products
+    
     def update_product(
             self,
             product_id: str,

@@ -80,6 +80,20 @@ class ProductRepository(IProductRepository):
 
         return total_count, [ProductVO(**row_to_dict(product)) for product in products]
     
+    def get_products_by_category(self, page, items_per_page, category_main, category_sub):
+        with SessionLocal() as db:
+            query = db.query(Product).filter(Product.category_main == category_main)
+            
+            if category_sub is not None:
+                query = query.filter(Product.category_sub == category_sub)
+
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            products = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [ProductVO(**row_to_dict(product)) for product in products]
+
     def update(self, product_vo: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]) -> ProductVO:
         with SessionLocal() as db:
             product = db.query(Product).filter(Product.id == product_vo.id).first()

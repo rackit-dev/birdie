@@ -64,10 +64,29 @@ class GetProductsResponse(BaseModel):
 def get_products(
     page: int = 1,
     items_per_page: int = 10,
-    #NO NEED TO AUTORIZE
+    #NO NEED TO AUTHORIZE
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     total_count, products = product_service.get_products(page, items_per_page)
+    
+    return {
+        "total_count": total_count,
+        "page": page,
+        "products": products,
+    }
+
+
+@router.get("/by_category", response_model=GetProductsResponse)
+@inject
+def get_products(
+    page: int,
+    items_per_page: int,
+    category_main: str,
+    category_sub: str | None = None,
+    #NO NEED TO AUTHORIZE
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, products = product_service.get_products_by_category(page, items_per_page, category_main, category_sub)
     
     return {
         "total_count": total_count,
