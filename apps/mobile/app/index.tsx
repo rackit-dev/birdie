@@ -21,7 +21,10 @@ export default function LoadingScreen() {
         if (accessToken) {
           router.replace("/(tabs)");
         } else {
-          router.replace("/login");
+          // 로그인페이지 잠시 건너뛰기
+          router.replace("/(tabs)");
+
+          // router.replace("/login");
         }
       } catch (error) {
         console.error("토큰 확인 중 에러:", error);

@@ -3,130 +3,18 @@ import { Text, View } from "@/components/Themed";
 import { useState, useEffect } from "react";
 import useLikeStore from "@/store/useLikeStore";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import ItemCard from "@/components/ItemCard";
+import { useRouter } from "expo-router";
+import axios from "axios";
 
 type Product = {
   id: string;
-  image: number;
+  image: any;
   brand: string;
   name: string;
-  price: string;
+  priceSell: number;
+  priceOriginal: number;
+  discount: number;
 };
-
-const itemData: Product[] = [
-  {
-    id: "nike-airmax90",
-    image: require("../../assets/images/items/shoes1.jpg"),
-    brand: "나이키",
-    name: "에어 맥스 90",
-    price: "150,000원",
-  },
-  {
-    id: "adidas-ultraboost",
-    image: require("../../assets/images/items/shoes2.jpg"),
-    brand: "아디다스",
-    name: "울트라부스트",
-    price: "180,000원",
-  },
-  {
-    id: "puma-rsx",
-    image: require("../../assets/images/items/shoes3.jpg"),
-    brand: "푸마",
-    name: "RS-X",
-    price: "130,000원",
-  },
-  {
-    id: "newbalance-574",
-    image: require("../../assets/images/items/shoes4.jpg"),
-    brand: "뉴발란스",
-    name: "574",
-    price: "140,000원",
-  },
-  {
-    id: "reebok-clubc",
-    image: require("../../assets/images/items/shoes5.jpg"),
-    brand: "리복",
-    name: "클럽 C",
-    price: "120,000원",
-  },
-  {
-    id: "vans-oldskool",
-    image: require("../../assets/images/items/shoes6.jpg"),
-    brand: "반스",
-    name: "올드스쿨",
-    price: "110,000원",
-  },
-  {
-    id: "nike-sportshorts",
-    image: require("../../assets/images/items/shorts1.jpg"),
-    brand: "나이키",
-    name: "스포츠 반바지",
-    price: "50,000원",
-  },
-  {
-    id: "adidas-trainingshorts",
-    image: require("../../assets/images/items/shorts2.jpg"),
-    brand: "아디다스",
-    name: "트레이닝 반바지",
-    price: "55,000원",
-  },
-  {
-    id: "puma-sportshirt",
-    image: require("../../assets/images/items/shirt1.jpg"),
-    brand: "푸마",
-    name: "운동용 티셔츠",
-    price: "45,000원",
-  },
-  {
-    id: "newbalance-runningshirt",
-    image: require("../../assets/images/items/shirt2.jpg"),
-    brand: "뉴발란스",
-    name: "러닝 티셔츠",
-    price: "60,000원",
-  },
-  {
-    id: "nike-gymbag",
-    image: require("../../assets/images/items/bag1.jpg"),
-    brand: "나이키",
-    name: "체육관 가방",
-    price: "80,000원",
-  },
-  {
-    id: "adidas-windbreaker",
-    image: require("../../assets/images/items/outer1.jpg"),
-    brand: "아디다스",
-    name: "윈드브레이커",
-    price: "200,000원",
-  },
-  {
-    id: "yonex-badmintonracket",
-    image: require("../../assets/images/items/racket1.jpg"),
-    brand: "요넥스",
-    name: "배드민턴 라켓",
-    price: "250,000원",
-  },
-  {
-    id: "wilson-tennisracket",
-    image: require("../../assets/images/items/racket2.jpg"),
-    brand: "윌슨",
-    name: "테니스 라켓",
-    price: "270,000원",
-  },
-  {
-    id: "head-tennisracket",
-    image: require("../../assets/images/items/racket3.jpg"),
-    brand: "헤드",
-    name: "테니스 라켓",
-    price: "260,000원",
-  },
-  {
-    id: "babolat-tennisracket",
-    image: require("../../assets/images/items/racket4.jpg"),
-    brand: "바볼랏",
-    name: "테니스 라켓",
-    price: "280,000원",
-  },
-];
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
@@ -136,10 +24,42 @@ export default function TabOneScreen() {
   const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
   const { likedItems, toggleLike } = useLikeStore();
+  const router = useRouter();
+  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}/products`;
 
   useEffect(() => {
-    setShuffledImages1(shuffleArray([...itemData]));
-    setShuffledImages2(shuffleArray([...itemData]));
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/products?page=1&items_per_page=309`
+        );
+        if (response.data && Array.isArray(response.data.products)) {
+          const fullData = response.data.products.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            brand: item.category_sub,
+            priceSell: item.price_sell,
+            priceWhole: item.price_whole,
+            priceOriginal: item.price_whole,
+            discount: item.discount_rate,
+            image: require("../../assets/images/items/shoes1.jpg"), // 임시
+          }));
+
+          const getRandomSample = (array: Product[], size: number) => {
+            const shuffled = [...array].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, size);
+          };
+
+          const sampled = getRandomSample(fullData, 20);
+          setShuffledImages1(sampled);
+          setShuffledImages2(getRandomSample(fullData, 20));
+        }
+      } catch (err) {
+        console.error("상품 API 호출 실패:", err);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   return (
@@ -165,24 +85,69 @@ export default function TabOneScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageGrid}
-              extraData={likedItems}
-              renderItem={({ item }) => {
-                const isLiked = likedItems.some(
-                  (liked) => liked.id === item.id
-                );
-                return (
-                  <ItemCard
-                    item={item}
-                    isLiked={isLiked}
-                    toggleLike={toggleLike}
-                  />
-                );
-              }}
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => router.push(`/product/${item.id}`)}
+                  style={styles.productContainer}
+                >
+                  <View style={{ position: "relative" }}>
+                    <Image
+                      source={item.image}
+                      style={styles.itemImage}
+                      resizeMode="cover"
+                    />
+
+                    <Pressable
+                      onPress={() => toggleLike(item)}
+                      style={styles.heartIconContainer}
+                    >
+                      <Ionicons
+                        name={
+                          likedItems.some((liked) => liked.id === item.id)
+                            ? "heart"
+                            : "heart-outline"
+                        }
+                        size={20}
+                        color="#FF2D55"
+                      />
+                    </Pressable>
+                  </View>
+
+                  <View style={{ alignItems: "flex-start" }}>
+                    <Text style={styles.brandText}>{item.brand}</Text>
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.name.replace(/_/g, " ")}
+                    </Text>
+
+                    {item.discount > 0 ? (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 3,
+                        }}
+                      >
+                        <Text style={styles.discountText}>
+                          {item.discount}%
+                        </Text>
+                        <Text style={styles.priceText}>
+                          {item.priceSell.toLocaleString()}원
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.priceText}>
+                        {item.priceSell.toLocaleString()}원
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              )}
             />
-          </>
-        }
-        ListFooterComponent={
-          <>
+
             <View style={styles.textContainer}>
               <Text style={styles.font}>베스트</Text>
             </View>
@@ -194,155 +159,68 @@ export default function TabOneScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageGrid}
               renderItem={({ item }) => (
-                <View style={styles.productContainer}>
-                  <Image
-                    source={item.image}
-                    style={styles.itemImage}
-                    resizeMode="cover"
-                  />
+                <Pressable
+                  onPress={() => router.push(`/product/${item.id}`)}
+                  style={styles.productContainer}
+                >
+                  <View style={{ position: "relative" }}>
+                    <Image
+                      source={item.image}
+                      style={styles.itemImage}
+                      resizeMode="cover"
+                    />
+
+                    <Pressable
+                      onPress={() => toggleLike(item)}
+                      style={styles.heartIconContainer}
+                    >
+                      <Ionicons
+                        name={
+                          likedItems.some((liked) => liked.id === item.id)
+                            ? "heart"
+                            : "heart-outline"
+                        }
+                        size={20}
+                        color="#FF2D55"
+                      />
+                    </Pressable>
+                  </View>
                   <View style={{ alignItems: "flex-start" }}>
                     <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText}>{item.name}</Text>
-                    <Text style={styles.priceText}>{item.price}</Text>
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {item.name.replace(/_/g, " ")}
+                    </Text>
+
+                    {item.discount > 0 ? (
+                      <>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 3,
+                          }}
+                        >
+                          <Text style={styles.discountText}>
+                            {item.discount}%
+                          </Text>
+                          <Text style={styles.priceText}>
+                            {item.priceSell.toLocaleString()}원
+                          </Text>
+                        </View>
+                      </>
+                    ) : (
+                      <Text style={styles.priceText}>
+                        {item.priceSell.toLocaleString()}원
+                      </Text>
+                    )}
                   </View>
-                </View>
+                </Pressable>
               )}
             />
-
-            <View
-              style={{ width: "100%", height: 550, backgroundColor: "#f9f9f9" }}
-            >
-              <Text
-                style={{
-                  marginTop: 30,
-                  marginLeft: 17,
-                  fontFamily: "P-Bold",
-                  fontSize: 16,
-                }}
-              >
-                고객센터 1588-1588
-              </Text>
-              <Text
-                style={{
-                  marginTop: 15,
-                  marginLeft: 17,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                  color: "#B0B0B0",
-                }}
-              >
-                운영시간 평일 10:00 - 18:00 (토-일, 공휴일 휴무)
-              </Text>
-              <Text
-                style={{
-                  marginLeft: 17,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                  color: "#B0B0B0",
-                }}
-              >
-                점심시간 평일 13:00 - 14:00
-              </Text>
-              <Text
-                style={{
-                  marginTop: 15,
-                  marginLeft: 17,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                }}
-              >
-                자주 묻는 질문
-              </Text>
-              <Text
-                style={{
-                  marginTop: 15,
-                  marginLeft: 17,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                }}
-              >
-                1:1 문의
-              </Text>
-              <View
-                style={{
-                  marginTop: 30,
-                  marginBottom: 30,
-                  width: "92%",
-                  height: 0.7,
-                  backgroundColor: "#BCBCBC",
-                  alignSelf: "center",
-                }}
-              />
-              <Text
-                style={{
-                  marginLeft: 17,
-                  fontFamily: "P-Bold",
-                  fontSize: 14,
-                  color: "grey",
-                }}
-              >
-                사업자 정보
-              </Text>
-              <Text
-                style={{
-                  marginTop: 25,
-                  marginLeft: 17,
-                  fontFamily: "P-Bold",
-                  fontSize: 14,
-                  color: "grey",
-                }}
-              >
-                법적 고지사항
-              </Text>
-              <View
-                style={{
-                  marginTop: 30,
-                  marginBottom: 30,
-                  width: "92%",
-                  height: 0.7,
-                  backgroundColor: "#BCBCBC",
-                  alignSelf: "center",
-                }}
-              />
-              <Text
-                style={{
-                  marginLeft: 17,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                  color: "grey",
-                }}
-              >
-                이용약관
-              </Text>
-              <Text
-                style={{
-                  marginTop: 20,
-                  marginLeft: 17,
-                  fontFamily: "P-Bold",
-                  fontSize: 14,
-                }}
-              >
-                개인정보처리방침
-              </Text>
-              <Text
-                style={{
-                  marginTop: 20,
-                  marginLeft: 17,
-                  marginRight: 20,
-                  fontFamily: "P-Medium",
-                  fontSize: 14,
-                  color: "grey",
-                }}
-              >
-                일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-                통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-                있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기
-                바랍니다. 일부 상품의 경우 주식회사 ----는 통신판매의 당사자가
-                아닌 통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이
-                제한될 수 있으므로, 각 상품 페이지에서 구체적인 내용을
-                확인하시기 바랍니다. 어쩌구
-              </Text>
-            </View>
           </>
         }
         data={[]}
@@ -386,11 +264,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     paddingHorizontal: 10,
     marginBottom: 50,
-    width: 1070,
+    width: 1320,
   },
   productContainer: {
     width: 120,
-    height: 200,
+    height: 220,
     alignItems: "flex-start",
     marginHorizontal: 5,
   },
@@ -400,9 +278,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 5,
   },
-  itemTextBox: {
-    marginLeft: 5,
-  },
   brandText: {
     fontFamily: "P-Bold",
     fontSize: 14,
@@ -410,12 +285,25 @@ const styles = StyleSheet.create({
     marginVertical: 3,
   },
   nameText: {
-    fontFamily: "P-Medium",
+    fontFamily: "P-regular",
     fontSize: 14,
-    marginBottom: 7,
+    marginBottom: 4,
   },
   priceText: {
-    fontFamily: "P-Black",
+    fontFamily: "P-Bold",
     fontSize: 14,
+  },
+  discountText: {
+    fontFamily: "P-Bold",
+    fontSize: 14,
+    color: "#FF2D55",
+  },
+  heartIconContainer: {
+    position: "absolute",
+    bottom: 7,
+    right: 4,
+    borderRadius: 12,
+    padding: 5,
+    elevation: 3,
   },
 });
