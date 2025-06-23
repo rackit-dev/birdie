@@ -12,15 +12,26 @@ jobs:
     name: Deploy to Internal Instance
     runs-on: ubuntu-latest
     steps:
-      - name: SSH to Host and execute commands
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.BASTION_HOST }}
-          username: ${{ secrets.BASTION_USER }}
-          key: ${{ secrets.BASTION_KEY }}
-          script_stop: true  
-          script: |
-            ssh web
-            cd birdie
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup SSH and deploy
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat <<EOF >> ~/.ssh/config
+          Host internal-host
+            HostName ${{ secrets.INTERNAL_HOST }}
+            User ${{ secrets.INTERNAL_USER }}
+            ProxyJump ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}
+            StrictHostKeyChecking=no
+            UserKnownHostsFile=/dev/null
+          EOF
+
+          ssh internal-host <<EOF
+            cd ~/birdie
             git pull
             echo "SUCCESSFULLY FINISHED"
+          EOF
