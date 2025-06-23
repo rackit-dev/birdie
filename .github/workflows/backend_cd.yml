@@ -18,6 +18,7 @@ jobs:
       - name: Setup SSH and deploy
         run: |
           mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
