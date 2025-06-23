@@ -20,6 +20,7 @@ jobs:
           key: ${{ secrets.BASTION_KEY }}
           script_stop: true  
           script: |
+            ssh web
             cd birdie
             git pull
             echo "SUCCESSFULLY FINISHED"
