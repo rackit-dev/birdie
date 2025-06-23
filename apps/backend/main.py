@@ -6,12 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from containers import Container
 
 from user.interface.controllers.user_controller import router as user_routers
+from product.interface.controllers.product_controller import router as product_routers
 
 app = FastAPI()
 app.container = Container()
 
 app.include_router(user_routers)
-
+app.include_router(product_routers)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
