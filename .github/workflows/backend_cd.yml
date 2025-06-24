@@ -35,4 +35,5 @@ jobs:
             cd ~/birdie
             git pull
             echo "SUCCESSFULLY FINISHED"
+            systemctl restart fastapi
           EOF
