@@ -9,12 +9,44 @@ import {
   Dimensions,
 } from "react-native";
 import Modal from "react-native-modal";
-import { useLocalSearchParams, Link } from "expo-router";
+import { useLocalSearchParams, Link, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
+const mockQnA = [
+  {
+    category: "상품상세문의",
+    title: "끊어짐",
+    content: "우포스 오리지널 끊어짐 이슈가 많은데 보완됐나요?",
+    user: "gse***",
+    date: "25.06.22",
+    answered: false,
+    secret: false,
+  },
+  {
+    category: "상품상세문의",
+    title: "문의 입니다.",
+    content: "박스에 풀리 씌워져 왔는데 정상인가요?",
+    user: "yu1***",
+    date: "25.06.13",
+    answered: true,
+    secret: false,
+    answer: "안녕하세요 우포스입니다. 일부 사이즈는 신형박스로 출고 중입니다.",
+    answerUser: "우포스 담당자",
+    answerDate: "25.06.16",
+  },
+  {
+    category: "배송",
+    title: "상품 관련 문의입니다.",
+    content: "",
+    user: "jim***",
+    date: "25.06.07",
+    answered: true,
+    secret: true,
+  },
+];
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams();
@@ -23,7 +55,10 @@ export default function ProductDetail() {
   const [showModal, setShowModal] = useState(false);
   const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
   const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
+
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -85,7 +120,85 @@ export default function ProductDetail() {
       case 3:
         return (
           <View style={styles.tabContent}>
-            <Text>문의</Text>
+            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 10 }}>
+              상품문의 ({mockQnA.length})
+            </Text>
+
+            {mockQnA.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  if (!item.secret) {
+                    const updated = [...expandedItems];
+                    updated[index] = !updated[index];
+                    setExpandedItems(updated);
+                  }
+                }}
+                style={{
+                  paddingVertical: 12,
+                  borderBottomColor: "#eee",
+                  borderBottomWidth: 1,
+                }}
+              >
+                <Text style={{ color: "#666", fontSize: 12 }}>
+                  {item.category}
+                </Text>
+                <Text style={{ fontWeight: "600", fontSize: 15 }}>
+                  {item.secret ? "🔒 상품 관련 문의입니다." : item.title}
+                </Text>
+                <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
+                  {item.answered ? "답변완료" : "답변예정"} · {item.user} ·{" "}
+                  {item.date}
+                </Text>
+
+                {expandedItems[index] && !item.secret && (
+                  <View
+                    style={{
+                      marginTop: 12,
+                      backgroundColor: "#f7f7f7",
+                      padding: 12,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#444", fontSize: 14 }}>
+                      {item.content}
+                    </Text>
+
+                    {item.answer && (
+                      <View style={{ marginTop: 10 }}>
+                        <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                          답변. {item.answerUser}
+                        </Text>
+                        <Text style={{ color: "#444", fontSize: 14 }}>
+                          {item.answer}
+                        </Text>
+                        <Text
+                          style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}
+                        >
+                          {item.answerDate}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              onPress={() => router.push(`/qna/write?id=${id}`)}
+              style={{
+                marginTop: 20,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                paddingVertical: 12,
+                borderRadius: 8,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontWeight: "600", fontSize: 16 }}>
+                판매자에게 문의하기
+              </Text>
+            </TouchableOpacity>
           </View>
         );
     }
