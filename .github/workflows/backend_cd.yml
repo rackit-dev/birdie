@@ -32,7 +32,7 @@ jobs:
           ssh internal-host <<EOF
             cd ~/birdie
             git pull
-            systemctl reload fastapi
-            systemctl status fastapi
+            sudo systemctl reload fastapi
+            sudo systemctl status fastapi
             echo "✅ SUCCESSFULLY FINISHED ✅"
           EOF
