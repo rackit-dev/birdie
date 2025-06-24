@@ -6,9 +6,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Modal,
   Dimensions,
 } from "react-native";
+import Modal from "react-native-modal";
 import { useLocalSearchParams, Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
@@ -21,7 +21,9 @@ export default function ProductDetail() {
   const [currentTab, setCurrentTab] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}/products`;
+  const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
+  const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -35,6 +37,19 @@ export default function ProductDetail() {
         setProduct(found);
       } catch (error) {
         console.error("상품 가져오기 실패", error);
+
+        // 테스트용 더미 데이터
+        setProduct({
+          id: "dummy-001",
+          name: "더미 상품명",
+          category_main: "신발",
+          category_sub: "브랜드",
+          product_number: "MS123456",
+          created_at: new Date().toISOString(),
+          price_sell: 89000,
+          price_whole: 129000,
+          discount_rate: 31,
+        });
       }
     };
 
@@ -81,7 +96,7 @@ export default function ProductDetail() {
       <View style={styles.customHeader}>
         <Link href="/(tabs)" asChild>
           <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="chevron-back-outline" size={29} color="black" />
+            <Ionicons name="chevron-back" size={29} color="black" />
           </TouchableOpacity>
         </Link>
         <View style={styles.headerIconsRight}>
@@ -197,6 +212,96 @@ export default function ProductDetail() {
           <Text style={styles.buyText}>구매하기</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        isVisible={showModal}
+        onBackdropPress={() => setShowModal(false)}
+        swipeDirection="down"
+        onSwipeComplete={() => setShowModal(false)}
+        backdropTransitionOutTiming={0}
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.dragHandle} />
+          <Text style={styles.sectionTitle}>옵션 선택</Text>
+
+          <View style={{ marginTop: 10 }}>
+            <TouchableOpacity
+              style={[
+                styles.dropdownBox,
+                isOptionOpen && styles.dropdownBoxExpanded,
+              ]}
+              onPress={() => setIsOptionOpen(!isOptionOpen)}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={styles.dropdownText}>{selectedOption}</Text>
+                <Text>
+                  {isOptionOpen ? (
+                    <Ionicons name="chevron-up" size={18} color="black" />
+                  ) : (
+                    <Ionicons name="chevron-down" size={18} color="black" />
+                  )}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {isOptionOpen && (
+              <View style={styles.optionScrollContainer}>
+                <ScrollView>
+                  {OPTIONS.map((opt, index) => (
+                    <TouchableOpacity
+                      key={opt}
+                      style={[
+                        styles.optionItem,
+                        opt === selectedOption && styles.optionItemSelected,
+                      ]}
+                      onPress={() => {
+                        setSelectedOption(opt);
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text>{opt}</Text>
+                        {index === 0 && (
+                          <Text style={{ color: "red", fontSize: 12 }}>
+                            마지막 1개
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.cartButton}
+              onPress={() => setShowModal(true)}
+            >
+              <Text style={{ ...styles.buyText, color: "#000" }}>장바구니</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.buyButton}
+              onPress={() => setShowModal(true)}
+            >
+              <Text style={styles.buyText}>구매하기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -261,7 +366,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: "100%",
     backgroundColor: "#fff",
-    paddingBottom: 20,
+    paddingBottom: 30,
     paddingTop: 10,
     flexDirection: "row",
     alignItems: "center",
@@ -273,15 +378,32 @@ const styles = StyleSheet.create({
   likeButton: { flexDirection: "row", alignItems: "center" },
   likeText: {
     marginLeft: 4,
+    marginRight: 15,
     fontSize: 16,
     color: "#FF2D55",
     fontWeight: "500",
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 20,
+    marginTop: 20,
+  },
   buyButton: {
+    flex: 1,
+    alignItems: "center",
     backgroundColor: "#000",
-    paddingVertical: 14,
-    paddingHorizontal: 110,
+    paddingVertical: 16,
     borderRadius: 8,
+  },
+  cartButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
   },
   buyText: {
     color: "#fff",
@@ -300,5 +422,85 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomColor: "#eee",
     borderBottomWidth: 1,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    maxHeight: Dimensions.get("window").height * 0.85,
+    paddingBottom: 90,
+  },
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  dragHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#ccc",
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  dropdownWrapper: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginTop: 12,
+    overflow: "hidden",
+  },
+  dropdownBox: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+  dropdownText: {
+    fontSize: 16,
+  },
+  optionScrollContainer: {
+    maxHeight: 250,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  optionItem: {
+    padding: 12,
+    backgroundColor: "#fff",
+  },
+  optionText: {
+    fontSize: 16,
+  },
+  dropdownBoxExpanded: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  optionItemSelected: {
+    backgroundColor: "#f9f9f9",
+  },
+  buttonRowFixed: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 20,
+  },
+  optionListWrapper: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    overflow: "hidden",
   },
 });

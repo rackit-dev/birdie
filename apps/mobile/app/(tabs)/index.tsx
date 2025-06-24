@@ -25,7 +25,7 @@ export default function TabOneScreen() {
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
   const { likedItems, toggleLike } = useLikeStore();
   const router = useRouter();
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}/products`;
+  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -56,6 +56,41 @@ export default function TabOneScreen() {
         }
       } catch (err) {
         console.error("상품 API 호출 실패:", err);
+
+        // 테스트용 더미 데이터
+        const dummyData: Product[] = [
+          {
+            id: "dummy1",
+            name: "테스트 스니커즈",
+            brand: "DummyBrand",
+            priceSell: 39000,
+            priceOriginal: 49000,
+            discount: 20,
+            image: require("../../assets/images/items/shoes1.jpg"),
+          },
+          {
+            id: "dummy2",
+            name: "테스트 러닝화",
+            brand: "TestBrand",
+            priceSell: 69000,
+            priceOriginal: 99000,
+            discount: 30,
+            image: require("../../assets/images/items/shoes1.jpg"),
+          },
+          {
+            id: "dummy3",
+            name: "데일리 샌들",
+            brand: "SampleCo",
+            priceSell: 29000,
+            priceOriginal: 29000,
+            discount: 0,
+            image: require("../../assets/images/items/shoes1.jpg"),
+          },
+        ];
+
+        const sampled = shuffleArray(dummyData);
+        setShuffledImages1(sampled);
+        setShuffledImages2(sampled);
       }
     };
 
