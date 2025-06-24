@@ -114,9 +114,143 @@ export default function ProductDetail() {
       case 2:
         return (
           <View style={styles.tabContent}>
-            <Text>후기</Text>
+            <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 10 }}>
+              96%가 만족했어요
+            </Text>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 20 }}
+            >
+              {[1, 2, 3, 4, 5].map((_, i) => (
+                <View
+                  key={i}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    backgroundColor: "#ddd",
+                    borderRadius: 8,
+                    marginRight: 10,
+                  }}
+                />
+              ))}
+            </ScrollView>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <View>
+                <Text style={{ fontSize: 16, marginBottom: 4 }}>색상</Text>
+                <Text style={{ fontWeight: "600" }}>화면과 같아요</Text>
+              </View>
+              <Text style={{ alignSelf: "center" }}>96%</Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <View>
+                <Text style={{ fontSize: 16, marginBottom: 4 }}>사이즈</Text>
+                <Text style={{ fontWeight: "600" }}>잘 맞아요</Text>
+              </View>
+              <Text style={{ alignSelf: "center" }}>95%</Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              {["신발 사이즈", "옵션", "만족도"].map((label, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <Text>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text
+                style={{ fontWeight: "700", fontSize: 16, marginBottom: 6 }}
+              >
+                만족해요{" "}
+                <Text style={{ color: "red", fontSize: 13 }}>BEST</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
+                감튀조아 🌟 Yellow · 2025.05.14
+              </Text>
+              <Text
+                style={{
+                  alignSelf: "flex-start",
+                  backgroundColor: "#f1f1f1",
+                  paddingVertical: 4,
+                  paddingHorizontal: 10,
+                  borderRadius: 12,
+                  fontSize: 12,
+                  marginBottom: 10,
+                }}
+              >
+                다음날 발송되었어요 📦
+              </Text>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {[1, 2, 3, 4].map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      backgroundColor: "#ddd",
+                      borderRadius: 6,
+                      marginRight: 10,
+                    }}
+                  />
+                ))}
+              </ScrollView>
+
+              <View style={{ marginTop: 15 }}>
+                <Text style={{ fontSize: 14, marginBottom: 4 }}>
+                  <Text style={{ fontWeight: "600" }}>옵션</Text> ivory · black
+                </Text>
+                <Text style={{ fontSize: 14, marginBottom: 4 }}>
+                  <Text style={{ fontWeight: "600" }}>체형</Text> 164cm · 58kg
+                </Text>
+                <Text style={{ fontSize: 14, marginBottom: 4 }}>
+                  <Text style={{ fontWeight: "600" }}>사이즈</Text> 잘 맞아요
+                </Text>
+                <Text style={{ fontSize: 14, marginBottom: 4 }}>
+                  <Text style={{ fontWeight: "600" }}>색상</Text> 화면과 같아요
+                </Text>
+              </View>
+
+              <Text style={{ marginTop: 12, fontSize: 14 }}>
+                아직 신어보진 못했는데 신으면 귀여워질 거 같은 느낌입니다
+              </Text>
+            </View>
           </View>
         );
+
       case 3:
         return (
           <View style={styles.tabContent}>
