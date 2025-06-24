@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/actions
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -35,5 +33,5 @@ jobs:
             cd ~/birdie
             git pull
             echo "SUCCESSFULLY FINISHED"
-            systemctl restart fastapi
+            systemctl reload fastapi
           EOF
