@@ -185,7 +185,7 @@ export default function ProductDetail() {
             ))}
 
             <TouchableOpacity
-              onPress={() => router.push(`/qna/write?id=${id}`)}
+              onPress={() => router.push(`/qna?id=${id}`)}
               style={{
                 marginTop: 20,
                 borderWidth: 1,
