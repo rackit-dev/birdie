@@ -26,6 +26,7 @@ export default function TabOneScreen() {
   const { likedItems, toggleLike } = useLikeStore();
   const router = useRouter();
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -42,7 +43,9 @@ export default function TabOneScreen() {
             priceWhole: item.price_whole,
             priceOriginal: item.price_whole,
             discount: item.discount_rate,
-            image: require("../../assets/images/items/shoes1.jpg"), // 임시
+            image: {
+              uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
+            },
           }));
 
           const getRandomSample = (array: Product[], size: number) => {
@@ -130,8 +133,14 @@ export default function TabOneScreen() {
                       source={item.image}
                       style={styles.itemImage}
                       resizeMode="cover"
+                      onError={(e) => {
+                        console.warn(
+                          "이미지 로딩 실패:",
+                          item.name,
+                          e.nativeEvent
+                        );
+                      }}
                     />
-
                     <Pressable
                       onPress={() => toggleLike(item)}
                       style={styles.heartIconContainer}
