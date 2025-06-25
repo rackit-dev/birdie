@@ -143,17 +143,25 @@ export default function TabOneScreen() {
                     />
                     <Pressable
                       onPress={() => toggleLike(item)}
-                      style={styles.heartIconContainer}
+                      style={styles.heartWrapper}
                     >
-                      <Ionicons
-                        name={
-                          likedItems.some((liked) => liked.id === item.id)
-                            ? "heart"
-                            : "heart-outline"
-                        }
-                        size={20}
-                        color="#FF2D55"
-                      />
+                      {!likedItems.some((liked) => liked.id === item.id) ? (
+                        <>
+                          <Ionicons
+                            name="heart"
+                            size={18}
+                            color="rgba(128,128,128,0.4)"
+                            style={styles.absoluteIcon}
+                          />
+                          <Ionicons
+                            name="heart-outline"
+                            size={18}
+                            color="#ffffff"
+                          />
+                        </>
+                      ) : (
+                        <Ionicons name="heart" size={17} color="#FF2D55" />
+                      )}
                     </Pressable>
                   </View>
 
@@ -213,20 +221,27 @@ export default function TabOneScreen() {
                       style={styles.itemImage}
                       resizeMode="cover"
                     />
-
                     <Pressable
                       onPress={() => toggleLike(item)}
-                      style={styles.heartIconContainer}
+                      style={styles.heartWrapper}
                     >
-                      <Ionicons
-                        name={
-                          likedItems.some((liked) => liked.id === item.id)
-                            ? "heart"
-                            : "heart-outline"
-                        }
-                        size={20}
-                        color="#FF2D55"
-                      />
+                      {!likedItems.some((liked) => liked.id === item.id) ? (
+                        <>
+                          <Ionicons
+                            name="heart"
+                            size={18}
+                            color="rgba(128,128,128,0.4)"
+                            style={styles.absoluteIcon}
+                          />
+                          <Ionicons
+                            name="heart-outline"
+                            size={18}
+                            color="#ffffff"
+                          />
+                        </>
+                      ) : (
+                        <Ionicons name="heart" size={17} color="#FF2D55" />
+                      )}
                     </Pressable>
                   </View>
                   <View style={{ alignItems: "flex-start" }}>
@@ -346,8 +361,23 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 7,
     right: 4,
-    borderRadius: 12,
-    padding: 5,
-    elevation: 3,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    zIndex: 2,
+  },
+  heartWrapper: {
+    position: "absolute",
+    bottom: 7,
+    right: 4,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  absoluteIcon: {
+    position: "absolute",
   },
 });
