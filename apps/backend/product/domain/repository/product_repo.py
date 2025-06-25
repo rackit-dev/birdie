@@ -39,6 +39,10 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
+    def get_products_by_id(self, product_id: str) -> tuple[int, list[Product]]:
+        raise NotImplementedError
+    
+    @abstractmethod
     def get_products_by_category(self, page: int, items_per_page: int, category_main: str, category_sub) -> tuple[int, list[Product]]:
         raise NotImplementedError
     

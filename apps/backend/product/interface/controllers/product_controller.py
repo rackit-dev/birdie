@@ -76,9 +76,24 @@ def get_products(
     }
 
 
+@router.get("/by_id", response_model=GetProductsResponse)
+@inject
+def get_products_by_id(
+    product_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product = product_service.get_products_by_id(product_id)
+
+    return {
+        "total_count": 1,
+        "page": 1,
+        "products": product,
+    }
+
+
 @router.get("/by_category", response_model=GetProductsResponse)
 @inject
-def get_products(
+def get_products_by_category(
     page: int,
     items_per_page: int,
     category_main: str,
