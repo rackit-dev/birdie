@@ -63,10 +63,29 @@ def get_cartitems(
     }
 
 
-"""
-@router.put("", )
+class UpdateCartItemBody(BaseModel):
+    cartitem_id: str = Field(min_length=1, max_length=32)
+    user_id: str = Field(min_length=1, max_length=32)
+    product_id: str = Field(min_length=1, max_length=32)
+    product_option_id: str = Field(min_length=1, max_length=32)
+    quantity: int = Field(ge=1, le=99)
+
+
+@router.put("", response_model=CartItemResponse)
 @inject
-"""
+def update_cartitem(
+    body: UpdateCartItemBody,
+    cartitem_service: CartItemService = Depends(Provide[Container.cartitem_service]),
+):
+    cartitem = cartitem_service.update_cartitem(
+        cartitem_id=body.cartitem_id,
+        user_id=body.user_id,
+        product_id=body.product_id,
+        product_option_id=body.product_option_id,
+        quantity=body.quantity,
+    )
+
+    return cartitem
 
 
 @router.delete("", status_code=204)

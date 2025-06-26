@@ -36,6 +36,17 @@ class CartItemRepository(ICartItemRepository):
         
         return CartItem(**row_to_dict(cartitem))
     
+    def find_by_id(self, cartitem_id):
+        with SessionLocal() as db:
+            cartitem = db.query(CartItem).filter(
+                CartItem.id == cartitem_id,
+            ).first()
+        
+        if not cartitem:
+            raise HTTPException(status_code=422)
+
+        return CartItemVO(**row_to_dict(cartitem))
+    
     def get_cartitems(self, user_id: str):
         with SessionLocal() as db:
             query = db.query(CartItem).filter(
@@ -46,6 +57,21 @@ class CartItemRepository(ICartItemRepository):
             cartitems = query.all()
 
         return total_count, [CartItemVO(**row_to_dict(cartitem)) for cartitem in cartitems]
+    
+    def update(self, cartitem_vo: CartItemVO):
+        with SessionLocal() as db:
+            cartitem = db.query(CartItem).filter(CartItem.id == cartitem_vo.id).first()
+        
+            if not cartitem:
+                raise HTTPException(status_code=422)
+            
+            cartitem.product_option_id = cartitem_vo.product_option_id
+            cartitem.quantity = cartitem_vo.quantity
+            cartitem.updated_at = cartitem_vo.updated_at
+            db.add(cartitem)
+            db.commit()
+
+        return cartitem
     
     def delete(self, cartitem_id: str):
         with SessionLocal() as db:

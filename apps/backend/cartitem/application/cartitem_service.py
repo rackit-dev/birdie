@@ -52,5 +52,34 @@ class CartItemService:
 
         return cartitems
     
+    def update_cartitem(
+        self,
+        cartitem_id: str,
+        user_id: str,
+        product_id: str,
+        product_option_id: str,
+        quantity: int,
+    ) -> CartItem:
+        _cartitem = None
+
+        try:
+            _cartitem = self.cartitem_repo.find_by_ids(user_id, product_id, product_option_id)
+        except HTTPException as e:
+            if e.status_code != 422:
+                raise e
+        
+        if _cartitem and cartitem_id != _cartitem.id:
+            raise HTTPException(status_code=422, detail="Item Already Exsists.")
+        
+        cartitem = self.cartitem_repo.find_by_id(cartitem_id)
+
+        cartitem.product_option_id = product_option_id
+        cartitem.quantity = quantity
+        cartitem.updated_at = datetime.now()
+
+        self.cartitem_repo.update(cartitem)
+
+        return cartitem
+    
     def delete_cartitem(self, cartitem_id: str):
         self.cartitem_repo.delete(cartitem_id)
