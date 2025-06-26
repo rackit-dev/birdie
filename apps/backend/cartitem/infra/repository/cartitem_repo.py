@@ -35,3 +35,14 @@ class CartItemRepository(ICartItemRepository):
             raise HTTPException(status_code=422)
         
         return CartItem(**row_to_dict(cartitem))
+    
+    def get_cartitems(self, user_id: str):
+        with SessionLocal() as db:
+            query = db.query(CartItem).filter(
+                CartItem.user_id == user_id
+            )
+            
+            total_count = query.count()
+            cartitems = query.all()
+
+        return total_count, [CartItemVO(**row_to_dict(cartitem)) for cartitem in cartitems]

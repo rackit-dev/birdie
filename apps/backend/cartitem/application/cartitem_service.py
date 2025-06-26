@@ -46,3 +46,8 @@ class CartItemService:
         self.cartitem_repo.save(cartitem)
         
         return cartitem
+    
+    def get_cartitems(self, user_id: str) -> tuple[int, list[CartItem]]:
+        cartitems = self.cartitem_repo.get_cartitems(user_id)
+
+        return cartitems

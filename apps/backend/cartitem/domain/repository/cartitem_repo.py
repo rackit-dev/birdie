@@ -17,3 +17,7 @@ class ICartItemRepository(metaclass=ABCMeta):
         product_option_id: str
     ) -> CartItem:
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_cartitems(self, user_id: str) -> tuple[int, list[CartItem]]:
+        raise NotImplementedError

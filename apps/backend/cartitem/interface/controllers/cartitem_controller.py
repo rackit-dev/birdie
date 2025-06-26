@@ -18,7 +18,17 @@ class CreateCartItemBody(BaseModel):
     quantity: int = Field(ge=1, le=99)
 
 
-@router.post("", status_code=201)
+class CartItemResponse(BaseModel):
+    id: str
+    user_id: str
+    product_id: str
+    product_option_id: str
+    quantity: int
+    created_at: datetime
+    updated_at: datetime
+
+
+@router.post("", status_code=201, response_model=CartItemResponse)
 @inject
 def create_cartitem(
     cartitem: CreateCartItemBody,
@@ -32,3 +42,22 @@ def create_cartitem(
     )
 
     return created_cartitem
+
+
+class GetCartItemsResponse(BaseModel):
+    total_count: int
+    cartitems: list[CartItemResponse]
+
+
+@router.get("", response_model=GetCartItemsResponse)
+@inject
+def get_cartitems(
+    user_id: str,
+    cartitem_service: CartItemService = Depends(Provide[Container.cartitem_service]),
+):
+    total_count, cartitems = cartitem_service.get_cartitems(user_id)
+    
+    return {
+        "total_count": total_count,
+        "cartitems": cartitems,
+    }
