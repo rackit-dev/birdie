@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const categories = [
   { id: "1", name: "베스트" },
-  { id: "2", name: "배트민턴화" },
+  { id: "2", name: "배드민턴화" },
   { id: "3", name: "배드민턴 라켓" },
   { id: "4", name: "배드민턴 의류" },
   { id: "5", name: "배드민턴 가방" },
@@ -56,6 +57,8 @@ const brands = {
 };
 
 export default function CategoryScreen() {
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
 
   return (
@@ -96,14 +99,27 @@ export default function CategoryScreen() {
             data={brands[selectedCategory]}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
-              <View style={styles.brandItem}>
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/productList",
+                    params: {
+                      category: categories.find(
+                        (c) => c.id === selectedCategory
+                      )?.name,
+                      brand: item,
+                    },
+                  })
+                }
+                style={styles.brandItem}
+              >
                 <Text style={styles.brandText}>{item}</Text>
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
                   color="#000"
                 />
-              </View>
+              </TouchableOpacity>
             )}
           />
         </View>

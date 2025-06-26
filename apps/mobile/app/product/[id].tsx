@@ -56,6 +56,9 @@ export default function ProductDetail() {
   const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
   const [isOptionOpen, setIsOptionOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
+  const [quantity, setQuantity] = useState(1);
+  const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
+  const [pendingQty, setPendingQty] = useState<number>(1);
 
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
   const router = useRouter();
@@ -363,9 +366,11 @@ export default function ProductDetail() {
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.cardContainer}>
           <Image
-            source={require("@/assets/images/items/shoes1.jpg")}
+            source={{
+              uri: `${process.env.EXPO_PUBLIC_API_IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+            }}
             style={styles.productImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </View>
 
@@ -472,7 +477,7 @@ export default function ProductDetail() {
           <View style={styles.dragHandle} />
           <Text style={styles.sectionTitle}>옵션 선택</Text>
 
-          <View style={{ marginTop: 10 }}>
+          <View>
             <TouchableOpacity
               style={[
                 styles.dropdownBox,
@@ -532,10 +537,81 @@ export default function ProductDetail() {
             )}
           </View>
 
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ ...styles.sectionTitle, marginBottom: 15 }}>
+              수량 선택
+            </Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  if (pendingQty === 1) {
+                    setQtyAlertVisible(true);
+                    return;
+                  }
+                  setPendingQty((prev) => prev - 1);
+                }}
+                style={styles.qtyButton}
+              >
+                <Text style={{ fontSize: 20 }}>-</Text>
+              </TouchableOpacity>
+              <Text style={{ fontSize: 18 }}>{quantity}</Text>
+              <TouchableOpacity
+                onPress={() => setQuantity((prev) => prev + 1)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontSize: 20, marginBottom: 2, marginLeft: 1 }}>
+                  +
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <Modal
+            isVisible={qtyAlertVisible}
+            onBackdropPress={() => setQtyAlertVisible(false)}
+          >
+            <View style={styles.alertModalContent}>
+              <Text style={styles.alertText}>
+                더 이상 수량을 줄일 수 없습니다.
+              </Text>
+              <TouchableOpacity
+                onPress={() => setQtyAlertVisible(false)}
+                style={styles.alertButton}
+              >
+                <Text style={styles.alertButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
+
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.cartButton}
-              onPress={() => setShowModal(true)}
+              onPress={() => {
+                setShowModal(false);
+                router.push({
+                  pathname: "/cart",
+                  params: {
+                    product: JSON.stringify({
+                      id: product.id,
+                      name: product.name,
+                      category_sub: product.category_sub,
+                      price_sell: product.price_sell,
+                      price_whole: product.price_whole,
+                      option: selectedOption,
+                      quantity: quantity,
+                    }),
+                  },
+                });
+              }}
             >
               <Text style={{ ...styles.buyText, color: "#000" }}>장바구니</Text>
             </TouchableOpacity>
@@ -650,7 +726,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#ccc",
   },
   buyText: {
     color: "#fff",
@@ -749,5 +825,44 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     overflow: "hidden",
+  },
+  optionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  lastOneText: {
+    fontSize: 12,
+    color: "red",
+  },
+  alertModalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  alertText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  alertButton: {
+    backgroundColor: "black",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+  },
+  alertButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  qtyButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
