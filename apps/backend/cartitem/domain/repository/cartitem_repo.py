@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from fastapi import UploadFile
 
 from cartitem.domain.cartitem import CartItem
 
@@ -20,4 +19,8 @@ class ICartItemRepository(metaclass=ABCMeta):
     
     @abstractmethod
     def get_cartitems(self, user_id: str) -> tuple[int, list[CartItem]]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def delete(self, cartitem_id: str):
         raise NotImplementedError

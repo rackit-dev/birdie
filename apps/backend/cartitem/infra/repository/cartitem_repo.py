@@ -46,3 +46,15 @@ class CartItemRepository(ICartItemRepository):
             cartitems = query.all()
 
         return total_count, [CartItemVO(**row_to_dict(cartitem)) for cartitem in cartitems]
+    
+    def delete(self, cartitem_id: str):
+        with SessionLocal() as db:
+            cartitem = db.query(CartItem).filter(
+                CartItem.id == cartitem_id
+            ).first()
+
+            if not cartitem:
+                raise HTTPException(status_code=422, detail="CartItem Not Exsists")
+            
+            db.delete(cartitem)
+            db.commit()

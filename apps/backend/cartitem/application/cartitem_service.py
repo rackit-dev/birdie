@@ -51,3 +51,6 @@ class CartItemService:
         cartitems = self.cartitem_repo.get_cartitems(user_id)
 
         return cartitems
+    
+    def delete_cartitem(self, cartitem_id: str):
+        self.cartitem_repo.delete(cartitem_id)

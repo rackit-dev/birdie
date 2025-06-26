@@ -61,3 +61,18 @@ def get_cartitems(
         "total_count": total_count,
         "cartitems": cartitems,
     }
+
+
+"""
+@router.put("", )
+@inject
+"""
+
+
+@router.delete("", status_code=204)
+@inject
+def delete_cartitem(
+    cartitem_id: str,
+    cartitem_service: CartItemService = Depends(Provide[Container.cartitem_service]),
+):
+    cartitem_service.delete_cartitem(cartitem_id)
