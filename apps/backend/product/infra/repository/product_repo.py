@@ -86,6 +86,9 @@ class ProductRepository(IProductRepository):
                 Product.id == product_id,
             ).first()
 
+            if not product:
+                raise HTTPException(status_code=404, detail="Product Not Found")
+
         return [ProductVO(**row_to_dict(product))]
     
     def get_products_by_category(self, page, items_per_page, category_main, category_sub):
