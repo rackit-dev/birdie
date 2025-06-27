@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
@@ -38,3 +38,39 @@ class ProductOption(Base):
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     product: Mapped["Product"] = relationship(back_populates="options")
+
+
+class ProductLike(Base):
+    __tablename__ = "ProductLike"
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", name="uq_user_product_like"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
+    product: Mapped["Product"] = relationship(back_populates="likes")
+
+
+class ProductReview(Base):
+    __tablename__ = "ProductReview"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 ~ 5
+    content: Mapped[str] = mapped_column(Text, nullable=True)
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
+    product: Mapped["Product"] = relationship(back_populates="reviews")

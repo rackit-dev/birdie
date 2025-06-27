@@ -25,3 +25,22 @@ class ProductOption:
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class ProductLike:
+    id: str
+    user_id: str
+    product_id: str
+    created_at: datetime
+
+
+@dataclass
+class ProductReview:
+    id: str
+    user_id: str
+    product_id: str
+    rating: int  # 1 ~ 5
+    content: str | None
+    created_at: datetime
+    updated_at: datetime

@@ -7,7 +7,9 @@ from utils.db_utils import row_to_dict
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
 from product.domain.product import ProductOption as ProductOptionVO
-from product.infra.db_models.product import Product, ProductOption
+from product.domain.product import ProductLike as ProductLikeVO
+from product.domain.product import ProductReview as ProductReviewVO
+from product.infra.db_models.product import Product, ProductOption, ProductLike, ProductReview
 
 
 class ProductRepository(IProductRepository):
