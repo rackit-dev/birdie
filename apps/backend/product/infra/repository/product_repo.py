@@ -1,4 +1,5 @@
 from typing import List
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
 import MySQLdb
@@ -270,3 +271,31 @@ class ProductRepository(IProductRepository):
                         raise HTTPException(status_code=409, detail="Already liked this product.")
                     elif code == 1452:
                         raise HTTPException(status_code=422, detail="Invalid product or user ID.")
+        
+    def get_likes(self, user_id: str) -> tuple[int, list[ProductVO]]:
+        with SessionLocal() as db:
+            products = (
+                db.query(Product)
+                .join(ProductLike, Product.id == ProductLike.product_id)
+                .filter(ProductLike.user_id == user_id)
+                .all()
+            )
+
+            total_count = len(products)
+
+        return total_count, [ProductVO(**row_to_dict(p)) for p in products]
+    
+    def delete_like(self, product_like_id: str):
+        with SessionLocal() as db:
+            product_like = db.query(ProductLike).filter(
+                ProductLike.id == product_like_id
+            ).first()
+            
+            if not product_like_id:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_like)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product like.")

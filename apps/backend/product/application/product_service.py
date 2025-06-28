@@ -166,3 +166,11 @@ class ProductService:
         self.product_repo.save_like(product_like)
 
         return product_like
+    
+    def get_product_likes(self, user_id: str) -> tuple[int, list[Product]]:
+        product_likes = self.product_repo.get_likes(user_id)
+
+        return product_likes
+
+    def delete_product_like(self, product_like_id: str):
+        self.product_repo.delete_like(product_like_id)

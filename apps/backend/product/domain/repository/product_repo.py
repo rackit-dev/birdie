@@ -98,3 +98,11 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def save_like(self, product_like: ProductLike):
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_likes(self, user_id: str) -> tuple[int, list[Product]]:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def delete_like(self, product_like_id: str):
+        raise NotImplementedError

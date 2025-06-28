@@ -237,7 +237,14 @@ class CreateProductLikeBody(BaseModel):
     product_id: str
 
 
-@router.post("/like", status_code=201)
+class ProductLikeResponse(BaseModel):
+    id: str
+    user_id: str
+    product_id: str
+    created_at: datetime
+
+
+@router.post("/like", status_code=201, response_model=ProductLikeResponse)
 @inject
 def create_like(
     product_like: CreateProductLikeBody,
@@ -249,3 +256,31 @@ def create_like(
     )
 
     return created_product_like
+
+
+class GetProductLikesResponse(BaseModel):
+    total_count: int
+    products: list[ProductResponse]
+    
+
+@router.get("/like", response_model=GetProductLikesResponse)
+@inject
+def get_likes(
+    user_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, products = product_service.get_product_likes(user_id)
+
+    return {
+        "total_count": total_count,
+        "products": products,
+    }
+
+
+@router.delete("/like", status_code=204)
+@inject
+def delete_product_option(
+    product_like_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_like(product_like_id)
