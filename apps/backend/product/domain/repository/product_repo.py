@@ -106,3 +106,8 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def delete_like(self, product_like_id: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def save_review(self, product_review: ProductReview):
+        raise NotImplementedError
+    

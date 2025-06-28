@@ -73,17 +73,17 @@ class ProductService:
         return products
     
     def update_product(
-            self,
-            product_id: str,
-            name: str,
-            price_whole: int,
-            price_sell: int,
-            discount_rate: int,
-            is_active: bool,
-            category_main: str,
-            category_sub: str,
-            image_thumbnail: UploadFile,
-            image_detail: List[UploadFile],
+        self,
+        product_id: str,
+        name: str,
+        price_whole: int,
+        price_sell: int,
+        discount_rate: int,
+        is_active: bool,
+        category_main: str,
+        category_sub: str,
+        image_thumbnail: UploadFile,
+        image_detail: List[UploadFile],
     ) -> Product:
         product = self.product_repo.find_by_id(product_id)
 
@@ -114,9 +114,9 @@ class ProductService:
         self.product_repo.delete(product_id)
 
     def create_product_options(
-            self,
-            product_id: str,
-            options: List[str],
+        self,
+        product_id: str,
+        options: List[str],
     ) -> tuple[int, list[ProductOption]]:
         product_option_list = []
 
@@ -174,3 +174,27 @@ class ProductService:
 
     def delete_product_like(self, product_like_id: str):
         self.product_repo.delete_like(product_like_id)
+
+    def create_product_review(
+        self, 
+        user_id: str,
+        user_name: str,
+        product_id: str,
+        rating: int,
+        content: str | None = None,
+    ) -> ProductReview:
+        now = datetime.now()
+        product_review: ProductReview = ProductReview(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            user_name=user_name,
+            product_id=product_id,
+            rating=rating,
+            content=content,
+            created_at=now,
+            updated_at=now,
+            visible=True,
+        )
+        self.product_repo.save_review(product_review)
+
+        return product_review

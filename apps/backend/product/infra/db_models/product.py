@@ -73,6 +73,7 @@ class ProductReview(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    user_name: Mapped[str] = mapped_column(String(32), nullable=False)
     product_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("Product.id", ondelete="CASCADE"),
@@ -82,5 +83,6 @@ class ProductReview(Base):
     content: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     product: Mapped["Product"] = relationship(back_populates="reviews")

@@ -299,3 +299,27 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except:
                 raise HTTPException(status_code=500, detail="Failed to Delete product like.")
+    
+    def save_review(self, product_review: ProductReviewVO):
+        new_product_review = ProductReview(
+            id=product_review.id,
+            user_id=product_review.user_id,
+            user_name=product_review.user_name,
+            product_id=product_review.product_id,
+            rating=product_review.rating,
+            content=product_review.content,
+            created_at=product_review.created_at,
+            updated_at=product_review.updated_at,
+            visible=product_review.visible,
+        )
+
+        with SessionLocal() as db:
+            try:
+                db.add(new_product_review)
+                db.commit()
+            except IntegrityError as e:
+                db.rollback()
+                if isinstance(e.orig, MySQLdb.IntegrityError):
+                    code = e.orig.args[0]
+                    if code == 1452:
+                        raise HTTPException(status_code=422, detail="Invalid product ID.")

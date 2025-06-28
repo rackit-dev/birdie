@@ -39,8 +39,10 @@ class ProductLike:
 class ProductReview:
     id: str
     user_id: str
+    user_name: str
     product_id: str
     rating: int  # 1 ~ 5
     content: str | None
     created_at: datetime
     updated_at: datetime
+    visible: bool

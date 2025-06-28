@@ -233,8 +233,8 @@ def delete_product_option(
 
 
 class CreateProductLikeBody(BaseModel):
-    user_id: str
-    product_id: str
+    user_id: str = Field(min_length=10, max_length=32)
+    product_id: str = Field(min_length=10, max_length=32)
 
 
 class ProductLikeResponse(BaseModel):
@@ -284,3 +284,28 @@ def delete_product_option(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product_like(product_like_id)
+
+
+class CreateProductReviewBody(BaseModel):
+    user_id: str = Field(min_length=10, max_length=32)
+    user_name: str = Field(min_length=2, max_length=8)
+    product_id: str = Field(min_length=10, max_length=32)
+    rating: int = Field(ge=1, le=5)
+    content: str = Field(min_length=5, max_length=100)
+
+
+@router.post("/review", status_code=201)
+@inject
+def create_product_review(
+    product_review: CreateProductReviewBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    created_product_review = product_service.create_product_review(
+        user_id=product_review.user_id,
+        user_name=product_review.user_name,
+        product_id=product_review.product_id,
+        rating=product_review.rating,
+        content=product_review.content,
+    )
+
+    return created_product_review
