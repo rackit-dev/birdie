@@ -1,5 +1,7 @@
 from typing import List
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
+import MySQLdb
 
 from database import SessionLocal
 from aws import bucket_session
@@ -193,7 +195,7 @@ class ProductRepository(IProductRepository):
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to save product options.")
 
-    def get_options(self, product_id) -> tuple[int, List[ProductOptionVO]]:
+    def get_options(self, product_id: str) -> tuple[int, List[ProductOptionVO]]:
         with SessionLocal() as db:
             product_options = db.query(ProductOption).filter(
                 ProductOption.product_id == product_id
@@ -225,7 +227,7 @@ class ProductRepository(IProductRepository):
         return product_option
     
     
-    def find_by_optionid(self, id) -> ProductOptionVO:
+    def find_by_optionid(self, id: str) -> ProductOptionVO:
         with SessionLocal() as db:
             product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
 
@@ -235,7 +237,7 @@ class ProductRepository(IProductRepository):
         return ProductOptionVO(**row_to_dict(product_option))
     
     
-    def delete_option(self, id):
+    def delete_option(self, id: str):
         with SessionLocal() as db:
             product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
             
@@ -247,3 +249,24 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except:
                 raise HTTPException(status_code=500, detail="Failed to Delete product option.")
+            
+    def save_like(self, product_like: ProductLikeVO):
+        new_product_like = ProductLike(
+            id=product_like.id,
+            user_id=product_like.user_id,
+            product_id=product_like.product_id,
+            created_at=product_like.created_at,
+        )
+
+        with SessionLocal() as db:
+            try:
+                db.add(new_product_like)
+                db.commit()
+            except IntegrityError as e:
+                db.rollback()
+                if isinstance(e.orig, MySQLdb.IntegrityError):
+                    code = e.orig.args[0]
+                    if code == 1062:
+                        raise HTTPException(status_code=409, detail="Already liked this product.")
+                    elif code == 1452:
+                        raise HTTPException(status_code=422, detail="Invalid product or user ID.")

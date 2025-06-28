@@ -230,3 +230,22 @@ def delete_product_option(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product_option(product_option_id)
+
+
+class CreateProductLikeBody(BaseModel):
+    user_id: str
+    product_id: str
+
+
+@router.post("/like", status_code=201)
+@inject
+def create_like(
+    product_like: CreateProductLikeBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    created_product_like = product_service.create_product_like(
+        user_id=product_like.user_id,
+        product_id=product_like.product_id,
+    )
+
+    return created_product_like

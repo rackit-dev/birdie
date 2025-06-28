@@ -23,6 +23,16 @@ class Product(Base):
         cascade="all, delete-orphan"
     )
 
+    likes: Mapped[list["ProductLike"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
+    reviews: Mapped[list["ProductReview"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
 
 class ProductOption(Base):
     __tablename__ = "ProductOption"

@@ -4,7 +4,7 @@ from dependency_injector.wiring import inject
 from fastapi import HTTPException, UploadFile
 from ulid import ULID
 
-from product.domain.product import Product, ProductOption
+from product.domain.product import Product, ProductOption, ProductLike, ProductReview
 from product.domain.repository.product_repo import IProductRepository
 
 
@@ -154,3 +154,15 @@ class ProductService:
     
     def delete_product_option(self, product_option_id: str):
         self.product_repo.delete_option(product_option_id)
+
+    def create_product_like(self, user_id: str, product_id: str) -> ProductLike:
+        now = datetime.now()
+        product_like: ProductLike = ProductLike(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            product_id=product_id,
+            created_at=now,
+        )
+        self.product_repo.save_like(product_like)
+
+        return product_like

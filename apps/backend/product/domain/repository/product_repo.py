@@ -2,7 +2,7 @@ from typing import List
 from abc import ABCMeta, abstractmethod
 from fastapi import UploadFile
 
-from product.domain.product import Product, ProductOption
+from product.domain.product import Product, ProductOption, ProductLike, ProductReview
 
 
 class IProductRepository(metaclass=ABCMeta):
@@ -93,4 +93,8 @@ class IProductRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def delete_option(self, product_option_id: str):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def save_like(self, product_like: ProductLike):
         raise NotImplementedError
