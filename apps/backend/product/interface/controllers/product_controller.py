@@ -354,3 +354,12 @@ def get_reviews_by_user(
         "total_count": total_count,
         "product_reviews": product_reviews,
     }
+
+
+@router.delete("/reviews", status_code=204)
+@inject
+def delete_review(
+    product_review_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_review(product_review_id)

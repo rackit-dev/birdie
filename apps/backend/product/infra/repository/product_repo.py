@@ -341,3 +341,18 @@ class ProductRepository(IProductRepository):
                 total_count = len(reviews)
 
                 return total_count, [ProductReviewVO(**row_to_dict(review)) for review in reviews]
+    
+    def delete_review(self, product_review_id: str):
+        with SessionLocal() as db:
+            product_review = db.query(ProductReview).filter(
+                ProductReview.id == product_review_id
+            ).first()
+            
+            if not product_review_id:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_review)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product review.")

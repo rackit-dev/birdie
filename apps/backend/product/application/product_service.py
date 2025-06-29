@@ -210,4 +210,6 @@ class ProductService:
         product_reviews = self.product_repo.get_reviews(product_id, user_id)
 
         return product_reviews
-
+    
+    def delete_product_review(self, product_review_id: str):
+        self.product_repo.delete_review(product_review_id)
