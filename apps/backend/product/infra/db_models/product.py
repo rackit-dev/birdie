@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
@@ -23,6 +23,16 @@ class Product(Base):
         cascade="all, delete-orphan"
     )
 
+    likes: Mapped[list["ProductLike"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
+    reviews: Mapped[list["ProductReview"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
 
 class ProductOption(Base):
     __tablename__ = "ProductOption"
@@ -38,3 +48,41 @@ class ProductOption(Base):
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     product: Mapped["Product"] = relationship(back_populates="options")
+
+
+class ProductLike(Base):
+    __tablename__ = "ProductLike"
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", name="uq_user_product_like"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
+    product: Mapped["Product"] = relationship(back_populates="likes")
+
+
+class ProductReview(Base):
+    __tablename__ = "ProductReview"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    user_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 ~ 5
+    content: Mapped[str] = mapped_column(Text, nullable=True)
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    product: Mapped["Product"] = relationship(back_populates="reviews")

@@ -230,3 +230,136 @@ def delete_product_option(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product_option(product_option_id)
+
+
+class CreateProductLikeBody(BaseModel):
+    user_id: str = Field(min_length=10, max_length=32)
+    product_id: str = Field(min_length=10, max_length=32)
+
+
+class ProductLikeResponse(BaseModel):
+    id: str
+    user_id: str
+    product_id: str
+    created_at: datetime
+
+
+@router.post("/like", status_code=201, response_model=ProductLikeResponse)
+@inject
+def create_like(
+    product_like: CreateProductLikeBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    created_product_like = product_service.create_product_like(
+        user_id=product_like.user_id,
+        product_id=product_like.product_id,
+    )
+
+    return created_product_like
+
+
+class GetProductLikesResponse(BaseModel):
+    total_count: int
+    products: list[ProductResponse]
+    
+
+@router.get("/like", response_model=GetProductLikesResponse)
+@inject
+def get_likes(
+    user_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, products = product_service.get_product_likes(user_id)
+
+    return {
+        "total_count": total_count,
+        "products": products,
+    }
+
+
+@router.delete("/like", status_code=204)
+@inject
+def delete_product_option(
+    product_like_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_like(product_like_id)
+
+
+class CreateProductReviewBody(BaseModel):
+    user_id: str = Field(min_length=10, max_length=32)
+    user_name: str = Field(min_length=2, max_length=8)
+    product_id: str = Field(min_length=10, max_length=32)
+    rating: int = Field(ge=1, le=5)
+    content: str = Field(min_length=5, max_length=100)
+
+
+@router.post("/reviews", status_code=201)
+@inject
+def create_product_review(
+    product_review: CreateProductReviewBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    created_product_review = product_service.create_product_review(
+        user_id=product_review.user_id,
+        user_name=product_review.user_name,
+        product_id=product_review.product_id,
+        rating=product_review.rating,
+        content=product_review.content,
+    )
+
+    return created_product_review
+
+
+class ProductReviewResponse(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    product_id: str
+    rating: int
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    visible: bool
+
+
+class GetProductReviewsResponse(BaseModel):
+    total_count: int
+    product_reviews: list[ProductReviewResponse]
+
+
+@router.get("/reviews/by_product", response_model=GetProductReviewsResponse)
+@inject
+def get_reviews_by_product(
+    product_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_reviews = product_service.get_product_reviews(product_id, None)
+
+    return {
+        "total_count": total_count,
+        "product_reviews": product_reviews,
+    }
+
+
+@router.get("/reviews/by_user", response_model=GetProductReviewsResponse)
+@inject
+def get_reviews_by_user(
+    user_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_reviews = product_service.get_product_reviews(None, user_id)
+
+    return {
+        "total_count": total_count,
+        "product_reviews": product_reviews,
+    }
+
+
+@router.delete("/reviews", status_code=204)
+@inject
+def delete_review(
+    product_review_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_review(product_review_id)

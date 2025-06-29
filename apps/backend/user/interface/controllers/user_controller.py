@@ -13,7 +13,7 @@ router = APIRouter(prefix="/users")
 
 
 class CreateUserBody(BaseModel):
-    name: str = Field(min_length=2, max_length=32)
+    name: str = Field(min_length=2, max_length=8)
     email: EmailStr = Field(max_length=64)
     password: str = Field(min_length=8, max_length=32)
 
@@ -42,7 +42,7 @@ def create_user(
 
 
 class UpdateUserBody(BaseModel):
-    name: str | None = Field(min_length=2, max_length=32, default=None)
+    name: str | None = Field(min_length=2, max_length=8, default=None)
 
 
 @router.put("", response_model=UserResponse)
@@ -61,7 +61,7 @@ def update_user(
 
 
 class UpdateAdminBody(BaseModel):
-    name: str | None = Field(min_length=2, max_length=32, default=None)
+    name: str | None = Field(min_length=2, max_length=8, default=None)
     password: str | None = Field(min_length=8, max_length=32, default=None)
 
 

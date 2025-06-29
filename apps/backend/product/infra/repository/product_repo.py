@@ -1,5 +1,8 @@
 from typing import List
+from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
+import MySQLdb
 
 from database import SessionLocal
 from aws import bucket_session
@@ -7,7 +10,9 @@ from utils.db_utils import row_to_dict
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
 from product.domain.product import ProductOption as ProductOptionVO
-from product.infra.db_models.product import Product, ProductOption
+from product.domain.product import ProductLike as ProductLikeVO
+from product.domain.product import ProductReview as ProductReviewVO
+from product.infra.db_models.product import Product, ProductOption, ProductLike, ProductReview
 
 
 class ProductRepository(IProductRepository):
@@ -191,7 +196,7 @@ class ProductRepository(IProductRepository):
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to save product options.")
 
-    def get_options(self, product_id) -> tuple[int, List[ProductOptionVO]]:
+    def get_options(self, product_id: str) -> tuple[int, List[ProductOptionVO]]:
         with SessionLocal() as db:
             product_options = db.query(ProductOption).filter(
                 ProductOption.product_id == product_id
@@ -223,7 +228,7 @@ class ProductRepository(IProductRepository):
         return product_option
     
     
-    def find_by_optionid(self, id) -> ProductOptionVO:
+    def find_by_optionid(self, id: str) -> ProductOptionVO:
         with SessionLocal() as db:
             product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
 
@@ -233,7 +238,7 @@ class ProductRepository(IProductRepository):
         return ProductOptionVO(**row_to_dict(product_option))
     
     
-    def delete_option(self, id):
+    def delete_option(self, id: str):
         with SessionLocal() as db:
             product_option = db.query(ProductOption).filter(ProductOption.id == id).first()
             
@@ -245,3 +250,109 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except:
                 raise HTTPException(status_code=500, detail="Failed to Delete product option.")
+            
+    def save_like(self, product_like: ProductLikeVO):
+        new_product_like = ProductLike(
+            id=product_like.id,
+            user_id=product_like.user_id,
+            product_id=product_like.product_id,
+            created_at=product_like.created_at,
+        )
+
+        with SessionLocal() as db:
+            try:
+                db.add(new_product_like)
+                db.commit()
+            except IntegrityError as e:
+                db.rollback()
+                if isinstance(e.orig, MySQLdb.IntegrityError):
+                    code = e.orig.args[0]
+                    if code == 1062:
+                        raise HTTPException(status_code=409, detail="Already liked this product.")
+                    elif code == 1452:
+                        raise HTTPException(status_code=422, detail="Invalid product or user ID.")
+        
+    def get_likes(self, user_id: str) -> tuple[int, list[ProductVO]]:
+        with SessionLocal() as db:
+            products = (
+                db.query(Product)
+                .join(ProductLike, Product.id == ProductLike.product_id)
+                .filter(ProductLike.user_id == user_id)
+                .all()
+            )
+
+            total_count = len(products)
+
+        return total_count, [ProductVO(**row_to_dict(p)) for p in products]
+    
+    def delete_like(self, product_like_id: str):
+        with SessionLocal() as db:
+            product_like = db.query(ProductLike).filter(
+                ProductLike.id == product_like_id
+            ).first()
+            
+            if not product_like_id:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_like)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product like.")
+    
+    def save_review(self, product_review: ProductReviewVO):
+        new_product_review = ProductReview(
+            id=product_review.id,
+            user_id=product_review.user_id,
+            user_name=product_review.user_name,
+            product_id=product_review.product_id,
+            rating=product_review.rating,
+            content=product_review.content,
+            created_at=product_review.created_at,
+            updated_at=product_review.updated_at,
+            visible=product_review.visible,
+        )
+
+        with SessionLocal() as db:
+            try:
+                db.add(new_product_review)
+                db.commit()
+            except IntegrityError as e:
+                db.rollback()
+                if isinstance(e.orig, MySQLdb.IntegrityError):
+                    code = e.orig.args[0]
+                    if code == 1452:
+                        raise HTTPException(status_code=422, detail="Invalid product ID.")
+    
+    def get_reviews(self, product_id: str, user_id: str) -> tuple[int, list[ProductReviewVO]]:
+        with SessionLocal() as db:
+            if product_id is None and user_id is None:
+                raise HTTPException(status_code=400, detail="Either product id or user id must be provided.")
+
+            with SessionLocal() as db:
+                query = db.query(ProductReview)
+
+                if product_id:
+                    query = query.filter(ProductReview.product_id == product_id)
+                elif user_id:
+                    query = query.filter(ProductReview.user_id == user_id)
+
+                reviews = query.order_by(ProductReview.created_at.desc()).all()
+                total_count = len(reviews)
+
+                return total_count, [ProductReviewVO(**row_to_dict(review)) for review in reviews]
+    
+    def delete_review(self, product_review_id: str):
+        with SessionLocal() as db:
+            product_review = db.query(ProductReview).filter(
+                ProductReview.id == product_review_id
+            ).first()
+            
+            if not product_review_id:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_review)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product review.")
