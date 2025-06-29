@@ -323,3 +323,21 @@ class ProductRepository(IProductRepository):
                     code = e.orig.args[0]
                     if code == 1452:
                         raise HTTPException(status_code=422, detail="Invalid product ID.")
+    
+    def get_reviews(self, product_id: str, user_id: str) -> tuple[int, list[ProductReviewVO]]:
+        with SessionLocal() as db:
+            if product_id is None and user_id is None:
+                raise HTTPException(status_code=400, detail="Either product id or user id must be provided.")
+
+            with SessionLocal() as db:
+                query = db.query(ProductReview)
+
+                if product_id:
+                    query = query.filter(ProductReview.product_id == product_id)
+                elif user_id:
+                    query = query.filter(ProductReview.user_id == user_id)
+
+                reviews = query.order_by(ProductReview.created_at.desc()).all()
+                total_count = len(reviews)
+
+                return total_count, [ProductReviewVO(**row_to_dict(review)) for review in reviews]

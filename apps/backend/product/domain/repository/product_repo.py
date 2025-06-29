@@ -111,3 +111,6 @@ class IProductRepository(metaclass=ABCMeta):
     def save_review(self, product_review: ProductReview):
         raise NotImplementedError
     
+    @abstractmethod
+    def get_reviews(self, product_id: str, user_id: str) -> tuple[int, list[ProductReview]]:
+        raise NotImplementedError

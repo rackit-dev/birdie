@@ -198,3 +198,16 @@ class ProductService:
         self.product_repo.save_review(product_review)
 
         return product_review
+    
+    def get_product_reviews(
+        self,
+        product_id: str | None = None,
+        user_id: str | None = None,
+    ) -> tuple[int, list[ProductReview]]:
+        if product_id is None and user_id is None:
+            raise HTTPException(status_code=400, detail="Either product id or user id must be provided.")
+        
+        product_reviews = self.product_repo.get_reviews(product_id, user_id)
+
+        return product_reviews
+

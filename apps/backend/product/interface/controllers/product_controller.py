@@ -294,7 +294,7 @@ class CreateProductReviewBody(BaseModel):
     content: str = Field(min_length=5, max_length=100)
 
 
-@router.post("/review", status_code=201)
+@router.post("/reviews", status_code=201)
 @inject
 def create_product_review(
     product_review: CreateProductReviewBody,
@@ -309,3 +309,48 @@ def create_product_review(
     )
 
     return created_product_review
+
+
+class ProductReviewResponse(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    product_id: str
+    rating: int
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    visible: bool
+
+
+class GetProductReviewsResponse(BaseModel):
+    total_count: int
+    product_reviews: list[ProductReviewResponse]
+
+
+@router.get("/reviews/by_product", response_model=GetProductReviewsResponse)
+@inject
+def get_reviews_by_product(
+    product_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_reviews = product_service.get_product_reviews(product_id, None)
+
+    return {
+        "total_count": total_count,
+        "product_reviews": product_reviews,
+    }
+
+
+@router.get("/reviews/by_user", response_model=GetProductReviewsResponse)
+@inject
+def get_reviews_by_user(
+    user_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_reviews = product_service.get_product_reviews(None, user_id)
+
+    return {
+        "total_count": total_count,
+        "product_reviews": product_reviews,
+    }
