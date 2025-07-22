@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import Modal from "react-native-modal";
 import { useLocalSearchParams, Link, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -59,9 +60,29 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
   const [pendingQty, setPendingQty] = useState<number>(1);
+  const [cartCount, setCartCount] = useState(0);
+  const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
+  const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
 
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
   const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/cartitems`, {
+            params: { user_id: "test_user" },
+          });
+          setCartCount(res.data.total_count);
+        } catch (err) {
+          console.error("장바구니 개수 불러오기 실패:", err);
+        }
+      };
+
+      fetchCartCount();
+    }, [id])
+  );
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -343,6 +364,40 @@ export default function ProductDetail() {
 
   return (
     <View style={styles.container}>
+      {cartSuccessVisible && (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 90,
+            left: 20,
+            right: 20,
+            backgroundColor: "black",
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            borderRadius: 10,
+            zIndex: 999,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 14, fontWeight: "500" }}>
+            장바구니에 담겼습니다.
+          </Text>
+          <TouchableOpacity onPress={() => router.push("/cart")}>
+            <Text
+              style={{
+                color: "white",
+                fontWeight: "700",
+                fontSize: 14,
+                textDecorationLine: "underline",
+              }}
+            >
+              바로가기
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <View style={styles.customHeader}>
         <Link href="/(tabs)" asChild>
           <TouchableOpacity style={styles.headerIcon}>
@@ -356,8 +411,33 @@ export default function ProductDetail() {
             </TouchableOpacity>
           </Link>
           <Link href="/cart" asChild>
-            <TouchableOpacity>
+            <TouchableOpacity style={{ position: "relative" }}>
               <Ionicons name="bag-outline" size={25} color="black" />
+              {cartCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -6,
+                    backgroundColor: "red",
+                    borderRadius: 9,
+                    width: 18,
+                    height: 18,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {cartCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </Link>
         </View>
@@ -459,7 +539,9 @@ export default function ProductDetail() {
 
         <TouchableOpacity
           style={styles.buyButton}
-          onPress={() => setShowModal(true)}
+          onPress={() => {
+            setShowModal(true);
+          }}
         >
           <Text style={styles.buyText}>구매하기</Text>
         </TouchableOpacity>
@@ -591,26 +673,50 @@ export default function ProductDetail() {
               </TouchableOpacity>
             </View>
           </Modal>
+          <Modal
+            isVisible={alreadyInCartAlert}
+            onBackdropPress={() => setAlreadyInCartAlert(false)}
+          >
+            <View style={styles.alertModalContent}>
+              <Text style={styles.alertText}>
+                이미 장바구니에 있는 상품입니다.
+              </Text>
+              <TouchableOpacity
+                onPress={() => setAlreadyInCartAlert(false)}
+                style={styles.alertButton}
+              >
+                <Text style={styles.alertButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.cartButton}
-              onPress={() => {
-                setShowModal(false);
-                router.push({
-                  pathname: "/cart",
-                  params: {
-                    product: JSON.stringify({
-                      id: product.id,
-                      name: product.name,
-                      category_sub: product.category_sub,
-                      price_sell: product.price_sell,
-                      price_whole: product.price_whole,
-                      option: selectedOption,
-                      quantity: quantity,
-                    }),
-                  },
-                });
+              onPress={async () => {
+                try {
+                  const res = await axios.post(`${API_URL}/cartitems`, {
+                    user_id: "test_user",
+                    product_id: product.id,
+                    product_option_id: selectedOption,
+                    quantity: quantity,
+                  });
+
+                  setCartSuccessVisible(true);
+                  setTimeout(() => setCartSuccessVisible(false), 2000);
+                  setShowModal(false);
+
+                  const cartRes = await axios.get(`${API_URL}/cartitems`, {
+                    params: { user_id: "test_user" },
+                  });
+                  setCartCount(cartRes.data.total_count);
+                } catch (error: any) {
+                  if (error?.response?.status === 422) {
+                    setAlreadyInCartAlert(true);
+                  } else {
+                    alert("장바구니 추가 중 오류가 발생했습니다.");
+                  }
+                }
               }}
             >
               <Text style={{ ...styles.buyText, color: "#000" }}>장바구니</Text>
@@ -618,7 +724,10 @@ export default function ProductDetail() {
 
             <TouchableOpacity
               style={styles.buyButton}
-              onPress={() => setShowModal(true)}
+              onPress={() => {
+                setShowModal(false);
+                router.push(`/purchase?id=${product.id}`);
+              }}
             >
               <Text style={styles.buyText}>구매하기</Text>
             </TouchableOpacity>

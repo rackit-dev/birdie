@@ -7,11 +7,13 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  Image,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
-import { useLocalSearchParams } from "expo-router";
 import Modal from "react-native-modal";
+import axios from "axios";
+import { useRouter } from "expo-router";
 
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
 
@@ -28,44 +30,62 @@ export default function CartScreen() {
   const [isOptionOpen, setIsOptionOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
+  const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteMode, setDeleteMode] = useState<"single" | "multiple">("single");
 
-  const { product } = useLocalSearchParams();
+  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const IMAGE_URL = `${process.env.EXPO_PUBLIC_API_IMAGE_URL}`;
+  const router = useRouter();
 
   useEffect(() => {
-    if (product) {
+    const fetchCartItemsWithProducts = async () => {
       try {
-        const parsed = JSON.parse(product as string);
-        const newItem = {
-          id: parsed.id,
-          brand: parsed.category_sub || "기본브랜드",
-          name: parsed.name,
-          image: null,
-          option: parsed.option,
-          options: [parsed.option],
-          quantity: parsed.quantity,
-          priceOriginal: parsed.price_whole,
-          priceDiscounted: parsed.price_sell,
-        };
-
-        setCartItems((prev) => {
-          const exists = prev.find(
-            (item) => item.id === newItem.id && item.option === newItem.option
-          );
-          if (exists) {
-            return prev.map((item) =>
-              item.id === newItem.id && item.option === newItem.option
-                ? { ...item, quantity: item.quantity + newItem.quantity }
-                : item
-            );
-          } else {
-            return [...prev, newItem];
-          }
+        const cartRes = await axios.get(`${API_URL}/cartitems`, {
+          params: { user_id: "test_user" },
         });
-      } catch (e) {
-        console.error("장바구니 데이터 파싱 오류:", e);
+
+        const cartItemsRaw = cartRes.data.cartitems;
+
+        const productRes = await axios.get(
+          `${API_URL}/products?page=1&items_per_page=309`
+        );
+        const allProducts = productRes.data.products;
+
+        const mergedCartItems = cartItemsRaw.map((item: any) => {
+          const product = allProducts.find(
+            (p: any) => p.id === item.product_id
+          );
+
+          return {
+            id: item.id,
+            user_id: item.user_id,
+            product_id: item.product_id,
+            product_option_id: item.product_option_id,
+            quantity: item.quantity,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+
+            name: product?.name || "알 수 없음",
+            brand: product?.category_sub || "기본브랜드",
+            image: product
+              ? { uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg` }
+              : null,
+            option: item.product_option_id,
+            options: [item.product_option_id],
+            priceOriginal: product?.price_whole ?? 0,
+            priceDiscounted: product?.price_sell ?? 0,
+          };
+        });
+
+        setCartItems(mergedCartItems);
+      } catch (error) {
+        console.error("장바구니 또는 상품 정보 불러오기 실패:", error);
       }
-    }
-  }, [product]);
+    };
+
+    fetchCartItemsWithProducts();
+  }, []);
 
   const toggleSelectAll = () => {
     if (selectedItems.length === cartItems.length) {
@@ -97,18 +117,50 @@ export default function CartScreen() {
     }
   };
 
-  const handleRemoveItem = (id: string) => {
-    Alert.alert("삭제하시겠습니까?", "", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () => {
-          setCartItems((prev) => prev.filter((item) => item.id !== id));
-          setSelectedItems((prev) => prev.filter((item) => item !== id));
-        },
-      },
-    ]);
+  const confirmDeleteItem = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteMode("single");
+    setDeleteAlertVisible(true);
+  };
+
+  const confirmDeleteSelected = () => {
+    setDeleteMode("multiple");
+    setDeleteAlertVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (deleteMode === "single" && deleteTargetId) {
+        await axios.delete(
+          `${API_URL}/cartitems?cartitem_id=${deleteTargetId}`
+        );
+
+        setCartItems((prev) =>
+          prev.filter((item) => item.id !== deleteTargetId)
+        );
+        setSelectedItems((prev) =>
+          prev.filter((itemId) => itemId !== deleteTargetId)
+        );
+      } else if (deleteMode === "multiple") {
+        await Promise.all(
+          selectedItems.map((id) =>
+            axios.delete(`${API_URL}/cartitems?cartitem_id=${id}`)
+          )
+        );
+        setCartItems((prev) =>
+          prev.filter((item) => !selectedItems.includes(item.id))
+        );
+        setSelectedItems([]);
+      }
+    } catch (error) {
+      console.log("삭제 요청 ID:", deleteTargetId);
+
+      console.error("삭제 실패:", error);
+      Alert.alert("삭제 중 오류가 발생했습니다.");
+    } finally {
+      setDeleteAlertVisible(false);
+      setDeleteTargetId(null);
+    }
   };
 
   const openOptionModal = (id: string, options: string[]) => {
@@ -156,98 +208,171 @@ export default function CartScreen() {
                   ? "checkbox"
                   : "square-outline"
               }
-              size={22}
-              color="black"
+              size={20}
+              color={
+                selectedItems.length === cartItems.length ? "#000" : "#ccc"
+              }
             />
           </TouchableOpacity>
           <Text style={{ marginLeft: 6 }}>
             전체선택 ({selectedItems.length}/{cartItems.length})
           </Text>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity onPress={confirmDeleteSelected}>
+            <Text style={{ color: "#666", fontSize: 14 }}>선택 삭제</Text>
+          </TouchableOpacity>
         </View>
 
-        {Object.keys(groupedItems).map((brand) => (
-          <View key={brand} style={styles.itemGroup}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 15,
-              }}
-            >
-              <TouchableOpacity onPress={() => toggleSelectBrand(brand)}>
-                <Ionicons
-                  name={
-                    groupedItems[brand].every((item) =>
-                      selectedItems.includes(item.id)
-                    )
-                      ? "checkbox"
-                      : "square-outline"
-                  }
-                  size={20}
-                />
-              </TouchableOpacity>
-              <Text style={styles.brandLabel}>{brand}</Text>
-            </View>
-
-            {groupedItems[brand].map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <TouchableOpacity onPress={() => toggleSelectItem(item.id)}>
+        {Object.keys(groupedItems).map((brand, index, arr) => (
+          <View key={brand}>
+            <View style={styles.itemGroup}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 15,
+                }}
+              >
+                <TouchableOpacity onPress={() => toggleSelectBrand(brand)}>
                   <Ionicons
                     name={
-                      selectedItems.includes(item.id)
+                      groupedItems[brand].every((item) =>
+                        selectedItems.includes(item.id)
+                      )
                         ? "checkbox"
                         : "square-outline"
                     }
                     size={20}
+                    color={
+                      groupedItems[brand].every((item) =>
+                        selectedItems.includes(item.id)
+                      )
+                        ? "#000"
+                        : "#ccc"
+                    }
                   />
                 </TouchableOpacity>
-                <View style={styles.grayBox} />
-                <View style={styles.itemDetails}>
-                  <View style={styles.titleRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.itemTitle} numberOfLines={2}>
-                        {item.name.replace(/_/g, " ")}
+
+                <Text style={styles.brandLabel}>{brand}</Text>
+              </View>
+
+              {groupedItems[brand].map((item, index, arr) => (
+                <View key={item.id} style={{ marginBottom: 20 }}>
+                  <View style={styles.itemRow}>
+                    <TouchableOpacity onPress={() => toggleSelectItem(item.id)}>
+                      <Ionicons
+                        name={
+                          selectedItems.includes(item.id)
+                            ? "checkbox"
+                            : "square-outline"
+                        }
+                        size={20}
+                        color={
+                          selectedItems.includes(item.id) ? "#000" : "#ccc"
+                        }
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      onPress={() => router.push(`/product/${item.product_id}`)}
+                    >
+                      {item.image ? (
+                        <Image
+                          source={item.image}
+                          style={styles.grayBox}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.grayBox} />
+                      )}
+                    </TouchableOpacity>
+
+                    <View style={styles.itemDetails}>
+                      <View style={styles.titleRow}>
+                        <View style={{ flex: 1 }}>
+                          <TouchableOpacity
+                            activeOpacity={1}
+                            onPress={() =>
+                              router.push(`/product/${item.product_id}`)
+                            }
+                          >
+                            <Text style={styles.itemTitle} numberOfLines={2}>
+                              {item.name.replace(/_/g, " ")}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity
+                          activeOpacity={1}
+                          onPress={() => confirmDeleteItem(item.id)}
+                        >
+                          <Ionicons name="close" size={20} color="#999" />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.optionText}>
+                        {item.option} / {item.quantity}개
                       </Text>
+                      <View style={styles.priceRow}>
+                        {item.priceOriginal > item.priceDiscounted && (
+                          <Text style={styles.priceOld}>
+                            {(
+                              item.priceOriginal * item.quantity
+                            ).toLocaleString()}
+                            원
+                          </Text>
+                        )}
+                        <Text style={styles.priceFinal}>
+                          {(
+                            item.priceDiscounted * item.quantity
+                          ).toLocaleString()}
+                          원
+                        </Text>
+                      </View>
                     </View>
-                    <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
-                      <Ionicons name="close" size={20} color="#888" />
+                  </View>
+
+                  <View style={styles.optionsButtonRow}>
+                    <TouchableOpacity
+                      style={styles.changeButton}
+                      onPress={() => openOptionModal(item.id, item.options)}
+                    >
+                      <Text>옵션 변경</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text style={styles.optionText}>
-                    {item.option} / {item.quantity}개
-                  </Text>
-                  <View style={styles.priceRow}>
-                    {item.priceOriginal > item.priceDiscounted && (
-                      <Text style={styles.priceOld}>
-                        {(item.priceOriginal * item.quantity).toLocaleString()}
-                        원
-                      </Text>
-                    )}
-                    <Text style={styles.priceFinal}>
-                      {(item.priceDiscounted * item.quantity).toLocaleString()}
-                      원
-                    </Text>
-                  </View>
                 </View>
-              </View>
-            ))}
-            {groupedItems[brand].map((item) => (
-              <View key={`btn-${item.id}`} style={styles.optionsButtonRow}>
-                <TouchableOpacity
-                  style={styles.changeButton}
-                  onPress={() => openOptionModal(item.id, item.options)}
-                >
-                  <Text>옵션 변경</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+              ))}
+            </View>
+
+            {index !== arr.length - 1 && <View style={styles.brandDivider} />}
           </View>
         ))}
+
+        <Modal
+          isVisible={deleteAlertVisible}
+          onBackdropPress={() => setDeleteAlertVisible(false)}
+        >
+          <View style={styles.alertModalContent}>
+            <Text style={styles.alertText}>상품을 삭제하시겠습니까?</Text>
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 20 }}>
+              <TouchableOpacity
+                onPress={() => setDeleteAlertVisible(false)}
+                style={styles.alertCancelButton}
+              >
+                <Text style={styles.alertCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleConfirmDelete}
+                style={styles.alertConfirmButton}
+              >
+                <Text style={styles.alertConfirmText}>삭제하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         <View style={styles.summaryBox}>
           <Text style={styles.summaryTitle}>예상 결제금액</Text>
           <Text style={styles.totalAmount}>
-            {getTotalPrice().toLocaleString()}원 주문하기
+            {getTotalPrice().toLocaleString()}원
           </Text>
         </View>
       </ScrollView>
@@ -365,7 +490,7 @@ export default function CartScreen() {
               style={styles.cancelButton}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.cancelButtonText}>취소하기</Text>
+              <Text style={styles.cancelButtonText}>취소</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -395,12 +520,12 @@ export default function CartScreen() {
           onBackdropPress={() => setQtyAlertVisible(false)}
         >
           <View style={styles.alertModalContent}>
-            <Text style={styles.alertText}>
+            <Text style={{ ...styles.alertText, marginBottom: 20 }}>
               더 이상 수량을 줄일 수 없습니다.
             </Text>
             <TouchableOpacity
               onPress={() => setQtyAlertVisible(false)}
-              style={styles.alertButton}
+              style={{ ...styles.alertButton }}
             >
               <Text style={styles.alertButtonText}>확인</Text>
             </TouchableOpacity>
@@ -433,7 +558,6 @@ const styles = StyleSheet.create({
   itemGroup: {
     borderTopColor: "#f4f4f4",
     paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   brandLabel: {
     fontWeight: "600",
@@ -471,7 +595,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "flex-end",
-    marginTop: 40,
+    marginTop: 30,
     gap: 6,
     marginRight: 2,
   },
@@ -524,7 +648,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   bottomBar: {
-    height: 60,
+    height: 70,
     backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
@@ -533,6 +657,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+    marginBottom: 12,
   },
   qtyTotal: {
     fontSize: 16,
@@ -633,7 +758,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: "#ccc",
   },
@@ -647,7 +772,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#000",
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 5,
   },
   confirmButtonText: {
     fontSize: 16,
@@ -679,22 +804,67 @@ const styles = StyleSheet.create({
   alertModalContent: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   alertText: {
     fontSize: 16,
-    marginBottom: 20,
   },
   alertButton: {
     backgroundColor: "black",
     paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 8,
+    borderRadius: 5,
   },
   alertButtonText: {
     color: "white",
     fontWeight: "600",
     fontSize: 16,
+  },
+  brandDivider: {
+    height: 1,
+    marginLeft: 15,
+    marginRight: 15,
+    marginTop: -2,
+    backgroundColor: "#f1f1f1",
+    marginVertical: 12,
+  },
+  detailsBox: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  option: {
+    fontSize: 12,
+    color: "#666",
+    marginVertical: 4,
+  },
+  alertCancelButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  alertCancelText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  alertConfirmButton: {
+    flex: 1,
+    backgroundColor: "black",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  alertConfirmText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
   },
 });

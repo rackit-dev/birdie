@@ -1,7 +1,57 @@
 {
   "build": {
     "release": {
-      "distribution": "store"
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_KAKAO_REST_API_KEY": "840a293cca5512dca12cc18698ec59cc",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "316693659926-mb2ebcfsh5qt736pg25vm8uikruvl1oq.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "316693659926-sg60bto2d4n7p7tf1uq2a2bdd1c7mncu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IOS_URL_SCHEME": "com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b",
+        "EXPO_PUBLIC_API_BASE_URL": "http://13.209.201.52:8080",
+        "EXPO_PUBLIC_API_IMAGE_URL": "https://d3szfgm2gc4sj0.cloudfront.net"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_KAKAO_REST_API_KEY": "840a293cca5512dca12cc18698ec59cc",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "316693659926-mb2ebcfsh5qt736pg25vm8uikruvl1oq.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "316693659926-sg60bto2d4n7p7tf1uq2a2bdd1c7mncu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IOS_URL_SCHEME": "com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b",
+        "EXPO_PUBLIC_API_BASE_URL": "http://13.209.201.52:8080",
+        "EXPO_PUBLIC_API_IMAGE_URL": "https://d3szfgm2gc4sj0.cloudfront.net"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_KAKAO_REST_API_KEY": "840a293cca5512dca12cc18698ec59cc",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "316693659926-mb2ebcfsh5qt736pg25vm8uikruvl1oq.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "316693659926-sg60bto2d4n7p7tf1uq2a2bdd1c7mncu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IOS_URL_SCHEME": "com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b",
+        "EXPO_PUBLIC_API_BASE_URL": "http://13.209.201.52:8080",
+        "EXPO_PUBLIC_API_IMAGE_URL": "https://d3szfgm2gc4sj0.cloudfront.net"
+      }
+    },
+    "production": {
+      "developmentClient": false,
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_KAKAO_REST_API_KEY": "840a293cca5512dca12cc18698ec59cc",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "316693659926-mb2ebcfsh5qt736pg25vm8uikruvl1oq.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "316693659926-sg60bto2d4n7p7tf1uq2a2bdd1c7mncu.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IOS_URL_SCHEME": "com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b",
+        "EXPO_PUBLIC_API_BASE_URL": "http://13.209.201.52:8080",
+        "EXPO_PUBLIC_API_IMAGE_URL": "https://d3szfgm2gc4sj0.cloudfront.net"
+      }
     }
   }
 }

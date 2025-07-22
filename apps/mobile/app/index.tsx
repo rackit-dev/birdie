@@ -8,6 +8,8 @@ export default function LoadingScreen() {
   const [checkingToken, setCheckingToken] = useState(true);
 
   useEffect(() => {
+    console.log("🚀 앱 시작 - LoadingScreen 마운트됨");
+
     const checkLoginStatus = async () => {
       try {
         // 로그인화면테스트용: 기존 저장된 토큰 삭제

@@ -24,6 +24,8 @@ export default function TabOneScreen() {
   const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
   const { likedItems, toggleLike } = useLikeStore();
+  const [cartCount, setCartCount] = useState(0);
+
   const router = useRouter();
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
@@ -282,7 +284,7 @@ export default function TabOneScreen() {
             />
           </>
         }
-        data={[]}
+        data={null}
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       />
