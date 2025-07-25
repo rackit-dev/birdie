@@ -37,6 +37,38 @@
     <package android:name="com.sktelecom.tauth"/>
     <package android:name="com.wooribank.smart.npib"/>
     <package android:name="com.kakaobank.channel"/>
+    <package android:name="kvp.jjy.MispAndroid320"/>
+    <package android:name="com.kftc.bankpay.android"/>
+    <package android:name="com.kbstar.liivbank"/>
+    <package android:name="com.nh.cashcardapp"/>
+    <package android:name="kr.co.kfcc.mobilebank"/>
+    <package android:name="com.knb.psb"/>
+    <package android:name="com.kakao.talk"/>
+    <package android:name="com.mysmilepay.app"/>
+    <package android:name="finance.chai.app"/>
+    <package android:name="com.nhnent.payapp"/>
+    <package android:name="com.hyundaicard.appcard"/>
+    <package android:name="viva.republica.toss"/>
+    <package android:name="com.shcard.smartpay"/>
+    <package android:name="com.shinhan.smartcaremgr"/>
+    <package android:name="com.hanaskard.paycla"/>
+    <package android:name="kr.co.samsungcard.mpocket"/>
+    <package android:name="com.kbcard.cxh.appcard"/>
+    <package android:name="nh.smart.nhallonepay"/>
+    <package android:name="kr.co.citibank.citimobile"/>
+    <package android:name="com.lcacApp"/>
+    <package android:name="com.lotte.lpay"/>
+    <package android:name="com.ssg.serviceapp.android.egiftcertificate"/>
+    <package android:name="com.inicis.kpay"/>
+    <package android:name="com.kbankwith.smartbank"/>
+    <package android:name="com.lguplus.paynow"/>
+    <package android:name="com.wooricard.smartapp"/>
+    <package android:name="com.lottemembers.android"/>
+    <package android:name="com.kt.ktauth"/>
+    <package android:name="com.lguplus.smartotp"/>
+    <package android:name="com.sktelecom.tauth"/>
+    <package android:name="com.wooribank.smart.npib"/>
+    <package android:name="com.kakaobank.channel"/>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
       <category android:name="android.intent.category.BROWSABLE"/>
@@ -62,7 +94,6 @@
       <intent-filter data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
         <data android:scheme="exampleformanagedexpo"/>
-        <data android:scheme="exp+mobile"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
       </intent-filter>

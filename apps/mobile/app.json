@@ -29,9 +29,7 @@
             ]
           },
           {
-            "CFBundleURLSchemes": [
-              "myapp"
-            ]
+            "CFBundleURLSchemes": ["myapp"]
           },
           {
             "CFBundleURLSchemes": [
@@ -39,9 +37,7 @@
             ]
           },
           {
-            "CFBundleURLSchemes": [
-              "myapp"
-            ]
+            "CFBundleURLSchemes": ["myapp"]
           },
           {
             "CFBundleURLSchemes": [
@@ -49,9 +45,7 @@
             ]
           },
           {
-            "CFBundleURLSchemes": [
-              "myapp"
-            ]
+            "CFBundleURLSchemes": ["myapp"]
           },
           {
             "CFBundleURLSchemes": [
@@ -59,9 +53,7 @@
             ]
           },
           {
-            "CFBundleURLSchemes": [
-              "myapp"
-            ]
+            "CFBundleURLSchemes": ["myapp"]
           }
         ],
         "LSApplicationQueriesSchemes": [
@@ -145,10 +137,7 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": [
-            "DEFAULT",
-            "BROWSABLE"
-          ],
+          "category": ["DEFAULT", "BROWSABLE"],
           "data": {
             "scheme": "exampleformanagedexpo"
           }
@@ -157,11 +146,10 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "standalone",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       "expo-secure-store",
       "expo-web-browser",
       [
