@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Pressable,
+  TextInput,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
+import CustomHeader from "../components/CustomHeader";
+import axios from "axios";
 
 const categories = [
   { id: "1", name: "베스트" },
@@ -62,12 +66,56 @@ export default function CategoryScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
+  const [cartCount, setCartCount] = useState(0);
+
+  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/cartitems`, {
+            params: { user_id: "test_user" },
+          });
+          setCartCount(res.data.total_count);
+        } catch (err) {
+          console.error("장바구니 개수 불러오기 실패:", err);
+        }
+      };
+
+      fetchCartCount();
+    }, [])
+  );
 
   return (
-    <View style={styles.container}>
-      <View
-        style={{ width: "100%", height: 0.7, backgroundColor: "#ededed" }}
+    <View style={{ flex: 1 }}>
+      <CustomHeader
+        cartCount={cartCount}
+        onPressCart={() => console.log("장바구니")}
+        customLeftComponent={
+          <Pressable
+            onPress={() => navigation.navigate("Search")}
+            style={styles.searchBox}
+          >
+            <TextInput
+              style={styles.searchInput}
+              placeholder="지금이 기회! 배드민턴 용품 세일"
+              placeholderTextColor="#888"
+              editable={false}
+              pointerEvents="none"
+            />
+            <Ionicons
+              name="search-outline"
+              size={25}
+              color="#000"
+              style={styles.searchIcon}
+            />
+          </Pressable>
+        }
       />
+
+      <View style={styles.divider} />
+
       <View style={{ flex: 1, flexDirection: "row" }}>
         <View style={styles.listContainer}>
           <FlatList
@@ -124,7 +172,27 @@ export default function CategoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#000",
+  },
+  searchIcon: {
+    marginLeft: 8,
+  },
+  divider: {
+    width: "100%",
+    height: 0.7,
+    backgroundColor: "#ededed",
+  },
   listContainer: {
     flex: 0.7,
     backgroundColor: "#f5f5f5",

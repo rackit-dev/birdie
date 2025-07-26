@@ -2,12 +2,15 @@ import { StyleSheet, FlatList, View } from "react-native";
 import { Text } from "@/components/Themed";
 import useLikeStore from "@/store/useLikeStore";
 import ItemCard from "@/components/ItemCard";
+import CustomHeader from "../components/CustomHeader";
 
 export default function LikeScreen() {
   const { likedItems, toggleLike } = useLikeStore();
 
   return (
     <View style={styles.container}>
+      <CustomHeader title="좋아요" />
+
       {likedItems.length > 0 ? (
         <FlatList
           data={likedItems}

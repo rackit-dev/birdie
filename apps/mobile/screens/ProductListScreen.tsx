@@ -34,19 +34,19 @@ export default function ProductListScreen() {
         id: "1",
         name: `${brand} 초경량 슈즈`,
         price: 59000,
-        image: require("../../assets/images/items/shoes1.jpg"),
+        image: require("../assets/images/items/shoes1.jpg"),
       },
       {
         id: "2",
         name: `${brand} 파워쿠션 2024`,
         price: 72000,
-        image: require("../../assets/images/items/shoes1.jpg"),
+        image: require("../assets/images/items/shoes1.jpg"),
       },
       {
         id: "3",
         name: `${brand} 런닝화`,
         price: 49000,
-        image: require("../../assets/images/items/shoes1.jpg"),
+        image: require("../assets/images/items/shoes1.jpg"),
       },
     ];
     setProducts(dummy);

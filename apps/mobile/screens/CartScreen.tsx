@@ -13,12 +13,17 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Modal from "react-native-modal";
 import axios from "axios";
-import { useRouter } from "expo-router";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/RootNavigator";
+import CustomHeader from "../components/CustomHeader";
 
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Cart">;
+
 export default function CartScreen() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,7 +41,6 @@ export default function CartScreen() {
 
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
   const IMAGE_URL = `${process.env.EXPO_PUBLIC_API_IMAGE_URL}`;
-  const router = useRouter();
 
   useEffect(() => {
     const fetchCartItemsWithProducts = async () => {
@@ -191,13 +195,11 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={26} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>장바구니</Text>
-        <View style={{ width: 26 }} />
-      </View>
+      <CustomHeader
+        title="장바구니"
+        showBackButton
+        onPressBack={() => navigation.goBack()}
+      />
 
       <ScrollView style={styles.scrollArea}>
         <View style={styles.selectAllBox}>
@@ -274,7 +276,11 @@ export default function CartScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       activeOpacity={1}
-                      onPress={() => router.push(`/product/${item.product_id}`)}
+                      onPress={() =>
+                        navigation.navigate("ProductDetail", {
+                          id: item.product_id,
+                        })
+                      }
                     >
                       {item.image ? (
                         <Image
@@ -293,7 +299,9 @@ export default function CartScreen() {
                           <TouchableOpacity
                             activeOpacity={1}
                             onPress={() =>
-                              router.push(`/product/${item.product_id}`)
+                              navigation.navigate("ProductDetail", {
+                                id: item.product_id,
+                              })
                             }
                           >
                             <Text style={styles.itemTitle} numberOfLines={2}>
@@ -538,17 +546,6 @@ export default function CartScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    height: 60,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    marginTop: 35,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
   scrollArea: { flex: 1 },
   selectAllBox: {
     flexDirection: "row",
