@@ -31,7 +31,7 @@ export default function HomeScreen() {
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useFocusEffect(

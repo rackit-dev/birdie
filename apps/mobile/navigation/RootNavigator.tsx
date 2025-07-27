@@ -32,7 +32,14 @@ export default function RootNavigator() {
       <Stack.Screen name="Loading" component={LoadingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Main" component={TabNavigator} />
-      <Stack.Screen name="ProductList" component={ProductListScreen} />
+      <Stack.Screen
+        name="ProductList"
+        component={ProductListScreen}
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Cart" component={CartScreen} />
       <Stack.Screen name="Qna" component={QnaScreen} />

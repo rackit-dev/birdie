@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import {
   View,
   Text,
@@ -71,6 +76,15 @@ export default function ProductDetail() {
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
 
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+
+  useLayoutEffect(() => {
+    const parent = navigation.getParent();
+    parent?.setOptions({ tabBarStyle: { display: "none" } });
+
+    return () => {
+      parent?.setOptions({ tabBarStyle: { display: "flex" } });
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

@@ -3,9 +3,14 @@ import { Text } from "@/components/Themed";
 import useLikeStore from "@/store/useLikeStore";
 import ItemCard from "@/components/ItemCard";
 import CustomHeader from "../components/CustomHeader";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootNavigator";
 
 export default function LikeScreen() {
   const { likedItems, toggleLike } = useLikeStore();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <View style={styles.container}>
@@ -20,12 +25,17 @@ export default function LikeScreen() {
           renderItem={({ item }) => {
             const isLiked = likedItems.some((liked) => liked.id === item.id);
             return (
-              <ItemCard
-                item={item}
-                isLiked={isLiked}
-                toggleLike={toggleLike}
-                size="large"
-              />
+              <View style={styles.itemWrapper}>
+                <ItemCard
+                  item={item}
+                  isLiked={isLiked}
+                  toggleLike={toggleLike}
+                  size="large"
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", { id: item.id })
+                  }
+                />
+              </View>
             );
           }}
           contentContainerStyle={{
@@ -50,6 +60,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontFamily: "P-Bold",
+    marginBottom: 16,
+  },
+  itemWrapper: {
+    width: "33.333%",
+    alignItems: "center",
     marginBottom: 16,
   },
   list: {

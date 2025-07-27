@@ -1,19 +1,22 @@
 import { View, Image, Pressable, StyleSheet } from "react-native";
 import { Text } from "@/components/Themed";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import useLikeStore from "@/store/useLikeStore";
 
 type ItemCardProps = {
   item: {
     id: string;
-    image: number;
+    image: any;
     brand: string;
     name: string;
     price: string;
+    priceSell?: number;
+    priceOriginal?: number;
+    discount?: number;
   };
   isLiked: boolean;
   toggleLike: (item: ItemCardProps["item"]) => void;
   size?: "small" | "large";
+  onPress?: () => void;
 };
 
 export default function ItemCard({
@@ -21,9 +24,11 @@ export default function ItemCard({
   isLiked,
   toggleLike,
   size = "small",
+  onPress,
 }: ItemCardProps) {
   return (
-    <View
+    <Pressable
+      onPress={onPress}
       style={
         size === "large"
           ? styles.productContainerLarge
@@ -44,19 +49,36 @@ export default function ItemCard({
         >
           <Ionicons
             name={isLiked ? "heart" : "heart-outline"}
-            size={size === "large" ? 22 : 22}
+            size={22}
             color={isLiked ? "red" : "grey"}
           />
         </Pressable>
       </View>
+
       <View
         style={size === "large" ? styles.itemTextBoxLarge : styles.itemTextBox}
       >
         <Text style={styles.brandText}>{item.brand}</Text>
-        <Text style={styles.nameText}>{item.name}</Text>
-        <Text style={styles.priceText}>{item.price}</Text>
+        <Text style={styles.nameText} numberOfLines={2}>
+          {item.name.replace(/_/g, " ")}
+        </Text>
+
+        {item.discount && item.discount > 0 && item.priceSell ? (
+          <View style={{ flexDirection: "row", gap: 3 }}>
+            <Text style={styles.discountText}>{item.discount}%</Text>
+            <Text style={styles.priceText}>
+              {item.priceSell.toLocaleString()}원
+            </Text>
+          </View>
+        ) : item.priceSell ? (
+          <Text style={styles.priceText}>
+            {item.priceSell.toLocaleString()}원
+          </Text>
+        ) : (
+          <Text style={styles.priceText}>{item.price}</Text>
+        )}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -68,7 +90,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   productContainerLarge: {
-    width: "33.33%",
     height: 270,
     alignItems: "flex-start",
   },
@@ -119,10 +140,15 @@ const styles = StyleSheet.create({
   nameText: {
     fontFamily: "P-Medium",
     fontSize: 14,
-    marginBottom: 7,
+    marginBottom: 4,
   },
   priceText: {
     fontFamily: "P-Black",
     fontSize: 14,
+  },
+  discountText: {
+    fontFamily: "P-Bold",
+    fontSize: 14,
+    color: "#FF2D55",
   },
 });
