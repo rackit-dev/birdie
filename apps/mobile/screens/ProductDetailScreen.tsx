@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import {
   View,
   Text,
@@ -7,6 +12,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -54,9 +60,9 @@ const mockQnA = [
 
 export default function ProductDetail() {
   const route = useRoute();
-  const { id } = route.params as { id: string };
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { id } = route.params as { id: string };
   const [currentTab, setCurrentTab] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
@@ -69,8 +75,11 @@ export default function ProductDetail() {
   const [cartCount, setCartCount] = useState(0);
   const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
-
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const [detailImages, setDetailImages] = useState<string[]>([]);
+  const { width: screenWidth } = useWindowDimensions();
+  const [imageHeights, setImageHeights] = useState<number[]>([]);
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useFocusEffect(
     useCallback(() => {
@@ -120,18 +129,85 @@ export default function ProductDetail() {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    if (currentTab !== 0 || !product) return;
+
+    let isMounted = true;
+    const loadDetailImages = async () => {
+      const imgs: string[] = [];
+      imgs.push(`${IMAGE_URL}/products/defaults/begin.jpg`);
+
+      let idx = 1;
+      while (true) {
+        const url = `${IMAGE_URL}/products/${product.name}/detail_${idx}.jpg`;
+        try {
+          const res = await axios.head(url);
+          if (res.status === 200) {
+            imgs.push(url);
+            idx++;
+          } else {
+            break;
+          }
+        } catch {
+          break;
+        }
+      }
+
+      imgs.push(`${IMAGE_URL}/products/defaults/end.jpg`);
+      if (isMounted) setDetailImages(imgs);
+
+      const heights: number[] = [];
+      await Promise.all(
+        imgs.map(
+          (img, i) =>
+            new Promise<void>((resolve) => {
+              Image.getSize(
+                img,
+                (w, h) => {
+                  heights[i] = (screenWidth * h) / w;
+                  resolve();
+                },
+                () => {
+                  heights[i] = 300;
+                  resolve();
+                }
+              );
+            })
+        )
+      );
+      if (isMounted) setImageHeights(heights);
+    };
+
+    loadDetailImages();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentTab, product, IMAGE_URL, screenWidth]);
+
   if (!product) return <Text>Loading...</Text>;
 
   const renderTabContent = () => {
     switch (currentTab) {
       case 0:
         return (
-          <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>상품 정보</Text>
-            <Text>품번: {product.product_number}</Text>
-            <Text>카테고리: {product.category_main}</Text>
-            <Text>브랜드: {product.category_sub}</Text>
-            <Text>등록일: {product.created_at?.split("T")[0]}</Text>
+          <View style={{ paddingTop: 50 }}>
+            <ScrollView
+              style={{ marginBottom: 20 }}
+              contentContainerStyle={{ alignItems: "center" }}
+            >
+              {detailImages.map((img, i) => (
+                <View key={img} style={{ width: "100%", alignItems: "center" }}>
+                  <Image
+                    source={{ uri: img }}
+                    style={{
+                      width: screenWidth - 25,
+                      height: imageHeights[i] || 300,
+                    }}
+                    resizeMode="contain"
+                  />
+                </View>
+              ))}
+            </ScrollView>
           </View>
         );
       case 1:
@@ -415,7 +491,7 @@ export default function ProductDetail() {
         <View style={styles.cardContainer}>
           <Image
             source={{
-              uri: `${process.env.EXPO_PUBLIC_API_IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+              uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
             }}
             style={styles.productImage}
             resizeMode="contain"
