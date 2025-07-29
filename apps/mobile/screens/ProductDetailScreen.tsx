@@ -81,6 +81,15 @@ export default function ProductDetail() {
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
+  useLayoutEffect(() => {
+    const parent = navigation.getParent();
+    parent?.setOptions({ tabBarStyle: { display: "none" } });
+
+    return () => {
+      parent?.setOptions({ tabBarStyle: { display: "flex" } });
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       const fetchCartCount = async () => {

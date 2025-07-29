@@ -14,6 +14,7 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarStyle: { display: "flex" },
         tabBarShowLabel: true,
         tabBarActiveTintColor: "black",
         tabBarInactiveTintColor: "gray",
