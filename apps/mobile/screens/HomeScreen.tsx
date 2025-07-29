@@ -1,12 +1,13 @@
 import { StyleSheet, FlatList, Image, Pressable } from "react-native";
 import { Text, View } from "@/components/Themed";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useLikeStore from "@/store/useLikeStore";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
+import CustomHeader from "../components/CustomHeader";
 
 type Product = {
   id: string;
@@ -30,8 +31,25 @@ export default function HomeScreen() {
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/cartitems`, {
+            params: { user_id: "test_user" },
+          });
+          setCartCount(res.data.total_count);
+        } catch (err) {
+          console.error("장바구니 개수 불러오기 실패:", err);
+        }
+      };
+
+      fetchCartCount();
+    }, [])
+  );
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -73,7 +91,7 @@ export default function HomeScreen() {
             priceSell: 39000,
             priceOriginal: 49000,
             discount: 20,
-            image: require("../../assets/images/items/shoes1.jpg"),
+            image: require("../assets/images/items/shoes1.jpg"),
           },
           {
             id: "dummy2",
@@ -82,7 +100,7 @@ export default function HomeScreen() {
             priceSell: 69000,
             priceOriginal: 99000,
             discount: 30,
-            image: require("../../assets/images/items/shoes1.jpg"),
+            image: require("../assets/images/items/shoes1.jpg"),
           },
           {
             id: "dummy3",
@@ -91,7 +109,7 @@ export default function HomeScreen() {
             priceSell: 29000,
             priceOriginal: 29000,
             discount: 0,
-            image: require("../../assets/images/items/shoes1.jpg"),
+            image: require("../assets/images/items/shoes1.jpg"),
           },
         ];
 
@@ -106,12 +124,18 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader
+        logo
+        onPressSearch={() => navigation.navigate("Search")}
+        onPressCart={() => navigation.navigate("Cart")}
+        cartCount={cartCount}
+      />
       <FlatList
         ListHeaderComponent={
           <>
             <View style={styles.imageContainer}>
               <Image
-                source={require("../../assets/images/image2.png")}
+                source={require("../assets/images/image2.png")}
                 style={styles.image}
                 resizeMode="cover"
               />

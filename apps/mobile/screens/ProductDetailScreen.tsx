@@ -15,6 +15,7 @@ import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
+import CustomHeader from "../components/CustomHeader";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -402,55 +403,13 @@ export default function ProductDetail() {
           </TouchableOpacity>
         </View>
       )}
-      <View style={styles.customHeader}>
-        <TouchableOpacity
-          style={styles.headerIcon}
-          onPress={() => navigation.navigate("Main")}
-        >
-          <Ionicons name="chevron-back" size={29} color="black" />
-        </TouchableOpacity>
-
-        <View style={styles.headerIconsRight}>
-          <TouchableOpacity
-            style={{ marginRight: 16 }}
-            onPress={() => navigation.navigate("SearchModal")}
-          >
-            <Ionicons name="search-outline" size={25} color="black" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{ position: "relative" }}
-            onPress={() => navigation.navigate("Cart")}
-          >
-            <Ionicons name="bag-outline" size={25} color="black" />
-            {cartCount > 0 && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: -4,
-                  right: -6,
-                  backgroundColor: "red",
-                  borderRadius: 9,
-                  width: 18,
-                  height: 18,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "white",
-                    fontSize: 10,
-                    fontWeight: "bold",
-                  }}
-                >
-                  {cartCount}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+      <CustomHeader
+        showBackButton
+        onPressBack={() => navigation.goBack()}
+        onPressSearch={() => navigation.navigate("SearchModal")}
+        onPressCart={() => navigation.navigate("Cart")}
+        cartCount={cartCount}
+      />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.cardContainer}>

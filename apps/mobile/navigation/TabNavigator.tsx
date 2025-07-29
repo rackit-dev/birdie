@@ -1,7 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
 import HomeScreen from "../screens/HomeScreen";
 import CategoryScreen from "../screens/CategoryScreen";
 import SearchScreen from "../screens/SearchScreen";
@@ -16,18 +15,20 @@ export default function TabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: true,
+        tabBarActiveTintColor: "black",
+        tabBarInactiveTintColor: "gray",
         tabBarIcon: ({ color, size, focused }) => {
           let iconName: any;
 
-          if (route.name === "Home") {
+          if (route.name === "HOME") {
             iconName = focused ? "grid" : "grid-outline";
-          } else if (route.name === "Category") {
+          } else if (route.name === "CATEGORY") {
             iconName = "list-outline";
-          } else if (route.name === "Search") {
+          } else if (route.name === "SEARCH") {
             iconName = focused ? "search" : "search-outline";
-          } else if (route.name === "Like") {
+          } else if (route.name === "LIKE") {
             iconName = focused ? "heart" : "heart-outline";
-          } else if (route.name === "My") {
+          } else if (route.name === "MY") {
             iconName = focused ? "person" : "person-outline";
           }
 
@@ -35,11 +36,17 @@ export default function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Category" component={CategoryScreen} />
-      <Tab.Screen name="Search" component={SearchScreen} />
-      <Tab.Screen name="Like" component={LikeScreen} />
-      <Tab.Screen name="My" component={MyScreen} />
+      <Tab.Screen name="HOME" component={HomeScreen} />
+      <Tab.Screen name="CATEGORY" component={CategoryScreen} />
+      <Tab.Screen
+        name="SEARCH"
+        component={SearchScreen}
+        options={{
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tab.Screen name="LIKE" component={LikeScreen} />
+      <Tab.Screen name="MY" component={MyScreen} />
     </Tab.Navigator>
   );
 }

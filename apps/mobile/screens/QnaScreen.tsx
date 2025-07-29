@@ -30,7 +30,7 @@ export default function QnaPage() {
 
       <View style={styles.productBox}>
         <Image
-          source={require("@/assets/images/items/shoes1.jpg")}
+          source={require("../assets/images/items/shoes1.jpg")}
           style={styles.productImage}
         />
         <View style={{ marginLeft: 12 }}>
