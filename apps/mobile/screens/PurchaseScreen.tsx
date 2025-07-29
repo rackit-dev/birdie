@@ -18,6 +18,24 @@ export default function OrderPaymentScreen() {
   const [selectedPayment, setSelectedPayment] = useState("tosspay");
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const amount = 25000 - parseInt(point, 10); // 실제 계산에 맞춰 조정 가능
+
+  const handlePayment = () => {
+    const paymentData = {
+      pg: "html5_inicis",
+      pay_method: "card",
+      merchant_uid: `mid_${Date.now()}`,
+      name: "디어달리아 페탈 드롭 리퀴드 블러쉬",
+      amount: amount.toString(),
+      buyer_name: "강지웅",
+      buyer_tel: "01055482364",
+      buyer_email: "jiwoong@example.com",
+      app_scheme: "myapp", // ← app.json의 scheme과 동일해야 함
+      m_redirect_url: "https://your-backend.com/payment/callback", // 필요 시 대체
+    };
+
+    navigation.navigate("PaymentWebview", { params: paymentData });
+  };
 
   return (
     <View style={styles.container}>
@@ -79,7 +97,7 @@ export default function OrderPaymentScreen() {
         </View>
         <View style={styles.rowBetween}>
           <Text>적립금 할인</Text>
-          <Text>-1,750원</Text>
+          <Text>-{point}원</Text>
         </View>
         <View style={styles.rowBetween}>
           <Text>배송비</Text>
@@ -87,15 +105,14 @@ export default function OrderPaymentScreen() {
         </View>
         <View style={styles.totalBox}>
           <Text style={styles.totalText}>총 결제금액</Text>
-          <Text style={styles.totalPrice}>23,250원</Text>
+          <Text style={styles.totalPrice}>{amount.toLocaleString()}원</Text>
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.paymentBtn}
-        onPress={() => navigation.navigate("Purchase")}
-      >
-        <Text style={styles.paymentBtnText}>23,250원 결제하기</Text>
+      <TouchableOpacity style={styles.paymentBtn} onPress={handlePayment}>
+        <Text style={styles.paymentBtnText}>
+          {amount.toLocaleString()}원 결제하기
+        </Text>
       </TouchableOpacity>
     </View>
   );

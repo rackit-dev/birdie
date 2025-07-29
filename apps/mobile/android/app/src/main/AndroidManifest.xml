@@ -37,6 +37,7 @@
     <package android:name="com.sktelecom.tauth"/>
     <package android:name="com.wooribank.smart.npib"/>
     <package android:name="com.kakaobank.channel"/>
+    <package android:name="com.shinhan.sbanking"/>
     <package android:name="kvp.jjy.MispAndroid320"/>
     <package android:name="com.kftc.bankpay.android"/>
     <package android:name="com.kbstar.liivbank"/>

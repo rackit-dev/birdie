@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b</string>
+          <string>myapp</string>
         </array>
       </dict>
       <dict>
@@ -158,8 +158,10 @@
     <true/>
     <key>NSAppTransportSecurity</key>
 <dict>
+  <key>NSAllowsArbitraryLoadsInWebContent</key>
+  <true/>
   <key>NSAllowsArbitraryLoads</key>
-  <false/>
+  <true/>
   <key>NSExceptionDomains</key>
   <dict>
     <key>13.209.201.52</key>
