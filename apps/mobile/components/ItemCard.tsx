@@ -41,17 +41,20 @@ export default function ItemCard({
           style={size === "large" ? styles.itemImageLarge : styles.itemImage}
           resizeMode="cover"
         />
-        <Pressable
-          onPress={() => toggleLike(item)}
-          style={
-            size === "large" ? styles.heartButtonLarge : styles.heartButton
-          }
-        >
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
-            size={22}
-            color={isLiked ? "red" : "grey"}
-          />
+        <Pressable onPress={() => toggleLike(item)} style={styles.heartWrapper}>
+          {!isLiked ? (
+            <>
+              <Ionicons
+                name="heart"
+                size={18}
+                color="rgba(128,128,128,0.4)"
+                style={styles.absoluteIcon}
+              />
+              <Ionicons name="heart-outline" size={18} color="#ffffff" />
+            </>
+          ) : (
+            <Ionicons name="heart" size={17} color="#FF2D55" />
+          )}
         </Pressable>
       </View>
 
@@ -108,22 +111,6 @@ const styles = StyleSheet.create({
     aspectRatio: 0.85,
     marginBottom: 8,
   },
-  heartButton: {
-    position: "absolute",
-    bottom: 4,
-    right: 1,
-    backgroundColor: "rgba(255, 255, 255, 0)",
-    borderRadius: 12,
-    padding: 5,
-  },
-  heartButtonLarge: {
-    position: "absolute",
-    bottom: 7,
-    right: 1,
-    backgroundColor: "rgba(255, 255, 255, 0)",
-    borderRadius: 12,
-    padding: 5,
-  },
   itemTextBox: {
     marginLeft: 5,
   },
@@ -150,5 +137,17 @@ const styles = StyleSheet.create({
     fontFamily: "P-Bold",
     fontSize: 14,
     color: "#FF2D55",
+  },
+  heartWrapper: {
+    position: "absolute",
+    bottom: 7,
+    right: 4,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  absoluteIcon: {
+    position: "absolute",
   },
 });
