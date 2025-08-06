@@ -41,14 +41,10 @@ const CustomHeader: React.FC<Props> = ({
           <TouchableOpacity onPress={onPressBack}>
             <Ionicons name="chevron-back" size={28} color="black" />
           </TouchableOpacity>
+        ) : title ? (
+          <Text style={styles.title}>{title}</Text>
         ) : null}
       </View>
-
-      {title && !logo && !customLeftComponent && (
-        <View style={[styles.centerAbsolute, { top: insets.top + 45 }]}>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-      )}
 
       <View style={styles.right}>
         {onPressSearch && (
@@ -94,17 +90,8 @@ const styles = StyleSheet.create({
     marginBottom: -5,
     marginRight: 5,
   },
-  centerAbsolute: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "50%",
-    transform: [{ translateY: -26 }],
-    alignItems: "center",
-    pointerEvents: "none",
-  },
   title: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#000",
   },
