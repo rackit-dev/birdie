@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList, Image, Pressable } from "react-native";
+import { StyleSheet, FlatList, Image, Pressable, Platform } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { useState, useEffect, useCallback } from "react";
 import useLikeStore, { Product } from "@/store/useLikeStore";
@@ -29,6 +29,23 @@ export default function HomeScreen() {
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
   const USER_ID = "test_user1";
+
+  const wrapName = (raw: string) => {
+    let s = raw.replace(/_/g, " ");
+
+    // -, /, . 뒤에는 줄바꿈 허용
+    s = s.replace(/([\-\/\.])/g, "$1\u200B");
+
+    // 영문↔숫자 경계
+    s = s
+      .replace(/([A-Za-z])(\d)/g, "$1\u200B$2")
+      .replace(/(\d)([A-Za-z])/g, "$1\u200B$2");
+
+    // 긴 영숫자 연속(8자 이상)은 4자마다 포인트
+    s = s.replace(/[A-Za-z0-9]{8,}/g, (m) => m.replace(/(.{4})/g, "$1\u200B"));
+
+    return s;
+  };
 
   const slogans = [
     "매일의 플레이를 특별하게,\n영스배드민턴",
@@ -224,10 +241,16 @@ export default function HomeScreen() {
 
                   <View style={{ alignItems: "flex-start" }}>
                     <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText} numberOfLines={2}>
-                      {item.name.replace(/_/g, " ")}
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                      {...(Platform.OS === "ios"
+                        ? { lineBreakStrategyIOS: "none" as const }
+                        : { textBreakStrategy: "balanced" as const })}
+                    >
+                      {wrapName(item.name)}
                     </Text>
-
                     {(item.discount ?? 0) > 0 ? (
                       <View style={{ flexDirection: "row", gap: 3 }}>
                         <Text style={styles.discountText}>
@@ -296,10 +319,16 @@ export default function HomeScreen() {
 
                   <View style={{ alignItems: "flex-start" }}>
                     <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText} numberOfLines={2}>
-                      {item.name.replace(/_/g, " ")}
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                      {...(Platform.OS === "ios"
+                        ? { lineBreakStrategyIOS: "none" as const }
+                        : { textBreakStrategy: "balanced" as const })}
+                    >
+                      {wrapName(item.name)}
                     </Text>
-
                     {(item.discount ?? 0) > 0 ? (
                       <View style={{ flexDirection: "row", gap: 3 }}>
                         <Text style={styles.discountText}>
@@ -491,7 +520,7 @@ const styles = StyleSheet.create({
     pointerEvents: "none",
   },
   sloganText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-Extra-Bold",
     fontSize: 28,
     color: "#fff",
     textAlign: "left",
