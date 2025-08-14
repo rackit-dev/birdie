@@ -260,6 +260,7 @@ def create_like(
 
 class GetProductLikesResponse(BaseModel):
     total_count: int
+    product_like_ids: list[str]
     products: list[ProductResponse]
     
 
@@ -269,10 +270,11 @@ def get_likes(
     user_id: str,
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
-    total_count, products = product_service.get_product_likes(user_id)
+    total_count, product_like_ids, products = product_service.get_product_likes(user_id)
 
     return {
         "total_count": total_count,
+        "product_like_ids": product_like_ids,
         "products": products,
     }
 

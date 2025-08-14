@@ -100,7 +100,7 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def get_likes(self, user_id: str) -> tuple[int, list[Product]]:
+    def get_likes(self, user_id: str) -> tuple[int, list[str], list[Product]]:
         raise NotImplementedError
     
     @abstractmethod
