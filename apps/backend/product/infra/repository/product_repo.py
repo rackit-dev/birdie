@@ -272,18 +272,20 @@ class ProductRepository(IProductRepository):
                     elif code == 1452:
                         raise HTTPException(status_code=422, detail="Invalid product or user ID.")
         
-    def get_likes(self, user_id: str) -> tuple[int, list[ProductVO]]:
+    def get_likes(self, user_id: str) -> tuple[int, list[int], list[ProductVO]]:
         with SessionLocal() as db:
-            products = (
-                db.query(Product)
-                .join(ProductLike, Product.id == ProductLike.product_id)
+            results = (
+                db.query(ProductLike.id.label("like_id"), Product)
+                .join(Product, Product.id == ProductLike.product_id)
                 .filter(ProductLike.user_id == user_id)
                 .all()
             )
 
-            total_count = len(products)
+            total_count = len(results)
+            like_ids = [like_id for like_id, _ in results]  # ProductLike.id 리스트
+            products = [ProductVO(**row_to_dict(p)) for _, p in results]  # ProductVO 리스트
 
-        return total_count, [ProductVO(**row_to_dict(p)) for p in products]
+        return total_count, like_ids, products
     
     def delete_like(self, product_like_id: str):
         with SessionLocal() as db:
