@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from containers import Container
 from common.auth import CurrentUser, get_admin_user
+from utils.val_image import validate_images
 from product.application.product_service import ProductService
 
 router = APIRouter(prefix="/products")
@@ -296,23 +297,6 @@ class CreateProductReviewBody(BaseModel):
     content: str = Field(min_length=5, max_length=100)
 
 
-@router.post("/reviews", status_code=201)
-@inject
-def create_product_review(
-    product_review: CreateProductReviewBody,
-    product_service: ProductService = Depends(Provide[Container.product_service]),
-):
-    created_product_review = product_service.create_product_review(
-        user_id=product_review.user_id,
-        user_name=product_review.user_name,
-        product_id=product_review.product_id,
-        rating=product_review.rating,
-        content=product_review.content,
-    )
-
-    return created_product_review
-
-
 class ProductReviewResponse(BaseModel):
     id: str
     user_id: str
@@ -323,6 +307,31 @@ class ProductReviewResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     visible: bool
+    #images_url: List[str] = []
+
+
+@router.post("/reviews", status_code=201, response_model=ProductReviewResponse)
+@inject
+def create_product_review(
+    user_id: Annotated[str, Form(..., min_length=10, max_length=32)],
+    user_name: Annotated[str, Form(..., min_length=2, max_length=8)],
+    product_id: Annotated[str, Form(..., min_length=10, max_length=32)],
+    rating: Annotated[int, Form(..., ge=1, le=5)],
+    content: Annotated[str, Form(..., min_length=5, max_length=100)],
+    images: List[UploadFile] = File(...),
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    validate_images(images)
+    created_product_review = product_service.create_product_review(
+        user_id=user_id,
+        user_name=user_name,
+        product_id=product_id,
+        rating=rating,
+        content=content,
+        #image_urls=image_urls,
+    )
+
+    return created_product_review
 
 
 class GetProductReviewsResponse(BaseModel):
