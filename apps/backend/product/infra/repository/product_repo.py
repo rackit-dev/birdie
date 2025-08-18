@@ -1,5 +1,4 @@
 from typing import List
-from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
 import MySQLdb
@@ -36,7 +35,7 @@ class ProductRepository(IProductRepository):
                 db.flush()
                 db.refresh(new_product)
                 db.expunge(new_product)
-                self._upload_img(product.name, image_thumbnail, image_detail)
+                self._upload_product_img(product.name, image_thumbnail, image_detail)
                 db.commit()
             except Exception as e:
                 db.rollback()
@@ -54,8 +53,11 @@ class ProductRepository(IProductRepository):
             raise HTTPException(status_code=422)
         
         return ProductVO(**row_to_dict(product))
-    
-    def _upload_img(self, name: str, image_thumbnail: UploadFile, image_detail: List[UploadFile]):
+
+    def _upload_product_img(self, name: str, image_thumbnail: UploadFile, image_detail: List[UploadFile]):
+        if not image_thumbnail or not image_detail:
+            return
+        
         thumbnail_extension = image_thumbnail.filename.split(".")[-1]
         thumbnail_key = f"products/{name}/thumbnail.{thumbnail_extension}"
         
@@ -282,8 +284,8 @@ class ProductRepository(IProductRepository):
             )
 
             total_count = len(results)
-            like_ids = [like_id for like_id, _ in results]  # ProductLike.id 리스트
-            products = [ProductVO(**row_to_dict(p)) for _, p in results]  # ProductVO 리스트
+            like_ids = [like_id for like_id, _ in results]
+            products = [ProductVO(**row_to_dict(p)) for _, p in results]
 
         return total_count, like_ids, products
     
@@ -301,8 +303,8 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except:
                 raise HTTPException(status_code=500, detail="Failed to Delete product like.")
-    
-    def save_review(self, product_review: ProductReviewVO):
+
+    def save_review(self, product_review: ProductReviewVO, images: List[UploadFile]) -> ProductReviewVO:
         new_product_review = ProductReview(
             id=product_review.id,
             user_id=product_review.user_id,
@@ -318,6 +320,8 @@ class ProductRepository(IProductRepository):
         with SessionLocal() as db:
             try:
                 db.add(new_product_review)
+                db.flush()
+                self._upload_review_images(product_review.product_id, new_product_review.id, images)
                 db.commit()
             except IntegrityError as e:
                 db.rollback()
@@ -326,6 +330,19 @@ class ProductRepository(IProductRepository):
                     if code == 1452:
                         raise HTTPException(status_code=422, detail="Invalid product ID.")
     
+    def _upload_review_images(self, review_id: str, images: List[UploadFile]):
+        if not images:
+            return
+        with bucket_session() as s3:
+            for i, image in enumerate(images, start=1):
+                extension = image.filename.split(".")[-1]
+                key = f"reviews/{review_id}/img_{i}.{extension}"
+                s3.upload_fileobj(
+                    image.file,
+                    "birdie-image-bucket",
+                    key,
+                )
+
     def get_reviews(self, product_id: str, user_id: str) -> tuple[int, list[ProductReviewVO]]:
         with SessionLocal() as db:
             if product_id is None and user_id is None:

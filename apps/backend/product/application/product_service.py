@@ -181,6 +181,7 @@ class ProductService:
         user_name: str,
         product_id: str,
         rating: int,
+        images: List[UploadFile],
         content: str | None = None,
     ) -> ProductReview:
         now = datetime.now()
@@ -195,7 +196,7 @@ class ProductService:
             updated_at=now,
             visible=True,
         )
-        self.product_repo.save_review(product_review)
+        self.product_repo.save_review(product_review, images)
 
         return product_review
     

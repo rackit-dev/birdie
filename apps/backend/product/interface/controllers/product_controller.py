@@ -328,7 +328,7 @@ def create_product_review(
         product_id=product_id,
         rating=rating,
         content=content,
-        #image_urls=image_urls,
+        images=images,
     )
 
     return created_product_review

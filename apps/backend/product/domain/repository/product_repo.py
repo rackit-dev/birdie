@@ -108,7 +108,7 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def save_review(self, product_review: ProductReview):
+    def save_review(self, product_review: ProductReview, images: List[UploadFile]) -> ProductReview:
         raise NotImplementedError
     
     @abstractmethod
