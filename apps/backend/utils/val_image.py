@@ -19,5 +19,5 @@ def validate_images(images: List[UploadFile]):
         if size_mb > MAX_FILE_SIZE_MB:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File {image.filename} exceeds the maximum size of {MAX_FILE_SIZE_MB}MB."
+                detail=f"File {image.filename} exceeds the maximum size of {MAX_FILE_SIZE_MB}MB."
             )
