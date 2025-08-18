@@ -321,7 +321,7 @@ class ProductRepository(IProductRepository):
             try:
                 db.add(new_product_review)
                 db.flush()
-                self._upload_review_images(product_review.product_id, new_product_review.id, images)
+                self._upload_review_images(product_review.product_id, images)
                 db.commit()
             except IntegrityError as e:
                 db.rollback()
@@ -367,11 +367,30 @@ class ProductRepository(IProductRepository):
                 ProductReview.id == product_review_id
             ).first()
             
-            if not product_review_id:
+            if not product_review:
                 raise HTTPException(status_code=422)
             
             try:
                 db.delete(product_review)
+                self._delete_review_images(product_review_id)
                 db.commit()
             except:
+                db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to Delete product review.")
+
+    def _delete_review_images(self, review_id: str):
+        prefix = f"reviews/{review_id}/"
+        bucket_name = "birdie-image-bucket"
+
+        with bucket_session() as s3:
+            objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+
+            if "Contents" not in objects:
+                return  # No images to delete
+
+            delete_keys = [{"Key": obj["Key"]} for obj in objects["Contents"]]
+
+            s3.delete_objects(
+                Bucket=bucket_name,
+                Delete={"Objects": delete_keys}
+            )

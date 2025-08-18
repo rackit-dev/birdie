@@ -26,7 +26,7 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _upload_img(
+    def _upload_product_img(
             self,
             name: str,
             image_thumbnail: UploadFile,
