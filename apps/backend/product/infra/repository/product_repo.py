@@ -321,7 +321,7 @@ class ProductRepository(IProductRepository):
             try:
                 db.add(new_product_review)
                 db.flush()
-                self._upload_review_images(product_review.product_id, images)
+                self._upload_review_images(product_review.id, images)
                 db.commit()
             except IntegrityError as e:
                 db.rollback()
