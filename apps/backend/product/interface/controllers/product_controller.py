@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from pydantic import BaseModel, Field
@@ -318,10 +318,11 @@ def create_product_review(
     product_id: Annotated[str, Form(..., min_length=10, max_length=32)],
     rating: Annotated[int, Form(..., ge=1, le=5)],
     content: Annotated[str, Form(..., min_length=5, max_length=100)],
-    images: List[UploadFile] = File(...),
+    images: Optional[List[UploadFile]] = File(None),
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
-    validate_images(images)
+    if images:
+        validate_images(images)
     created_product_review = product_service.create_product_review(
         user_id=user_id,
         user_name=user_name,

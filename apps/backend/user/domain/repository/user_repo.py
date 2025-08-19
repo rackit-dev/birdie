@@ -1,5 +1,8 @@
+from typing import List
 from abc import ABCMeta, abstractmethod
-from user.domain.user import User
+from fastapi import UploadFile
+
+from user.domain.user import User, UserInquiry
 
 
 class IUserRepository(metaclass=ABCMeta):
@@ -45,4 +48,36 @@ class IUserRepository(metaclass=ABCMeta):
     
     @abstractmethod
     def delete(self, id: str):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def create_inquiry(self, inquiry: UserInquiry, images: List[UploadFile]) -> UserInquiry:
+        """
+        유저 문의 생성.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_inquiries_by_user(
+        self, user_id: str, page: int, items_per_page: int
+    ) -> tuple[int, list[UserInquiry]]:
+        """
+        특정 유저의 문의 목록을 페이지네이션하여 반환.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_inquiries_by_product(
+        self, product_id: str, page: int, items_per_page: int
+    ) -> tuple[int, list[UserInquiry]]:
+        """
+        특정 상품의 문의 목록을 페이지네이션하여 반환.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_inquiry(self, inquiry_id: str):
+        """
+        특정 문의 삭제.
+        """
         raise NotImplementedError
