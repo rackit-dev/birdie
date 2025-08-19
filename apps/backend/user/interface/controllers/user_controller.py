@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, List, Optional
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
@@ -172,7 +172,7 @@ def create_user_inquiry(
     content: Annotated[str, Form(..., min_length=1, max_length=500)],
     product_id: Optional[str] = Form(None, min_length=10, max_length=36),
     order_id: Optional[str] = Form(None, min_length=10, max_length=36),
-    images: Optional[List[UploadFile]] = File(None),  # Correctly set default to None
+    images: Optional[List[UploadFile]] = File(None),
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     if images:
