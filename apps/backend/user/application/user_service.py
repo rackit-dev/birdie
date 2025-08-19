@@ -1,11 +1,12 @@
+from typing import List
 from datetime import datetime
 from dependency_injector.wiring import inject
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from ulid import ULID
 
 from common.auth import Role, create_access_token
 from utils.crypto import Crypto
-from user.domain.user import User
+from user.domain.user import User, UserInquiry
 from user.domain.repository.user_repo import IUserRepository
 
 
@@ -122,3 +123,55 @@ class UserService:
         )
         
         return access_token
+    
+    def create_user_inquiry(
+        self,
+        user_id: str,
+        product_id: str | None,
+        order_id: str | None,
+        type: str,
+        content: str,
+        images: List[UploadFile] = [],
+    ):
+        try:
+            self.user_repo.find_by_id(user_id)
+        except HTTPException as e:
+            if e.status_code == 422:
+                raise HTTPException(status_code=422, detail=f"User id does not exist.")
+            raise e
+
+        now = datetime.now()
+        inquiry = UserInquiry(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            product_id=product_id,
+            order_id=order_id,
+            type=type,
+            content=content,
+            answer=None,
+            status="PENDING",
+            created_at=now,
+            updated_at=now,
+        )
+        self.user_repo.create_inquiry(inquiry, images)
+        return inquiry
+
+    def get_user_inquiries(
+        self,
+        identifier: str,
+        page: int,
+        items_per_page: int,
+        by_user: bool = True,
+    ):
+        if by_user:
+            total_count, inquiries = self.user_repo.get_inquiries_by_user(
+                user_id=identifier, page=page, items_per_page=items_per_page
+            )
+        else:
+            total_count, inquiries = self.user_repo.get_inquiries_by_product(
+                product_id=identifier, page=page, items_per_page=items_per_page
+            )
+        return {"total_count": total_count, "inquiries": inquiries}
+
+    def delete_user_inquiry(self, inquiry_id: str):
+        self.user_repo.delete_inquiry(inquiry_id)

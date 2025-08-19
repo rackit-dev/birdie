@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, UploadFile, File, Form  # Import Form for annotated usage
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
@@ -170,12 +170,13 @@ def create_user_inquiry(
     user_id: Annotated[str, Form(..., min_length=10, max_length=36)],
     type: Annotated[str, Form(..., min_length=1, max_length=32)],
     content: Annotated[str, Form(..., min_length=1, max_length=500)],
-    images: List[UploadFile] = File(...),
+    product_id: Optional[str] = Form(None, min_length=10, max_length=36),
+    order_id: Optional[str] = Form(None, min_length=10, max_length=36),
+    images: Optional[List[UploadFile]] = File(None),  # Correctly set default to None
     user_service: UserService = Depends(Provide[Container.user_service]),
-    product_id: Annotated[str | None, Form(min_length=10, max_length=36)] = None,
-    order_id: Annotated[str | None, Form(min_length=10, max_length=36)] = None,
 ):
-    validate_images(images)
+    if images:
+        validate_images(images)
     inquiry = user_service.create_user_inquiry(
         user_id=user_id,
         product_id=product_id,
@@ -188,30 +189,37 @@ def create_user_inquiry(
     return inquiry
 
 
-@router.get("/inquiry/by_user", response_model=list[UserInquiryResponse])
+class GetUserInquiriesResponse(BaseModel):
+    total_count: int
+    inquiries: list[UserInquiryResponse]
+
+
+@router.get("/inquiry/by_user", response_model=GetUserInquiriesResponse)
 @inject
-def get_user_inquiries(
+def get_user_inquiries_by_user(
     user_id: str,
     page: int = 1,
     items_per_page: int = 5,
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    inquiries = user_service.get_user_inquiries(user_id, page, items_per_page)
+    result = user_service.get_user_inquiries(
+        identifier=user_id, page=page, items_per_page=items_per_page, by_user=True
+    )
+    return result
 
-    return inquiries
 
-
-@router.get("/inquiry/by_product", response_model=list[UserInquiryResponse])
+@router.get("/inquiry/by_product", response_model=GetUserInquiriesResponse)
 @inject
-def get_user_inquiries(
+def get_user_inquiries_by_product(
     product_id: str,
     page: int = 1,
     items_per_page: int = 5,
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    inquiries = user_service.get_user_inquiries(product_id, page, items_per_page)
-
-    return inquiries
+    result = user_service.get_user_inquiries(
+        identifier=product_id, page=page, items_per_page=items_per_page, by_user=False
+    )
+    return result
 
 
 @router.delete("/inquiry", status_code=204)

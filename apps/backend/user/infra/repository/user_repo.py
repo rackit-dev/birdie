@@ -1,11 +1,13 @@
-from fastapi import HTTPException
+from typing import List
+from fastapi import HTTPException, UploadFile
 import requests
 
 from database import SessionLocal
 from utils.db_utils import row_to_dict
 from user.domain.repository.user_repo import IUserRepository
 from user.domain.user import User as UserVO
-from user.infra.db_models.user import User
+from user.domain.user import UserInquiry as UserInquiryVO
+from user.infra.db_models.user import User, UserInquiry
 
 
 class UserRepository(IUserRepository):
@@ -93,10 +95,7 @@ class UserRepository(IUserRepository):
 
         return user
     
-    def get_users(
-            self,
-            page: int = 1,
-            items_per_page: int = 10,
+    def get_users(self, page: int = 1, items_per_page: int = 10,
     ) -> tuple[int, list[UserVO]]:
         with SessionLocal() as db:
             query = db.query(User)
@@ -115,4 +114,56 @@ class UserRepository(IUserRepository):
                 raise HTTPException(status_code=422)
             
             db.delete(user)
+            db.commit()
+
+    def create_inquiry(self, inquiry: UserInquiryVO, images: List[UploadFile]) -> UserInquiryVO:
+        new_inquiry = UserInquiry(
+            id=inquiry.id,
+            user_id=inquiry.user_id,
+            product_id=inquiry.product_id,
+            order_id=inquiry.order_id,
+            type=inquiry.type,
+            content=inquiry.content,
+            answer=inquiry.answer,
+            status=inquiry.status,
+            created_at=inquiry.created_at,
+            updated_at=inquiry.updated_at,
+        )
+
+        with SessionLocal() as db:
+            db.add(new_inquiry)
+            db.commit()
+
+    def get_inquiries_by_user(
+        self, user_id: str, page: int, items_per_page: int
+    ) -> tuple[int, list[UserInquiryVO]]:
+        with SessionLocal() as db:
+            query = db.query(UserInquiry).filter(UserInquiry.user_id == user_id)
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            inquiries = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [UserInquiryVO(**row_to_dict(inquiry)) for inquiry in inquiries]
+
+    def get_inquiries_by_product(
+        self, product_id: str, page: int, items_per_page: int
+    ) -> tuple[int, list[UserInquiryVO]]:
+        with SessionLocal() as db:
+            query = db.query(UserInquiry).filter(UserInquiry.product_id == product_id)
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            inquiries = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [UserInquiryVO(**row_to_dict(inquiry)) for inquiry in inquiries]
+
+    def delete_inquiry(self, inquiry_id: str):
+        with SessionLocal() as db:
+            inquiry = db.query(UserInquiry).filter(UserInquiry.id == inquiry_id).first()
+
+            if not inquiry:
+                raise HTTPException(status_code=422, detail="Inquiry not found")
+
+            db.delete(inquiry)
             db.commit()
