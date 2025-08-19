@@ -322,7 +322,7 @@ class ProductRepository(IProductRepository):
             try:
                 db.add(new_product_review)
                 db.flush()
-                self._upload_review_images(product_review.id, images)
+                upload_images_to_s3(f"reviews/{product_review.id}", images)
                 db.commit()
             except IntegrityError as e:
                 db.rollback()
@@ -330,19 +330,6 @@ class ProductRepository(IProductRepository):
                     code = e.orig.args[0]
                     if code == 1452:
                         raise HTTPException(status_code=422, detail="Invalid product ID.")
-    
-    def _upload_review_images(self, review_id: str, images: List[UploadFile]):
-        if not images:
-            return
-        with bucket_session() as s3:
-            for i, image in enumerate(images, start=1):
-                extension = image.filename.split(".")[-1]
-                key = f"reviews/{review_id}/img_{i}.{extension}"
-                s3.upload_fileobj(
-                    image.file,
-                    "birdie-image-bucket",
-                    key,
-                )
 
     def get_reviews(self, product_id: str, user_id: str) -> tuple[int, list[ProductReviewVO]]:
         with SessionLocal() as db:
@@ -373,25 +360,8 @@ class ProductRepository(IProductRepository):
             
             try:
                 db.delete(product_review)
-                self._delete_review_images(product_review_id)
+                delete_images_from_s3(f"reviews/{product_review_id}")
                 db.commit()
             except:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to Delete product review.")
-
-    def _delete_review_images(self, review_id: str):
-        prefix = f"reviews/{review_id}/"
-        bucket_name = "birdie-image-bucket"
-
-        with bucket_session() as s3:
-            objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-
-            if "Contents" not in objects:
-                return  # No images to delete
-
-            delete_keys = [{"Key": obj["Key"]} for obj in objects["Contents"]]
-
-            s3.delete_objects(
-                Bucket=bucket_name,
-                Delete={"Objects": delete_keys}
-            )
