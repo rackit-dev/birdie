@@ -16,12 +16,14 @@ import {
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
+import useLikeStore, { Product } from "@/store/useLikeStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -78,6 +80,9 @@ export default function ProductDetail() {
   const [detailImages, setDetailImages] = useState<string[]>([]);
   const { width: screenWidth } = useWindowDimensions();
   const [imageHeights, setImageHeights] = useState<number[]>([]);
+  const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+
+  const USER_ID = "test_user1";
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
@@ -92,6 +97,27 @@ export default function ProductDetail() {
 
   useFocusEffect(
     useCallback(() => {
+      fetchLikedItems(USER_ID);
+    }, [])
+  );
+
+  const handleDeleteLike = async (product: Product) => {
+    try {
+      if (!product.product_like_id) {
+        console.warn("삭제할 product_like_id가 없습니다.");
+        return;
+      }
+      await axios.delete(`${API_URL}/products/like`, {
+        params: { product_like_id: product.product_like_id },
+      });
+      fetchLikedItems(USER_ID);
+    } catch (err) {
+      console.error("좋아요 삭제 실패:", err);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
       const fetchCartCount = async () => {
         try {
           const res = await axios.get(`${API_URL}/cartitems`, {
@@ -102,7 +128,7 @@ export default function ProductDetail() {
           console.error("장바구니 개수 불러오기 실패:", err);
         }
       };
-
+      fetchLikedItems(USER_ID);
       fetchCartCount();
     }, [id])
   );
@@ -232,78 +258,6 @@ export default function ProductDetail() {
               96%가 만족했어요
             </Text>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginBottom: 20 }}
-            >
-              {[1, 2, 3, 4, 5].map((_, i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: "#ddd",
-                    borderRadius: 8,
-                    marginRight: 10,
-                  }}
-                />
-              ))}
-            </ScrollView>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <View>
-                <Text style={{ fontSize: 16, marginBottom: 4 }}>색상</Text>
-                <Text style={{ fontWeight: "600" }}>화면과 같아요</Text>
-              </View>
-              <Text style={{ alignSelf: "center" }}>96%</Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <View>
-                <Text style={{ fontSize: 16, marginBottom: 4 }}>사이즈</Text>
-                <Text style={{ fontWeight: "600" }}>잘 맞아요</Text>
-              </View>
-              <Text style={{ alignSelf: "center" }}>95%</Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {["신발 사이즈", "옵션", "만족도"].map((label, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    backgroundColor: "#fff",
-                  }}
-                >
-                  <Text>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{ fontWeight: "700", fontSize: 16, marginBottom: 6 }}
@@ -313,19 +267,6 @@ export default function ProductDetail() {
               </Text>
               <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
                 감튀조아 🌟 Yellow · 2025.05.14
-              </Text>
-              <Text
-                style={{
-                  alignSelf: "flex-start",
-                  backgroundColor: "#f1f1f1",
-                  paddingVertical: 4,
-                  paddingHorizontal: 10,
-                  borderRadius: 12,
-                  fontSize: 12,
-                  marginBottom: 10,
-                }}
-              >
-                다음날 발송되었어요 📦
               </Text>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -352,9 +293,6 @@ export default function ProductDetail() {
                 </Text>
                 <Text style={{ fontSize: 14, marginBottom: 4 }}>
                   <Text style={{ fontWeight: "600" }}>사이즈</Text> 잘 맞아요
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>색상</Text> 화면과 같아요
                 </Text>
               </View>
 
@@ -491,7 +429,7 @@ export default function ProductDetail() {
       <CustomHeader
         showBackButton
         onPressBack={() => navigation.goBack()}
-        onPressSearch={() => navigation.navigate("SearchModal")}
+        onPressSearch={() => navigation.navigate("Search")}
         onPressCart={() => navigation.navigate("Cart")}
         cartCount={cartCount}
       />
@@ -585,9 +523,21 @@ export default function ProductDetail() {
       </ScrollView>
 
       <View style={styles.fixedBuy}>
-        <TouchableOpacity style={styles.likeButton}>
-          <Ionicons name="heart-outline" size={24} color="#FF2D55" />
-          <Text style={styles.likeText}>1.3만</Text>
+        <TouchableOpacity
+          style={styles.likeButton}
+          onPress={() => toggleLike(USER_ID, product)}
+        >
+          {!likedItems.some((liked) => liked.id === product.id) ? (
+            <>
+              <Ionicons name="heart-outline" size={24} color="#000" />
+              <Text style={[styles.likeText, { color: "#000" }]}></Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="heart" size={24} color="#FF2D55" />
+              <Text style={[styles.likeText, { color: "#FF2D55" }]}></Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -863,9 +813,8 @@ const styles = StyleSheet.create({
   likeButton: { flexDirection: "row", alignItems: "center" },
   likeText: {
     marginLeft: 4,
-    marginRight: 15,
+    marginRight: 4,
     fontSize: 16,
-    color: "#FF2D55",
     fontWeight: "500",
   },
   buttonRow: {

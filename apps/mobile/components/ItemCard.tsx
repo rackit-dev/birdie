@@ -1,20 +1,13 @@
 import { View, Image, Pressable, StyleSheet } from "react-native";
 import { Text } from "@/components/Themed";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { Product } from "@/store/useLikeStore"; // ✅ 재사용
 
 type ItemCardProps = {
-  item: {
-    id: string;
-    image: any;
-    brand: string;
-    name: string;
-    price: string;
-    priceSell?: number;
-    priceOriginal?: number;
-    discount?: number;
-  };
+  item: Product;
   isLiked: boolean;
-  toggleLike: (item: ItemCardProps["item"]) => void;
+  toggleLike: (userId: string, item: Product) => void;
+  userId: string;
   size?: "small" | "large";
   onPress?: () => void;
 };
@@ -23,6 +16,7 @@ export default function ItemCard({
   item,
   isLiked,
   toggleLike,
+  userId,
   size = "small",
   onPress,
 }: ItemCardProps) {
@@ -41,7 +35,10 @@ export default function ItemCard({
           style={size === "large" ? styles.itemImageLarge : styles.itemImage}
           resizeMode="cover"
         />
-        <Pressable onPress={() => toggleLike(item)} style={styles.heartWrapper}>
+        <Pressable
+          onPress={() => toggleLike(userId, item)}
+          style={styles.heartWrapper}
+        >
           {!isLiked ? (
             <>
               <Ionicons
@@ -78,7 +75,7 @@ export default function ItemCard({
             {item.priceSell.toLocaleString()}원
           </Text>
         ) : (
-          <Text style={styles.priceText}>{item.price}</Text>
+          <Text style={styles.priceText}>-</Text>
         )}
       </View>
     </Pressable>

@@ -10,14 +10,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import ItemCard from "@/components/ItemCard";
-import useLikeStore from "@/store/useLikeStore";
-
-type Product = {
-  id: string;
-  name: string;
-  image: any;
-  price: number;
-};
+import useLikeStore, { Product } from "@/store/useLikeStore";
 
 export default function ProductListScreen() {
   const route = useRoute<any>();
@@ -26,9 +19,10 @@ export default function ProductListScreen() {
   const { category, brand } = route.params || {};
   const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
-  const { likedItems, toggleLike } = useLikeStore();
+  const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
+  const USER_ID = "test_user1";
 
   const categoryMap: Record<string, string> = {
     배드민턴화: "신발",
@@ -53,6 +47,7 @@ export default function ProductListScreen() {
       };
 
       fetchCartCount();
+      fetchLikedItems(USER_ID);
     }, [])
   );
 
@@ -71,12 +66,6 @@ export default function ProductListScreen() {
         const res = await axios.get(`${API_URL}/products/by_category`, {
           params,
         });
-
-        const filtered = res.data.products.filter(
-          (item) =>
-            item.category_main === mappedCategory &&
-            (!brand || item.category_sub === brand)
-        );
 
         const mapped = res.data.products.map((item: any) => ({
           id: item.id,
@@ -101,18 +90,15 @@ export default function ProductListScreen() {
 
   const renderItem = ({ item }: { item: Product }) => {
     const isLiked = likedItems.some((liked) => liked.id === item.id);
-
     return (
       <View style={styles.itemWrapper}>
         <ItemCard
-          item={{
-            ...item,
-            price: `${item.priceSell.toLocaleString()}원`,
-          }}
+          item={item}
           isLiked={isLiked}
           toggleLike={toggleLike}
           size="large"
           onPress={() => navigation.navigate("ProductDetail", { id: item.id })}
+          userId={USER_ID}
         />
       </View>
     );
