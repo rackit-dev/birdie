@@ -4,6 +4,7 @@ import requests
 
 from database import SessionLocal
 from utils.db_utils import row_to_dict
+from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from user.domain.repository.user_repo import IUserRepository
 from user.domain.user import User as UserVO
 from user.domain.user import UserInquiry as UserInquiryVO
@@ -132,6 +133,8 @@ class UserRepository(IUserRepository):
 
         with SessionLocal() as db:
             db.add(new_inquiry)
+            db.flush()
+            upload_images_to_s3(f"inquiries/{new_inquiry.id}", images)
             db.commit()
 
     def get_inquiries_by_user(
@@ -165,5 +168,10 @@ class UserRepository(IUserRepository):
             if not inquiry:
                 raise HTTPException(status_code=422, detail="Inquiry not found")
 
-            db.delete(inquiry)
-            db.commit()
+            try:
+                db.delete(inquiry)
+                delete_images_from_s3(f"inquiries/{inquiry_id}")
+                db.commit()
+            except:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to delete inquiry.")

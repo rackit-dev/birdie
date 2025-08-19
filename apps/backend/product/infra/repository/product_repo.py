@@ -6,6 +6,7 @@ import MySQLdb
 from database import SessionLocal
 from aws import bucket_session
 from utils.db_utils import row_to_dict
+from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
 from product.domain.product import ProductOption as ProductOptionVO
