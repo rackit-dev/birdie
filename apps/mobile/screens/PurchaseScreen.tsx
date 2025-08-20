@@ -7,11 +7,9 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
 } from "react-native";
 import Modal from "react-native-modal";
-import { RadioButton } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -33,9 +31,12 @@ export default function OrderPaymentScreen() {
   const [vbankModalVisible, setVbankModalVisible] = useState(false);
   const [selectedVbank, setSelectedVbank] = useState("은행을 선택해 주세요");
 
+  const route = useRoute<RouteProp<RootStackParamList, "Purchase">>();
+  const { fromCart, products } = route.params;
+
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const amount = 25000 - parseInt(point, 10); // 실제 계산에 맞춰 조정 가능
+  const amount = products[0].price - parseInt(point, 10);
 
   const cardCodeMap: { [key: string]: string } = {
     BC: "361",
@@ -110,12 +111,12 @@ export default function OrderPaymentScreen() {
   const vbankList = Object.keys(vbankCodeMap);
 
   const handlePayment = () => {
-    let pg = "html5_inicis"; // KG이니시스 고정
+    let pg = "html5_inicis";
     let pay_method = "card";
     let extraData: { [key: string]: string } = {};
 
     if (selectedPayment === "tosspay") {
-      pay_method = "tosspay"; // 중요: 여기서 페이방식 지정
+      pay_method = "tosspay";
     } else if (selectedPayment === "kakaopay") {
       pay_method = "kakaopay";
     } else if (selectedPayment === "normal") {
@@ -136,11 +137,11 @@ export default function OrderPaymentScreen() {
     }
 
     const paymentData = {
-      pg, // 고정: html5_inicis
+      pg,
       pay_method,
       digital: false,
       merchant_uid: `mid_${Date.now()}`,
-      name: "디어달리아 페탈 드롭 리퀴드 블러쉬",
+      name: products[0].name,
       amount: amount.toString(),
       buyer_name: "강지웅",
       buyer_tel: "01055482364",
@@ -150,7 +151,7 @@ export default function OrderPaymentScreen() {
       ...extraData,
     };
 
-    console.log("🔵 결제 요청 데이터:", paymentData);
+    console.log("결제 요청 데이터:", paymentData);
 
     navigation.navigate("PaymentWebview", { params: paymentData });
   };
@@ -172,7 +173,7 @@ export default function OrderPaymentScreen() {
             충북 청주시 서원구 모충로3번길 61 벨엘타운302호
           </Text>
           <Text style={styles.text}>010-5548-2364</Text>
-          <TouchableOpacity style={styles.changeBtn}>
+          <TouchableOpacity activeOpacity={1} style={styles.changeBtn}>
             <Text>배송지 변경</Text>
           </TouchableOpacity>
         </View>
@@ -181,18 +182,20 @@ export default function OrderPaymentScreen() {
           <Text style={styles.title}>주문 상품</Text>
           <View style={styles.productBox}>
             <Image
-              source={{ uri: "https://via.placeholder.com/80" }}
+              source={{ uri: products[0].image }}
               style={styles.productImage}
             />
             <View style={{ flex: 1 }}>
-              <Text style={styles.productName}>
-                디어달리아 페탈 드롭 리퀴드 블러쉬
+              <Text style={styles.productName}>{products[0].name}</Text>
+              <Text style={styles.option}>
+                {products[0].option} / {products[0].quantity}개
               </Text>
-              <Text style={styles.option}>태피 / 1개</Text>
-              <Text style={styles.price}>25,000원</Text>
+              <Text style={styles.price}>
+                {products[0].price.toLocaleString()}원
+              </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.couponBtn}>
+          <TouchableOpacity activeOpacity={1} style={styles.couponBtn}>
             <Text>쿠폰 사용</Text>
           </TouchableOpacity>
         </View>
@@ -202,25 +205,24 @@ export default function OrderPaymentScreen() {
 
           {["tosspay", "kakaopay", "normal"].map((type) => (
             <TouchableOpacity
+              activeOpacity={1}
               key={type}
               style={styles.radioRow}
               onPress={() => setSelectedPayment(type)}
             >
-              <RadioButton
-                value={type}
-                status={selectedPayment === type ? "checked" : "unchecked"}
-                onPress={() => setSelectedPayment(type)}
-              />
+              <View style={styles.customRadio}>
+                {selectedPayment === type && <View style={styles.radioInner} />}
+              </View>
               {type === "tosspay" && (
                 <View style={styles.row}>
                   <Image
                     source={require("../assets/images/logos/Toss_Logo_Alternative.png")}
                     style={styles.tossIcon}
                   />
-
                   <Text>토스페이</Text>
                 </View>
               )}
+
               {type === "kakaopay" && (
                 <View style={styles.row}>
                   <Image
@@ -237,6 +239,7 @@ export default function OrderPaymentScreen() {
             <View style={{ marginTop: 10 }}>
               <View style={styles.row}>
                 <TouchableOpacity
+                  activeOpacity={1}
                   style={[
                     styles.selectBtn,
                     normalType === "card" && styles.selectedBtn,
@@ -246,6 +249,7 @@ export default function OrderPaymentScreen() {
                   <Text>신용카드</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  activeOpacity={1}
                   style={[
                     styles.selectBtn,
                     normalType === "vbank" && styles.selectedBtn,
@@ -255,6 +259,7 @@ export default function OrderPaymentScreen() {
                   <Text>무통장</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  activeOpacity={1}
                   style={[
                     styles.selectBtn,
                     normalType === "phone" && styles.selectedBtn,
@@ -268,6 +273,7 @@ export default function OrderPaymentScreen() {
               {normalType === "vbank" && (
                 <View style={{ marginTop: 10 }}>
                   <TouchableOpacity
+                    activeOpacity={1}
                     style={styles.cardSelect}
                     onPress={() => setVbankModalVisible(true)}
                   >
@@ -314,6 +320,7 @@ export default function OrderPaymentScreen() {
               {normalType === "card" && (
                 <View style={{ marginTop: 10 }}>
                   <TouchableOpacity
+                    activeOpacity={1}
                     style={styles.cardSelect}
                     onPress={() => setCardModalVisible(true)}
                   >
@@ -330,6 +337,7 @@ export default function OrderPaymentScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
+                    activeOpacity={1}
                     style={styles.cardSelect}
                     onPress={() => setShowInstallmentModal(true)}
                   >
@@ -439,7 +447,7 @@ export default function OrderPaymentScreen() {
           <Text style={styles.title}>결제 금액</Text>
           <View style={styles.rowBetween}>
             <Text>총 상품금액</Text>
-            <Text>25,000원</Text>
+            <Text>{products[0].price.toLocaleString()}원</Text>
           </View>
           <View style={styles.rowBetween}>
             <Text>적립금 할인</Text>
@@ -520,7 +528,7 @@ const styles = StyleSheet.create({
   },
   couponBtn: {
     marginTop: 10,
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
   row: {
     flexDirection: "row",
@@ -545,6 +553,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 4,
+    minHeight: 40,
   },
   rowBetween: {
     flexDirection: "row",
@@ -602,6 +611,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 18.2,
     marginRight: 6,
+    resizeMode: "contain",
   },
   selectBtn: {
     flex: 1,
@@ -645,5 +655,21 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 18,
+  },
+  customRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#ccc",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#000",
   },
 });

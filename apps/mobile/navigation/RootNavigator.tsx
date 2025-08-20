@@ -22,7 +22,17 @@ export type RootStackParamList = {
   Login: undefined;
   Loading: undefined;
   SearchModal: undefined;
-  Purchase: { id: string };
+  Purchase: {
+    fromCart: boolean;
+    products: {
+      id: string;
+      name: string;
+      option: string;
+      quantity: number;
+      price: number;
+      image: string;
+    }[];
+  };
   ProductList: { category: string; brand: string };
   Search: undefined;
   PaymentWebview: { params: any };

@@ -728,7 +728,19 @@ export default function ProductDetail() {
               style={styles.buyButton}
               onPress={() => {
                 setShowModal(false);
-                navigation.navigate("Purchase", { id: product.id });
+                navigation.navigate("Purchase", {
+                  fromCart: false,
+                  products: [
+                    {
+                      id: product.id,
+                      image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                      name: product.name.replace(/_/g, " "),
+                      option: selectedOption,
+                      quantity,
+                      price: product.price_sell * quantity,
+                    },
+                  ],
+                });
               }}
             >
               <Text style={styles.buyText}>구매하기</Text>
