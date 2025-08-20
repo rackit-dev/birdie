@@ -28,17 +28,32 @@ const CustomHeader: React.FC<Props> = ({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.left}>
+      <View style={[styles.left, customLeftComponent ? { flex: 1 } : null]}>
         {customLeftComponent ? (
           customLeftComponent
         ) : logo ? (
           <Image
-            source={require("../assets/images/logo.png")}
+            source={require("../assets/images/logos/logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
+        ) : showBackButton && title ? (
+          <View style={styles.backWithTitle}>
+            <TouchableOpacity
+              onPress={onPressBack}
+              style={styles.backButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.title}>{title}</Text>
+          </View>
         ) : showBackButton ? (
-          <TouchableOpacity onPress={onPressBack}>
+          <TouchableOpacity
+            onPress={onPressBack}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="chevron-back" size={28} color="black" />
           </TouchableOpacity>
         ) : title ? (
@@ -80,7 +95,6 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   left: {
-    flex: 1,
     justifyContent: "flex-start",
   },
   right: {
@@ -117,5 +131,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 10,
     fontWeight: "bold",
+  },
+  backWithTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButton: {
+    marginRight: 8,
   },
 });
