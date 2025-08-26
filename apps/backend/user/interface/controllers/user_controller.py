@@ -229,3 +229,32 @@ def delete_user_inquiry(
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_user_inquiry(inquiry_id)
+
+
+class AnswerInquiryBody(BaseModel):
+    inquiry_id: str
+    answer: str = Field(min_length=1, max_length=500)
+
+
+@router.post("/inquiry/answer", response_model=UserInquiryResponse)
+@inject
+def post_inquiry_answer(
+    body: AnswerInquiryBody,
+    #current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    inquiry = user_service.answer_inquiry(
+        inquiry_id=body.inquiry_id,
+        answer=body.answer,
+    )
+    return inquiry
+
+
+@router.delete("/inquiry/answer", status_code=204)
+@inject
+def delete_inquiry_answer(
+    inquiry_id: str,
+    #current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_service.delete_inquiry_answer(inquiry_id)

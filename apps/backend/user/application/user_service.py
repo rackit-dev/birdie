@@ -154,6 +154,7 @@ class UserService:
             updated_at=now,
         )
         self.user_repo.create_inquiry(inquiry, images)
+
         return inquiry
 
     def get_user_inquiries(
@@ -175,3 +176,16 @@ class UserService:
 
     def delete_user_inquiry(self, inquiry_id: str):
         self.user_repo.delete_inquiry(inquiry_id)
+
+    def answer_inquiry(self, inquiry_id: str, answer: str) -> UserInquiry:
+        inquiry = self.user_repo.find_inquiry_by_id(inquiry_id)
+        
+        inquiry.answer = answer
+        inquiry.updated_at = datetime.now()
+
+        self.user_repo.create_inquiry_answer(inquiry)
+
+        return inquiry
+
+    def delete_inquiry_answer(self, inquiry_id: str):
+        self.user_repo.delete_inquiry_answer(inquiry_id)

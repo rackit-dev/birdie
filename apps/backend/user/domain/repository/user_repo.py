@@ -81,3 +81,26 @@ class IUserRepository(metaclass=ABCMeta):
         특정 문의 삭제.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def create_inquiry_answer(self, inquiry_id: str, answer: str) -> UserInquiry:
+        """
+        문의에 답변 추가.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_inquiry_by_id(self, inquiry_id: str) -> UserInquiry:
+        """
+        특정 문의를 ID로 검색.
+        검색된 문의가 없을 경우 422 에러 발생.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_inquiry_answer(self, inquiry_id: str):
+        """
+        특정 문의의 답변 삭제.
+        """
+        raise NotImplementedError
+    

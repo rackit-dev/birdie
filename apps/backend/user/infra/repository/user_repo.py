@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import HTTPException, UploadFile
 import requests
+from datetime import datetime
 
 from database import SessionLocal
 from utils.db_utils import row_to_dict
@@ -175,3 +176,40 @@ class UserRepository(IUserRepository):
             except:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to delete inquiry.")
+
+    def create_inquiry_answer(self, inquiry_vo: UserInquiryVO) -> UserInquiryVO:
+        with SessionLocal() as db:
+            inquiry = db.query(UserInquiry).filter(UserInquiry.id == inquiry_vo.id).first()
+
+            if not inquiry:
+                raise HTTPException(status_code=422, detail="Inquiry not found")
+
+            inquiry.answer = inquiry_vo.answer
+            inquiry.updated_at = inquiry_vo.updated_at
+
+            db.add(inquiry)
+            db.commit()
+            db.refresh(inquiry)
+
+        return UserInquiryVO(**row_to_dict(inquiry))
+
+    def find_inquiry_by_id(self, inquiry_id: str) -> UserInquiryVO:
+        with SessionLocal() as db:
+            inquiry = db.query(UserInquiry).filter(UserInquiry.id == inquiry_id).first()
+
+            if not inquiry:
+                raise HTTPException(status_code=422, detail="Inquiry not found")
+
+        return UserInquiryVO(**row_to_dict(inquiry))
+
+    def delete_inquiry_answer(self, inquiry_id: str):
+        with SessionLocal() as db:
+            inquiry = db.query(UserInquiry).filter(UserInquiry.id == inquiry_id).first()
+
+            if not inquiry:
+                raise HTTPException(status_code=422, detail="Inquiry not found")
+
+            inquiry.answer = None
+            inquiry.updated_at = datetime.now()
+            db.add(inquiry)
+            db.commit()
