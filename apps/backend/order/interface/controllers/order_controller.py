@@ -10,20 +10,43 @@ from order.application.order_service import OrderService
 router = APIRouter(prefix="/orders")
 
 
-class OrderResponse(BaseModel):
+class OrderItemResponse(BaseModel):
     id: str
-    user_id: str
+    order_id: str
     product_id: str
     quantity: int
-    status: str
+    price: int
     created_at: datetime
     updated_at: datetime
 
 
-class CreateOrderRequest(BaseModel):
+class OrderResponse(BaseModel):
+    id: str
     user_id: str
+    status: str
+    subtotal_price: int
+    discount_price: int
+    total_price: int
+    user_coupon_id: Optional[str]
+    recipient_name: str
+    phone_number: str
+    zipcode: str
+    address_line1: str
+    address_line2: Optional[str]
+    order_memo: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    items: List[OrderItemResponse]
+
+
+class CreateOrderItemRequest(BaseModel):
     product_id: str
     quantity: int
+    price: int
+
+
+class CreateOrderRequest(BaseModel):
+    user_id: str
     recipient_name: str
     phone_number: str
     zipcode: str
@@ -31,6 +54,7 @@ class CreateOrderRequest(BaseModel):
     address_line2: Optional[str]
     order_memo: Optional[str]
     user_coupon_id: Optional[str]
+    items: List[CreateOrderItemRequest]
 
 
 @router.post("", response_model=OrderResponse)
@@ -41,8 +65,6 @@ def create_order(
 ):
     order = order_service.create_order(
         user_id=request.user_id,
-        product_id=request.product_id,
-        quantity=request.quantity,
         recipient_name=request.recipient_name,
         phone_number=request.phone_number,
         zipcode=request.zipcode,
@@ -50,6 +72,7 @@ def create_order(
         address_line2=request.address_line2,
         order_memo=request.order_memo,
         user_coupon_id=request.user_coupon_id,
+        items=request.items,
     )
     return order
 
@@ -79,7 +102,7 @@ def get_orders(
     return {"total_count": total_count, "orders": orders}
 
 
-@router.put("/{order_id}", response_model=OrderResponse)
+@router.put("", response_model=OrderResponse)
 @inject
 def update_order(
     order_id: str,
@@ -89,7 +112,7 @@ def update_order(
     return order_service.update_order(order_id, status)
 
 
-@router.delete("/{order_id}", status_code=204)
+@router.delete("", status_code=204)
 @inject
 def delete_order(
     order_id: str,

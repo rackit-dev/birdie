@@ -50,3 +50,14 @@ class CouponWallet(BaseModel):
     order_id: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class OrderItem(BaseModel):
+    id: str
+    order_id: str
+    product_id: str
+    quantity: int
+    price: int
+    created_at: datetime
+    updated_at: datetime

@@ -68,3 +68,18 @@ class CouponWallet(Base):
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
+
+
+class OrderItem(Base):
+    __tablename__ = "OrderItem"
+
+    id = mapped_column(String(36), primary_key=True)
+    order_id = mapped_column(ForeignKey("Order.id"), nullable=False)
+    product_id = mapped_column(ForeignKey("Product.id"), nullable=False)
+
+    # 상품 정보(스냅샷)
+    quantity = mapped_column(Numeric(5, 0), nullable=False)
+    price = mapped_column(Numeric(10, 0), nullable=False)
+
+    created_at = mapped_column(DateTime, nullable=False)
+    updated_at = mapped_column(DateTime, nullable=False)
