@@ -74,7 +74,7 @@ class OrderItem(Base):
     __tablename__ = "OrderItem"
 
     id = mapped_column(String(36), primary_key=True)
-    order_id = mapped_column(ForeignKey("Order.id"), nullable=False)
+    order_id = mapped_column(ForeignKey("Orders.id"), nullable=False)
     product_id = mapped_column(ForeignKey("Product.id"), nullable=False)
 
     # 상품 정보(스냅샷)

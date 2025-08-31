@@ -35,17 +35,17 @@ class OrderService:
         subtotal_price = 0
         order_items = []
         for item in items:
-            if "quantity" not in item or "price" not in item:
+            if item.quantity == None or item.price == None:
                 raise HTTPException(status_code=400, detail="Item must include quantity and price")
-            item_total_price = item["quantity"] * item["price"]
+            item_total_price = item.quantity * item.price
             subtotal_price += item_total_price
             order_items.append(
                 OrderItem(
                     id=self.ulid.generate(),
-                    order_id=None,  # Will be set after order creation
-                    product_id=item["product_id"],
-                    quantity=item["quantity"],
-                    price=item["price"],
+                    order_id="None",  # Will be set after order creation
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                    price=item.price,
                     created_at=now,
                     updated_at=now,
                 )
@@ -55,8 +55,6 @@ class OrderService:
         discount_price = 0
         if user_coupon_id:
             coupon = self.order_repo.find_coupon_by_id(user_coupon_id)
-            if not coupon or not coupon.is_active:
-                raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
             discount_price = min(
                 coupon.discount_amount or 0,
                 coupon.max_discount_amount,
@@ -69,7 +67,7 @@ class OrderService:
         order = Order(
             id=self.ulid.generate(),
             user_id=user_id,
-            status="PENDING",
+            status="결제대기",
             subtotal_price=subtotal_price,
             discount_price=discount_price,
             total_price=total_price,
@@ -87,7 +85,7 @@ class OrderService:
 
         # Save order items
         for item in order_items:
-            item["order_id"] = order.id
+            item.order_id = order.id
             self.order_repo.save_order_item(item)
 
         return order

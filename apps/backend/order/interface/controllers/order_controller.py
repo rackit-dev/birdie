@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -27,16 +27,15 @@ class OrderResponse(BaseModel):
     subtotal_price: int
     discount_price: int
     total_price: int
-    user_coupon_id: Optional[str]
+    order_coupon_id: str | None
     recipient_name: str
     phone_number: str
     zipcode: str
     address_line1: str
-    address_line2: Optional[str]
-    order_memo: Optional[str]
+    address_line2: str | None
+    order_memo: str | None
     created_at: datetime
     updated_at: datetime
-    items: List[OrderItemResponse]
 
 
 class CreateOrderItemRequest(BaseModel):
@@ -51,9 +50,9 @@ class CreateOrderRequest(BaseModel):
     phone_number: str
     zipcode: str
     address_line1: str
-    address_line2: Optional[str]
-    order_memo: Optional[str]
-    user_coupon_id: Optional[str]
+    address_line2: str | None
+    order_memo: str | None
+    user_coupon_id: str | None
     items: List[CreateOrderItemRequest]
 
 
@@ -101,7 +100,7 @@ def get_orders(
     total_count, orders = order_service.get_orders(page, items_per_page)
     return {"total_count": total_count, "orders": orders}
 
-
+"""
 @router.put("", response_model=OrderResponse)
 @inject
 def update_order(
@@ -111,7 +110,6 @@ def update_order(
 ):
     return order_service.update_order(order_id, status)
 
-
 @router.delete("", status_code=204)
 @inject
 def delete_order(
@@ -119,3 +117,4 @@ def delete_order(
     order_service: OrderService = Depends(Provide[Container.order_service]),
 ):
     order_service.delete_order(order_id)
+"""

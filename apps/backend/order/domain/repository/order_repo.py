@@ -1,7 +1,7 @@
 from typing import List
 from abc import ABCMeta, abstractmethod
 
-from order.domain.order import Order
+from order.domain.order import Order, Coupon, CouponWallet, OrderItem
 
 
 class IOrderRepository(metaclass=ABCMeta):
@@ -20,6 +20,13 @@ class IOrderRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
+        """
+        Get a paginated list of orders.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def update(self, order: Order):
         """
         Update an existing order.
@@ -34,8 +41,15 @@ class IOrderRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
+    def save_order_item(self, order_item: OrderItem):
         """
-        Get a paginated list of orders.
+        Save a new order item.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_coupon_by_id(self, coupon_id: str) -> Coupon:
+        """
+        Find a coupon by its ID.
         """
         raise NotImplementedError
