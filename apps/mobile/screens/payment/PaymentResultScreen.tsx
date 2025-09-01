@@ -52,7 +52,11 @@ export default function PaymentResultScreen() {
 
   return (
     <View style={styles.safe}>
-      <CustomHeader showBackButton onPressBack={() => navigation.goBack()} />
+      <CustomHeader
+        showBackButton
+        onPressBack={() => navigation.goBack()}
+        onPressHome={() => navigation.navigate("Main")}
+      />
       <View style={styles.container}>
         <Text accessibilityRole="image" style={styles.icon}>
           {leadIcon}
