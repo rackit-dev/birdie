@@ -23,6 +23,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import useLikeStore, { Product } from "@/store/useLikeStore";
+import { useCartStore } from "../store/useCartStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -73,13 +74,14 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
   const [pendingQty, setPendingQty] = useState<number>(1);
-  const [cartCount, setCartCount] = useState(0);
   const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
   const [detailImages, setDetailImages] = useState<string[]>([]);
   const { width: screenWidth } = useWindowDimensions();
   const [imageHeights, setImageHeights] = useState<number[]>([]);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+  const fetchCartCount = useCartStore((s) => s.fetchCount);
+  const invalidateCart = useCartStore((s) => s.invalidate);
 
   const USER_ID = "test_user1";
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -97,7 +99,8 @@ export default function ProductDetail() {
   useFocusEffect(
     useCallback(() => {
       fetchLikedItems(USER_ID);
-    }, [])
+      fetchCartCount(USER_ID);
+    }, [fetchLikedItems, fetchCartCount])
   );
 
   const handleDeleteLike = async (product: Product) => {
@@ -114,23 +117,6 @@ export default function ProductDetail() {
       console.error("좋아요 삭제 실패:", err);
     }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchCartCount = async () => {
-        try {
-          const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: "test_user" },
-          });
-          setCartCount(res.data.total_count);
-        } catch (err) {
-          console.error("장바구니 개수 불러오기 실패:", err);
-        }
-      };
-      fetchLikedItems(USER_ID);
-      fetchCartCount();
-    }, [id])
-  );
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -430,7 +416,6 @@ export default function ProductDetail() {
         onPressBack={() => navigation.goBack()}
         onPressSearch={() => navigation.navigate("Search")}
         onPressCart={() => navigation.navigate("Cart")}
-        cartCount={cartCount}
       />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -698,7 +683,7 @@ export default function ProductDetail() {
               onPress={async () => {
                 try {
                   const res = await axios.post(`${API_URL}/cartitems`, {
-                    user_id: "test_user",
+                    user_id: USER_ID,
                     product_id: product.id,
                     product_option_id: selectedOption,
                     quantity: quantity,
@@ -708,10 +693,12 @@ export default function ProductDetail() {
                   setTimeout(() => setCartSuccessVisible(false), 2000);
                   setShowModal(false);
 
-                  const cartRes = await axios.get(`${API_URL}/cartitems`, {
-                    params: { user_id: "test_user" },
-                  });
-                  setCartCount(cartRes.data.total_count);
+                  // 전역 스토어 갱신
+                  if (invalidateCart) {
+                    await invalidateCart(USER_ID);
+                  } else {
+                    await fetchCartCount(USER_ID);
+                  }
                 } catch (error: any) {
                   if (error?.response?.status === 422) {
                     setAlreadyInCartAlert(true);
@@ -733,6 +720,7 @@ export default function ProductDetail() {
                   products: [
                     {
                       id: product.id,
+                      brand: product.brand,
                       image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
                       name: product.name.replace(/_/g, " "),
                       option: selectedOption,
@@ -773,10 +761,23 @@ const styles = StyleSheet.create({
   headerIcon: { padding: 4 },
   headerIconsRight: { flexDirection: "row", alignItems: "center" },
   productImage: { width: "100%", height: 450 },
-  brandText: { fontSize: 16, fontWeight: "600" },
-  smallText: { fontSize: 14 },
-  productInfo: { paddingHorizontal: 16, paddingBottom: 12, paddingTop: 15 },
-  title: { fontSize: 22, fontWeight: "600", marginVertical: 5 },
+  brandText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  smallText: {
+    fontSize: 14,
+  },
+  productInfo: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 15,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginVertical: 5,
+  },
   priceOriginal: {
     fontSize: 16,
     color: "#999",
@@ -794,7 +795,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  sectionTitle: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
   tabBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -804,9 +809,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginTop: 5,
   },
-  tabText: { fontSize: 15, color: "#999" },
-  tabTextActive: { color: "#000", fontWeight: "700" },
-  tabContent: { padding: 20 },
+  tabText: {
+    fontSize: 15,
+    color: "#999",
+  },
+  tabTextActive: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  tabContent: {
+    padding: 20,
+  },
   fixedBuy: {
     position: "absolute",
     bottom: 0,
@@ -821,7 +834,10 @@ const styles = StyleSheet.create({
     borderTopColor: "#eee",
     borderTopWidth: 1,
   },
-  likeButton: { flexDirection: "row", alignItems: "center" },
+  likeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   likeText: {
     marginLeft: 4,
     marginRight: 4,

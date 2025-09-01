@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity, Image, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCartStore } from "../store/useCartStore";
 
 type Props = {
   title?: string;
@@ -22,9 +23,9 @@ const CustomHeader: React.FC<Props> = ({
   onPressBack,
   onPressSearch,
   onPressCart,
-  cartCount = 0,
 }) => {
   const insets = useSafeAreaInsets();
+  const cartCount = useCartStore((state) => state.count);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

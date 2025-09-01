@@ -13,6 +13,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
+import { useCartStore } from "../store/useCartStore";
 import axios from "axios";
 
 const categories = [
@@ -44,31 +45,18 @@ export default function CategoryScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
-  const [cartCount, setCartCount] = useState(0);
-
+  const fetchCount = useCartStore((s) => s.fetchCount);
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCartCount = async () => {
-        try {
-          const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: "test_user" },
-          });
-          setCartCount(res.data.total_count);
-        } catch (err) {
-          console.error("장바구니 개수 불러오기 실패:", err);
-        }
-      };
-
-      fetchCartCount();
-    }, [])
+      fetchCount("test_user1");
+    }, [fetchCount])
   );
 
   return (
     <View style={{ flex: 1 }}>
       <CustomHeader
-        cartCount={cartCount}
         onPressCart={() => console.log("장바구니")}
         customLeftComponent={
           <Pressable

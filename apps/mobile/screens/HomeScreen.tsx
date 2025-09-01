@@ -9,6 +9,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import LinearGradient from "react-native-linear-gradient";
+import { useCartStore } from "../store/useCartStore";
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
@@ -21,8 +22,8 @@ export default function HomeScreen() {
   const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
-  const [cartCount, setCartCount] = useState(0);
   const [randomSlogan, setRandomSlogan] = useState("");
+  const fetchCount = useCartStore((s) => s.fetchCount);
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
@@ -56,20 +57,9 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCartCount = async () => {
-        try {
-          const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: USER_ID },
-          });
-          setCartCount(res.data.total_count);
-        } catch (err) {
-          console.error("장바구니 개수 불러오기 실패:", err);
-        }
-      };
-
-      fetchCartCount();
+      fetchCount(USER_ID);
       fetchLikedItems(USER_ID);
-    }, [])
+    }, [fetchCount, fetchLikedItems])
   );
 
   useEffect(() => {
@@ -160,7 +150,6 @@ export default function HomeScreen() {
         logo
         onPressSearch={() => navigation.navigate("Search")}
         onPressCart={() => navigation.navigate("Cart")}
-        cartCount={cartCount}
       />
       <FlatList
         ListHeaderComponent={
