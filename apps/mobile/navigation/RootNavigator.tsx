@@ -26,6 +26,7 @@ export type RootStackParamList = {
     fromCart: boolean;
     products: {
       id: string;
+      brand: string;
       name: string;
       option: string;
       quantity: number;
@@ -36,7 +37,14 @@ export type RootStackParamList = {
   ProductList: { category: string; brand: string };
   Search: undefined;
   PaymentWebview: { params: any };
-  PaymentResult: any;
+  PaymentResult: {
+    imp_success?: boolean | string;
+    success?: boolean | string;
+    imp_uid?: string;
+    merchant_uid?: string;
+    error_msg?: string;
+    error_code?: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

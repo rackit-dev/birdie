@@ -30,13 +30,25 @@ export default function OrderPaymentScreen() {
   const [installment, setInstallment] = useState("일시불");
   const [vbankModalVisible, setVbankModalVisible] = useState(false);
   const [selectedVbank, setSelectedVbank] = useState("은행을 선택해 주세요");
-
-  const route = useRoute<RouteProp<RootStackParamList, "Purchase">>();
-  const { fromCart, products } = route.params;
-
+  const formatName = (name: string) => name.replace(/_/g, " ");
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const amount = products[0].price - parseInt(point, 10);
+  const route = useRoute<RouteProp<RootStackParamList, "Purchase">>();
+  const products = route.params.products;
+
+  const totalProductPrice = products.reduce(
+    (acc, product) => acc + product.price,
+    0
+  );
+  const finalAmount = totalProductPrice - parseInt(point, 10);
+
+  const groupedByBrand = products.reduce((acc, product) => {
+    if (!acc[product.brand]) {
+      acc[product.brand] = [];
+    }
+    acc[product.brand].push(product);
+    return acc;
+  }, {} as Record<string, typeof products>);
 
   const cardCodeMap: { [key: string]: string } = {
     BC: "361",
@@ -125,6 +137,11 @@ export default function OrderPaymentScreen() {
         if (selectedCardCode) {
           extraData.card_code = selectedCardCode;
         }
+
+        if (installment !== "일시불") {
+          const months = parseInt(installment.replace("개월", ""), 10);
+          extraData.card_quota = months.toString();
+        }
       } else if (normalType === "phone") {
         pay_method = "phone";
       } else if (normalType === "vbank") {
@@ -141,17 +158,17 @@ export default function OrderPaymentScreen() {
       pay_method,
       digital: false,
       merchant_uid: `mid_${Date.now()}`,
-      name: products[0].name,
-      amount: amount.toString(),
+      name: `${products.length}개 상품`,
+      amount: "2000",
+      // amount: finalAmount.toString(),
       buyer_name: "강지웅",
-      buyer_tel: "01055482364",
+      buyer_tel: "01099999999",
       buyer_email: "jiwoong@example.com",
       app_scheme: "myapp",
-      m_redirect_url: "https://your-backend.com/payment/callback",
+      m_redirect_url: "https://example.com", // 실제 앱 배포시엔 이 주소가 백엔드 or 앱딥링크 처리 페이지여야함
+      escrow: normalType === "vbank",
       ...extraData,
     };
-
-    console.log("결제 요청 데이터:", paymentData);
 
     navigation.navigate("PaymentWebview", { params: paymentData });
   };
@@ -179,25 +196,35 @@ export default function OrderPaymentScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.title}>주문 상품</Text>
-          <View style={styles.productBox}>
-            <Image
-              source={{ uri: products[0].image }}
-              style={styles.productImage}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.productName}>{products[0].name}</Text>
-              <Text style={styles.option}>
-                {products[0].option} / {products[0].quantity}개
-              </Text>
-              <Text style={styles.price}>
-                {products[0].price.toLocaleString()}원
-              </Text>
+          <Text style={styles.title}>주문 상품 {products.length}개</Text>
+          {Object.entries(groupedByBrand).map(([brand, items]) => (
+            <View key={brand}>
+              {items.map((item, index) => (
+                <View
+                  key={`${item.name}-${item.option}-${index}`}
+                  style={[styles.productBox, { marginBottom: 10 }]}
+                >
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.productImage}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.productName}>{brand}</Text>
+                    <Text style={styles.option}>
+                      {formatName(item.name)} {"\n"}
+                      {item.option} / {item.quantity}개
+                    </Text>
+                    <Text style={styles.price}>
+                      {item.price.toLocaleString()}원
+                    </Text>
+                  </View>
+                </View>
+              ))}
+              <TouchableOpacity activeOpacity={1} style={styles.couponBtn}>
+                <Text>쿠폰 사용</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-          <TouchableOpacity activeOpacity={1} style={styles.couponBtn}>
-            <Text>쿠폰 사용</Text>
-          </TouchableOpacity>
+          ))}
         </View>
 
         <View style={styles.section}>
@@ -447,7 +474,7 @@ export default function OrderPaymentScreen() {
           <Text style={styles.title}>결제 금액</Text>
           <View style={styles.rowBetween}>
             <Text>총 상품금액</Text>
-            <Text>{products[0].price.toLocaleString()}원</Text>
+            <Text>{totalProductPrice.toLocaleString()}원</Text>
           </View>
           <View style={styles.rowBetween}>
             <Text>적립금 할인</Text>
@@ -459,13 +486,15 @@ export default function OrderPaymentScreen() {
           </View>
           <View style={styles.totalBox}>
             <Text style={styles.totalText}>총 결제금액</Text>
-            <Text style={styles.totalPrice}>{amount.toLocaleString()}원</Text>
+            <Text style={styles.totalPrice}>
+              {finalAmount.toLocaleString()}원
+            </Text>
           </View>
         </View>
       </ScrollView>
       <TouchableOpacity style={styles.paymentBtn} onPress={handlePayment}>
         <Text style={styles.paymentBtnText}>
-          {amount.toLocaleString()}원 결제하기
+          {finalAmount.toLocaleString()}원 결제하기
         </Text>
       </TouchableOpacity>
     </View>

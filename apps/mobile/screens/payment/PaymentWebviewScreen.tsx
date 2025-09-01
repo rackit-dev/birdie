@@ -19,15 +19,14 @@ type PaymentWebviewScreenNavProp = NativeStackNavigationProp<
 export default function PaymentWebviewScreen() {
   const navigation = useNavigation<PaymentWebviewScreenNavProp>();
   const route = useRoute<PaymentWebviewScreenRouteProp>();
-
-  const { params } = route.params;
+  const rawParams = route.params.params;
   const userCode = "imp83677210"; // 아임포트 기본 테스트 코드
 
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: "center" }}>
       <IMP.Payment
         userCode={userCode}
-        data={params}
+        data={rawParams}
         loading={<Loading />}
         callback={(response) => {
           navigation.replace("PaymentResult", response);
