@@ -16,8 +16,13 @@ class OrderItemResponse(BaseModel):
     id: str
     order_id: str
     product_id: str
+    coupon_wallet_id: str | None
+    status: str
     quantity: int
-    price: int
+    unit_price: int
+    coupon_discount_price: int
+    point_discount_price: int
+    final_price: int
     created_at: datetime
     updated_at: datetime
 
@@ -27,9 +32,9 @@ class OrderResponse(BaseModel):
     user_id: str
     status: str
     subtotal_price: int
-    discount_price: int
+    coupon_discount_price: int
+    point_discount_price: int
     total_price: int
-    order_coupon_id: str | None
     recipient_name: str
     phone_number: str
     zipcode: str
@@ -42,19 +47,26 @@ class OrderResponse(BaseModel):
 
 class CreateOrderItemRequest(BaseModel):
     product_id: str
+    coupon_wallet_id: str | None = None
     quantity: int = Field(le=0, ge=99999)
-    price: int = Field(le=0, ge=999999999)
+    unit_price: int = Field(le=0, ge=999999999)
+    coupon_discount_price: int = Field(le=0, ge=999999999, default=0)
+    point_discount_price: int = Field(le=0, ge=999999999, default=0)
+    final_price: int = Field(le=0, ge=999999999)
 
 
 class CreateOrderRequest(BaseModel):
     user_id: str
+    subtotal_price: int = Field(le=0, ge=999999999)
+    coupon_discount_price: int = Field(le=0, ge=999999999)
+    point_discount_price: int = Field(le=0, ge=999999999)
+    total_price: int = Field(le=0, ge=999999999)
     recipient_name: str = Field(min_length=1, max_length=32)
     phone_number: str = Field(min_length=10, max_length=15)
     zipcode: str = Field(min_length=5, max_length=10)
     address_line1: str = Field(min_length=1, max_length=100)
     address_line2: str | None = Field(default=None, max_length=100)
     order_memo: str | None = Field(default=None, max_length=100)
-    user_coupon_id: str | None
     items: List[CreateOrderItemRequest]
 
 
@@ -66,13 +78,16 @@ def create_order(
 ):
     order = order_service.create_order(
         user_id=request.user_id,
+        subtotal_price=request.subtotal_price,
+        coupon_discount_price=request.coupon_discount_price,
+        point_discount_price=request.point_discount_price,
+        total_price=request.total_price,
         recipient_name=request.recipient_name,
         phone_number=request.phone_number,
         zipcode=request.zipcode,
         address_line1=request.address_line1,
         address_line2=request.address_line2,
         order_memo=request.order_memo,
-        user_coupon_id=request.user_coupon_id,
         items=request.items,
     )
     return order
