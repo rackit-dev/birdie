@@ -8,9 +8,9 @@ class Order:
     user_id: str
     status: str
     subtotal_price: int
-    discount_price: int
+    coupon_discount_price: int
+    point_discount_price: int
     total_price: int
-    order_coupon_id: str | None
     recipient_name: str
     phone_number: str
     zipcode: str
@@ -45,7 +45,6 @@ class CouponWallet:
     coupon_id: str
     is_used: bool
     used_at: datetime | None
-    order_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -55,7 +54,36 @@ class OrderItem:
     id: str
     order_id: str
     product_id: str
+    coupon_wallet_id: str | None
+    status: str
     quantity: int
-    price: int
+    unit_price: int
+    coupon_discount_price: int
+    point_discount_price: int
+    final_price: int
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class Payment:
+    id: str
+    order_id: str
+    status: str
+    method: str
+    amount: int
+    paid_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class PointTransaction:
+    id: str
+    user_id: str
+    order_id: str | None
+    type: str
+    amount: int
+    balance_after: int
     created_at: datetime
     updated_at: datetime
