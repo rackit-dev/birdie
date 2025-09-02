@@ -36,15 +36,15 @@ class Coupon(Base):
     __tablename__ = "Coupon"
 
     id = mapped_column(String(36), primary_key=True)
-    code = mapped_column(String(32), unique=True, nullable=True)  # Limit to 32 characters
-    description = mapped_column(String(36), nullable=True)        # Limit to 36 characters
+    code = mapped_column(String(64), unique=True, nullable=True)
+    description = mapped_column(String(36), nullable=True)     
 
     discount_type = mapped_column(Enum("비율", "정액", name="discount_type"), nullable=False)
-    discount_rate = mapped_column(Numeric(2, 0), nullable=True)  # 할인율 (~99%)
+    discount_rate = mapped_column(Numeric(2, 0), nullable=True)    # 할인율 (~99%)
     discount_amount = mapped_column(Numeric(7, 0), nullable=True)  # 금액 (~9,999,999원)
 
-    min_order_amount = mapped_column(Numeric(7, 0), default=0)  # 최소 주문 금액 조건
-    max_discount_amount = mapped_column(Numeric(7, 0), nullable=False)  # 퍼센트 할인 시 상한선
+    min_order_amount = mapped_column(Numeric(7, 0), default=0)          # 최소 주문 금액 조건
+    max_discount_amount = mapped_column(Numeric(7, 0), nullable=False)  # 할인 시 상한선
 
     valid_from = mapped_column(DateTime, nullable=False)
     valid_until = mapped_column(DateTime, nullable=False)
