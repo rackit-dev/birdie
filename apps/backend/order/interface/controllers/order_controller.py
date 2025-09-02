@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from containers import Container
 from order.application.order_service import OrderService
@@ -40,18 +40,18 @@ class OrderResponse(BaseModel):
 
 class CreateOrderItemRequest(BaseModel):
     product_id: str
-    quantity: int
-    price: int
+    quantity: int = Field(le=0, ge=99999)
+    price: int = Field(le=0, ge=999999999)
 
 
 class CreateOrderRequest(BaseModel):
     user_id: str
-    recipient_name: str
-    phone_number: str
-    zipcode: str
-    address_line1: str
-    address_line2: str | None
-    order_memo: str | None
+    recipient_name: str = Field(min_length=1, max_length=32)
+    phone_number: str = Field(min_length=10, max_length=15)
+    zipcode: str = Field(min_length=5, max_length=10)
+    address_line1: str = Field(min_length=1, max_length=100)
+    address_line2: str | None = Field(default=None, max_length=100)
+    order_memo: str | None = Field(default=None, max_length=100)
     user_coupon_id: str | None
     items: List[CreateOrderItemRequest]
 
