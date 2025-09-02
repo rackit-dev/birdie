@@ -19,9 +19,9 @@ class OrderRepository(IOrderRepository):
             user_id=order.user_id,
             status=order.status,
             subtotal_price=order.subtotal_price,
-            discount_price=order.discount_price,
+            coupon_discount_price=order.coupon_discount_price,
+            point_discount_price=order.point_discount_price,
             total_price=order.total_price,
-            order_coupon_id=order.order_coupon_id,
             recipient_name=order.recipient_name,
             phone_number=order.phone_number,
             zipcode=order.zipcode,
@@ -71,10 +71,15 @@ class OrderRepository(IOrderRepository):
     def save_order_item(self, order_item: OrderItemVO):
         new_order_item = OrderItem(
             id=order_item.id,
-            order_id=order_item.order_id,  # Ensure order_id is set correctly
+            order_id=order_item.order_id,
             product_id=order_item.product_id,
+            coupon_wallet_id=order_item.coupon_wallet_id,
+            status=order_item.status,
             quantity=order_item.quantity,
-            price=order_item.price,
+            unit_price=order_item.unit_price,
+            coupon_discount_price=order_item.coupon_discount_price,
+            point_discount_price=order_item.point_discount_price,
+            final_price=order_item.final_price,
             created_at=order_item.created_at,
             updated_at=order_item.updated_at,
         )
@@ -85,7 +90,7 @@ class OrderRepository(IOrderRepository):
     def find_coupon_by_id(self, coupon_id: str) -> CouponVO:
         with SessionLocal() as db:
             coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
-            if not coupon or not coupon.is_active:
+            if not coupon:
                 raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
             return CouponVO(**row_to_dict(coupon))
 
@@ -134,7 +139,6 @@ class OrderRepository(IOrderRepository):
             coupon_id=coupon_wallet.coupon_id,
             is_used=coupon_wallet.is_used,
             used_at=coupon_wallet.used_at,
-            order_id=coupon_wallet.order_id,
             created_at=coupon_wallet.created_at,
             updated_at=coupon_wallet.updated_at,
         )

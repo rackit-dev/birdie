@@ -48,19 +48,19 @@ class OrderResponse(BaseModel):
 class CreateOrderItemRequest(BaseModel):
     product_id: str
     coupon_wallet_id: str | None = None
-    quantity: int = Field(le=0, ge=99999)
-    unit_price: int = Field(le=0, ge=999999999)
-    coupon_discount_price: int = Field(le=0, ge=999999999, default=0)
-    point_discount_price: int = Field(le=0, ge=999999999, default=0)
-    final_price: int = Field(le=0, ge=999999999)
+    quantity: int = Field(ge=0, le=99999)
+    unit_price: int = Field(ge=0, le=999999999)
+    coupon_discount_price: int = Field(ge=0, le=999999999, default=0)
+    point_discount_price: int = Field(ge=0, le=999999999, default=0)
+    final_price: int = Field(ge=0, le=999999999)
 
 
 class CreateOrderRequest(BaseModel):
     user_id: str
-    subtotal_price: int = Field(le=0, ge=999999999)
-    coupon_discount_price: int = Field(le=0, ge=999999999)
-    point_discount_price: int = Field(le=0, ge=999999999)
-    total_price: int = Field(le=0, ge=999999999)
+    subtotal_price: int = Field(ge=0, le=999999999)
+    coupon_discount_price: int = Field(ge=0, le=999999999)
+    point_discount_price: int = Field(ge=0, le=999999999)
+    total_price: int = Field(ge=0, le=999999999)
     recipient_name: str = Field(min_length=1, max_length=32)
     phone_number: str = Field(min_length=10, max_length=15)
     zipcode: str = Field(min_length=5, max_length=10)

@@ -49,7 +49,6 @@ class CouponWalletResponse(BaseModel):
     coupon_id: str
     is_used: bool
     used_at: datetime | None
-    order_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -64,7 +63,7 @@ class GetCouponWalletsResponse(BaseModel):
     coupon_wallets: List[CouponWalletResponse]
 
 
-@router.post("", response_model=CouponResponse)
+@router.post("", status_code=201, response_model=CouponResponse)
 @inject
 def create_coupon(
     request: CreateCouponRequest,
@@ -107,16 +106,17 @@ def get_coupons(
     return {"total_count": total_count, "coupons": coupons}
 
 
-@router.delete("", status_code=204)
+@router.put("", response_model=CouponResponse)
 @inject
-def delete_coupon(
+def inactive_coupon(
     coupon_id: str,
     order_service: OrderService = Depends(Provide[Container.order_service]),
 ):
-    order_service.mark_coupon_inactive(coupon_id)
+    coupon = order_service.mark_coupon_inactive(coupon_id)
+    return coupon
 
 
-@router.post("/wallet", response_model=CouponWalletResponse)
+@router.post("/wallet", status_code=201, response_model=CouponWalletResponse)
 @inject
 def create_coupon_wallet(
     request: CreateCouponWalletRequest,
