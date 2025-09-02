@@ -87,3 +87,41 @@ class OrderRepository(IOrderRepository):
             if not coupon or not coupon.is_active:
                 raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
             return CouponVO(**row_to_dict(coupon))
+
+    def save_coupon(self, coupon: CouponVO):
+        new_coupon = Coupon(
+            id=coupon.id,
+            code=coupon.code,
+            description=coupon.description,
+            discount_type=coupon.discount_type,
+            discount_rate=coupon.discount_rate,
+            discount_amount=coupon.discount_amount,
+            min_order_amount=coupon.min_order_amount,
+            max_discount_amount=coupon.max_discount_amount,
+            valid_from=coupon.valid_from,
+            valid_until=coupon.valid_until,
+            is_active=coupon.is_active,
+            created_at=coupon.created_at,
+            updated_at=coupon.updated_at,
+        )
+        with SessionLocal() as db:
+            db.add(new_coupon)
+            db.commit()
+
+    def update_coupon(self, coupon: CouponVO):
+        with SessionLocal() as db:
+            existing_coupon = db.query(Coupon).filter(Coupon.id == coupon.id).first()
+            if not existing_coupon:
+                raise HTTPException(status_code=404, detail="Coupon not found")
+            existing_coupon.is_active = coupon.is_active
+            existing_coupon.updated_at = coupon.updated_at
+            db.add(existing_coupon)
+            db.commit()
+
+    def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[CouponVO]]:
+        with SessionLocal() as db:
+            query = db.query(Coupon)
+            total_count = query.count()
+            offset = (page - 1) * items_per_page
+            coupons = query.limit(items_per_page).offset(offset).all()
+            return total_count, [CouponVO(**row_to_dict(coupon)) for coupon in coupons]

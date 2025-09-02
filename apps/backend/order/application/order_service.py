@@ -108,3 +108,48 @@ class OrderService:
 
     def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
         return self.order_repo.get_orders(page, items_per_page)
+
+    def create_coupon(
+        self,
+        code: str | None,
+        description: str | None,
+        discount_type: str,
+        discount_rate: int | None,
+        discount_amount: int | None,
+        min_order_amount: int,
+        max_discount_amount: int,
+        valid_from: datetime,
+        valid_until: datetime,
+    ) -> Coupon:
+        now = datetime.now()
+        coupon = Coupon(
+            id=self.ulid.generate(),
+            code=code,
+            description=description,
+            discount_type=discount_type,
+            discount_rate=discount_rate,
+            discount_amount=discount_amount,
+            min_order_amount=min_order_amount,
+            max_discount_amount=max_discount_amount,
+            valid_from=valid_from,
+            valid_until=valid_until,
+            is_active=True,
+            created_at=now,
+            updated_at=now,
+        )
+        self.order_repo.save_coupon(coupon)
+        return coupon
+
+    def get_coupon(self, coupon_id: str) -> Coupon:
+        return self.order_repo.find_coupon_by_id(coupon_id)
+
+    def mark_coupon_inactive(self, coupon_id: str):
+        coupon = self.order_repo.find_coupon_by_id(coupon_id)
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        coupon.is_active = False
+        coupon.updated_at = datetime.now()
+        self.order_repo.update_coupon(coupon)
+
+    def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[Coupon]]:
+        return self.order_repo.get_coupons(page, items_per_page)

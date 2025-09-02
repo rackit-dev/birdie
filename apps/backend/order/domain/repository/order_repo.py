@@ -53,3 +53,24 @@ class IOrderRepository(metaclass=ABCMeta):
         Find a coupon by its ID.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def save_coupon(self, coupon: Coupon):
+        """
+        Save a new coupon.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_coupon(self, coupon: Coupon):
+        """
+        Update an existing coupon.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[Coupon]]:
+        """
+        Get a paginated list of coupons.
+        """
+        raise NotImplementedError
