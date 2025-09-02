@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from database import SessionLocal
 from utils.db_utils import row_to_dict
@@ -20,7 +21,7 @@ class OrderRepository(IOrderRepository):
             subtotal_price=order.subtotal_price,
             discount_price=order.discount_price,
             total_price=order.total_price,
-            order_coupon_id=order.user_coupon_id,
+            order_coupon_id=order.order_coupon_id,
             recipient_name=order.recipient_name,
             phone_number=order.phone_number,
             zipcode=order.zipcode,
@@ -125,3 +126,58 @@ class OrderRepository(IOrderRepository):
             offset = (page - 1) * items_per_page
             coupons = query.limit(items_per_page).offset(offset).all()
             return total_count, [CouponVO(**row_to_dict(coupon)) for coupon in coupons]
+
+    def save_coupon_wallet(self, coupon_wallet: CouponWalletVO):
+        new_coupon_wallet = CouponWallet(
+            id=coupon_wallet.id,
+            user_id=coupon_wallet.user_id,
+            coupon_id=coupon_wallet.coupon_id,
+            is_used=coupon_wallet.is_used,
+            used_at=coupon_wallet.used_at,
+            order_id=coupon_wallet.order_id,
+            created_at=coupon_wallet.created_at,
+            updated_at=coupon_wallet.updated_at,
+        )
+        with SessionLocal() as db:
+            try:
+                db.add(new_coupon_wallet)
+                db.commit()
+            except IntegrityError as e:
+                db.rollback()
+                if "foreign key constraint fails" in str(e.orig):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Invalid foreign key: user_id or coupon_id does not exist"
+                    )
+                raise HTTPException(
+                    status_code=500,
+                    detail="An error occurred while saving the coupon wallet"
+                )
+
+    def find_coupon_wallet_by_id(self, coupon_wallet_id: str) -> CouponWalletVO:
+        with SessionLocal() as db:
+            coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == coupon_wallet_id).first()
+            if not coupon_wallet:
+                raise HTTPException(status_code=404, detail="CouponWallet not found")
+            return CouponWalletVO(**row_to_dict(coupon_wallet))
+
+    def delete_coupon_wallet(self, coupon_wallet_id: str):
+        with SessionLocal() as db:
+            coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == coupon_wallet_id).first()
+            if not coupon_wallet:
+                raise HTTPException(status_code=404, detail="CouponWallet not found")
+            db.delete(coupon_wallet)
+            db.commit()
+
+    def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWalletVO]]:
+        with SessionLocal() as db:
+            query = db.query(CouponWallet)
+            total_count = query.count()
+            offset = (page - 1) * items_per_page
+            coupon_wallets = query.limit(items_per_page).offset(offset).all()
+            return total_count, [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
+
+    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWalletVO]:
+        with SessionLocal() as db:
+            coupon_wallets = db.query(CouponWallet).filter(CouponWallet.user_id == user_id).all()
+            return [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]

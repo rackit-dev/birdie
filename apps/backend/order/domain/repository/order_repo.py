@@ -74,3 +74,38 @@ class IOrderRepository(metaclass=ABCMeta):
         Get a paginated list of coupons.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def save_coupon_wallet(self, coupon_wallet: CouponWallet):
+        """
+        Save a new coupon wallet.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_coupon_wallet_by_id(self, coupon_wallet_id: str) -> CouponWallet:
+        """
+        Find a coupon wallet by its ID.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_coupon_wallet(self, coupon_wallet_id: str):
+        """
+        Delete a coupon wallet by its ID.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWallet]]:
+        """
+        Get a paginated list of coupon wallets.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
+        """
+        Get all coupon wallets for a specific user.
+        """
+        raise NotImplementedError

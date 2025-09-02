@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from dependency_injector.wiring import inject
 from fastapi import HTTPException
@@ -121,7 +121,31 @@ class OrderService:
         valid_from: datetime,
         valid_until: datetime,
     ) -> Coupon:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)  # Ensure `now` is timezone-aware
+
+        # Validation logic
+        if discount_type not in ["비율", "정액"]:
+            raise HTTPException(status_code=400, detail="Invalid discount type. Must be '비율' or '정액'.")
+
+        if discount_type == "비율":
+            if discount_rate is None or not (0 < discount_rate <= 99):
+                raise HTTPException(status_code=400, detail="Discount rate must be between 1 and 99 for '비율' type.")
+            if discount_amount is not None:
+                raise HTTPException(status_code=400, detail="Discount amount must be None for '비율' type.")
+
+        if discount_type == "정액":
+            if discount_amount is None or discount_amount <= 0:
+                raise HTTPException(status_code=400, detail="Discount amount must be greater than 0 for '정액' type.")
+            if discount_rate is not None:
+                raise HTTPException(status_code=400, detail="Discount rate must be None for '정액' type.")
+
+        if valid_from >= valid_until:
+            raise HTTPException(status_code=400, detail="valid_from must be earlier than valid_until.")
+
+        if valid_until <= now:
+            raise HTTPException(status_code=400, detail="valid_until must be a future date.")
+
+        # Create coupon
         coupon = Coupon(
             id=self.ulid.generate(),
             code=code,
@@ -153,3 +177,33 @@ class OrderService:
 
     def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[Coupon]]:
         return self.order_repo.get_coupons(page, items_per_page)
+
+    def create_coupon_wallet(self, user_id: str, coupon_id: str) -> CouponWallet:
+        now = datetime.now()
+        coupon_wallet = CouponWallet(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            coupon_id=coupon_id,
+            is_used=False,
+            used_at=None,
+            order_id=None,
+            created_at=now,
+            updated_at=now,
+        )
+        self.order_repo.save_coupon_wallet(coupon_wallet)
+        return coupon_wallet
+
+    def get_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
+        return self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+
+    def delete_coupon_wallet(self, coupon_wallet_id: str):
+        coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+        if not coupon_wallet:
+            raise HTTPException(status_code=404, detail="CouponWallet not found")
+        self.order_repo.delete_coupon_wallet(coupon_wallet_id)
+
+    def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWallet]]:
+        return self.order_repo.get_coupon_wallets(page, items_per_page)
+
+    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
+        return self.order_repo.get_coupon_wallets_by_user(user_id)
