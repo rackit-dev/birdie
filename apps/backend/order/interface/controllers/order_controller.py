@@ -3,6 +3,8 @@ from typing import List
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
+import json
+from pathlib import Path
 
 from containers import Container
 from order.application.order_service import OrderService
@@ -99,6 +101,16 @@ def get_orders(
 ):
     total_count, orders = order_service.get_orders(page, items_per_page)
     return {"total_count": total_count, "orders": orders}
+
+
+@router.post("/payment/test")
+def payment_test(request: dict):
+    file_path = Path(f"tmp/payment_test_request_{datetime.now().isoformat()}.json")
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with file_path.open("w") as file:
+        json.dump(request, file, indent=4)
+    return request
+
 
 """
 @router.put("", response_model=OrderResponse)
