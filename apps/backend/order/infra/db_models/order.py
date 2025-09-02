@@ -83,3 +83,33 @@ class OrderItem(Base):
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
+
+
+class Payment(Base):
+    __tablename__ = "Payment"
+
+    id = mapped_column(String(36), primary_key=True)
+    order_id = mapped_column(ForeignKey("Orders.id"), nullable=False, unique=True)
+
+    status = mapped_column(Enum("대기중", "성공", "실패", name="status"), default="대기중")
+    method = mapped_column(Enum("카드", "휴대폰", "카카오페이", "토스페이", "포인트", name="method"), nullable=False)
+    amount = mapped_column(Numeric(10, 0), nullable=False)
+    paid_at = mapped_column(DateTime, nullable=True)
+
+    created_at = mapped_column(DateTime, nullable=False)
+    updated_at = mapped_column(DateTime, nullable=False)
+
+
+class PointTransaction(Base):
+    __tablename__ = "PointTransaction"
+
+    id = mapped_column(String(36), primary_key=True)
+    user_id = mapped_column(ForeignKey("User.id"), nullable=False)
+    order_id = mapped_column(ForeignKey("Orders.id"), nullable=True)
+
+    type = mapped_column(Enum("적립", "사용", "환불", name="type"), nullable=False)
+    amount = mapped_column(Numeric(5, 0), nullable=False)
+    balance_after = mapped_column(Numeric(10, 0), nullable=False)
+
+    created_at = mapped_column(DateTime, nullable=False)
+    updated_at = mapped_column(DateTime, nullable=False)

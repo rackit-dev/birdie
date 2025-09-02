@@ -59,3 +59,27 @@ class OrderItem:
     price: int
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class Payment:
+    id: str
+    order_id: str
+    status: str
+    method: str
+    amount: int
+    paid_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class PointTransaction:
+    id: str
+    user_id: str
+    order_id: str | None
+    type: str
+    amount: int
+    balance_after: int
+    created_at: datetime
+    updated_at: datetime
