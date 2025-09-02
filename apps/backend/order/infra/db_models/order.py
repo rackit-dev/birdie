@@ -10,16 +10,15 @@ class Order(Base):
     user_id = mapped_column(ForeignKey("User.id"), nullable=False)
 
     status = mapped_column(
-        Enum("결제대기", "결제완료", "상품준비중", "배송중", "배송완료", "구매확정", "주문취소", name="order_status"),
+        Enum("결제대기", "결제완료", "상품준비중", "배송중", "배송완료", "구매확정", "주문취소", "부분취소", name="status"),
         default="결제대기",
         nullable=False
     )
 
-    subtotal_price = mapped_column(Numeric(10, 0), nullable=False)  # 상품 원가 합계
-    discount_price = mapped_column(Numeric(10, 0), default=0)       # 할인된 금액
-    total_price = mapped_column(Numeric(10, 0), nullable=False)     # 최종 결제 금액
-
-    order_coupon_id = mapped_column(ForeignKey("CouponWallet.id"), nullable=True)  # 적용된 쿠폰 (사용자 쿠폰 지갑에서)
+    subtotal_price = mapped_column(Numeric(10, 0), nullable=False)   # 상품 원가 합계
+    coupon_discount_price = mapped_column(Numeric(10, 0), default=0) # 할인된 금액 (쿠폰)
+    point_discount_price = mapped_column(Numeric(10, 0), default=0)  # 할인된 금액 (포인트)
+    total_price = mapped_column(Numeric(10, 0), nullable=False)      # 최종 결제 금액
 
     # 배송지 (스냅샷)
     recipient_name = mapped_column(String(32), nullable=False)
@@ -64,7 +63,6 @@ class CouponWallet(Base):
 
     is_used = mapped_column(Boolean, default=False)
     used_at = mapped_column(DateTime, nullable=True)
-    order_id = mapped_column(String(36), nullable=True)
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
@@ -76,10 +74,16 @@ class OrderItem(Base):
     id = mapped_column(String(36), primary_key=True)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False)
     product_id = mapped_column(ForeignKey("Product.id"), nullable=False)
+    coupon_wallet_id = mapped_column(ForeignKey("CouponWallet.id"), nullable=True)
+
+    status = mapped_column(Enum("주문완료", "주문취소", "환불", name="status"), default="주문완료")
 
     # 상품 정보(스냅샷)
     quantity = mapped_column(Numeric(5, 0), nullable=False)
-    price = mapped_column(Numeric(10, 0), nullable=False)
+    unit_price = mapped_column(Numeric(10, 0), nullable=False)
+    coupon_discount_price = mapped_column(Numeric(10, 0), default=0)  # 할인된 금액 (쿠폰)
+    point_discount_price = mapped_column(Numeric(10, 0), default=0)   # 할인된 금액 (포인트)
+    final_price = mapped_column(Numeric(10, 0), nullable=False)       # 최종 결제 금액
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
@@ -107,7 +111,7 @@ class PointTransaction(Base):
     user_id = mapped_column(ForeignKey("User.id"), nullable=False)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=True)
 
-    type = mapped_column(Enum("적립", "사용", "환불", name="type"), nullable=False)
+    type = mapped_column(Enum("적립", "사용", "취소", name="type"), nullable=False)
     amount = mapped_column(Numeric(5, 0), nullable=False)
     balance_after = mapped_column(Numeric(10, 0), nullable=False)
 
