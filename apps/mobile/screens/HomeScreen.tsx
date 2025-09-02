@@ -475,8 +475,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   bannerWrapper: {
     width: "95%",
-    aspectRatio: 5 / 5,
-    marginBottom: 35,
+    aspectRatio: 4.5 / 5,
+    marginBottom: 27,
     alignSelf: "center",
     position: "relative",
   },
@@ -493,7 +493,6 @@ const styles = StyleSheet.create({
     height: "60%",
     borderRadius: 10,
   },
-
   overlay: {
     position: "absolute",
     bottom: 0,
@@ -503,21 +502,20 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "flex-start",
     paddingLeft: 20,
-    paddingBottom: 30,
+    paddingBottom: 20,
     backgroundColor: "transparent",
     borderRadius: 10,
     pointerEvents: "none",
   },
   sloganText: {
-    fontFamily: "P-Extra-Bold",
+    fontFamily: "P-Bold",
     fontSize: 28,
     color: "#fff",
     textAlign: "left",
-    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowColor: "rgba(45, 45, 45, 0.6)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
   },
-
   textContainer: {
     width: "100%",
     alignItems: "flex-start",

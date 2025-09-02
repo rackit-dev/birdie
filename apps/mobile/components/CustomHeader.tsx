@@ -35,11 +35,7 @@ const CustomHeader: React.FC<Props> = ({
         {customLeftComponent ? (
           customLeftComponent
         ) : logo ? (
-          <Image
-            source={require("../assets/images/logos/logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Text style={styles.appName}>YOUNG'S MINTION</Text>
         ) : showBackButton && title ? (
           <View style={styles.backWithTitle}>
             <TouchableOpacity
@@ -96,10 +92,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    height: 120,
+    height: 100,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     position: "relative",
   },
   left: {
@@ -117,9 +113,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000",
   },
-  logo: {
-    width: 100,
-    height: 40,
+  appName: {
+    fontFamily: "P-Bold",
+    fontSize: 21,
+    alignSelf: "center",
+    textAlign: "center",
+    marginTop: 5,
+    color: "#000",
   },
   iconWrapper: {
     marginLeft: 15,

@@ -1,11 +1,10 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
 
 const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -18,9 +17,9 @@ const LoadingScreen: React.FC = () => {
         navigation.replace("Main");
       } else {
         // 테스트용
-        // navigation.replace("Main");
+        navigation.replace("Main");
 
-        navigation.replace("Login");
+        //navigation.replace("Login");
       }
     };
 
@@ -29,10 +28,7 @@ const LoadingScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Image
-        style={styles.logo}
-        source={require("../assets/images/logos/reverse_logo.png")}
-      />
+      <Text style={styles.appName}>YOUNG'S MINTION</Text>
     </View>
   );
 };
@@ -47,6 +43,14 @@ const styles = StyleSheet.create({
   logo: {
     width: 180,
     height: 60,
+  },
+  appName: {
+    fontFamily: "P-Bold",
+    fontSize: 30,
+    alignSelf: "center",
+    textAlign: "center",
+    color: "#fff",
+    letterSpacing: -0.5,
   },
 });
 
