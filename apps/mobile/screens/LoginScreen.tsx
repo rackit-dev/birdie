@@ -1,37 +1,69 @@
-import {
-  View,
-  StyleSheet,
-  Text,
-  Pressable,
-  Alert,
-  Platform,
-  Image,
-} from "react-native";
-import { useState, useEffect } from "react";
-import { WebView } from "react-native-webview";
+import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
+import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
-import { makeRedirectUri } from "expo-auth-session";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
+import { login } from "@react-native-seoul/kakao-login";
 
-WebBrowser.maybeCompleteAuthSession();
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
+const AUTH_ENDPOINT = `${API_BASE}/users/social-login`;
 
 export default function LoginScreen() {
-  const [showWebView, setShowWebView] = useState(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const KAKAO_REST_API_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
-  const REDIRECT_URI = makeRedirectUri({ useProxy: true });
+  async function exchangeWithServer(
+    provider: "KAKAO" | "GOOGLE" | "APPLE",
+    token: string
+  ) {
+    const r = await fetch(AUTH_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `username=${encodeURIComponent(
+        provider
+      )}&password=${encodeURIComponent(token)}`,
+    });
 
-  // 구글로그인 테스트용(https://auth.expo.io/… 형태로 나와야하는데 안 나옴. 빌드 후에 가능)
-  console.log("Redirect URI:", REDIRECT_URI);
+    const raw = await r.text();
+    console.log("status", r.status, "raw", raw);
 
+    let data: any = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {}
+
+    // 서버 응답 키가 'sessionToken' 또는 'token' 등 다를 수 있으니 유연하게
+    const sessionToken = data.sessionToken || data.token || data.access_token;
+
+    if (!r.ok || !sessionToken) {
+      throw new Error(data?.error || `세션 발급 실패 (status ${r.status})`);
+    }
+    return sessionToken as string;
+  }
+
+  // 카카오
+  const handleKakaoLogin = async () => {
+    try {
+      const { accessToken } = await login();
+      // console.log("kakao accessToken", accessToken);
+      const sessionToken = await exchangeWithServer("KAKAO", accessToken);
+      await SecureStore.setItemAsync("session_token", sessionToken);
+      navigation.replace("Main");
+    } catch (e: any) {
+      if (e?.code === "E_CANCELLED_OPERATION") return;
+
+      Alert.alert(
+        "카카오 로그인 실패",
+        e?.message ?? "잠시 후 다시 시도해주세요."
+      );
+    }
+  };
+
+  // 구글
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
@@ -40,81 +72,25 @@ export default function LoginScreen() {
     webClientId,
     androidClientId,
     iosClientId,
-    redirectUri: REDIRECT_URI,
   });
 
-  const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${KAKAO_REST_API_KEY}&redirect_uri=${REDIRECT_URI}`;
-
-  const handleWebViewNavigationStateChange = async (navState: any) => {
-    const { url } = navState;
-
-    if (url.startsWith(REDIRECT_URI)) {
-      const codeMatch = url.match(/code=([^&]*)/);
-      const code = codeMatch?.[1];
-      if (code) {
-        try {
-          const tokenResponse = await fetch(
-            "https://kauth.kakao.com/oauth/token",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `grant_type=authorization_code&client_id=${KAKAO_REST_API_KEY}&redirect_uri=${REDIRECT_URI}&code=${code}`,
-            }
-          );
-
-          const tokenResult = await tokenResponse.json();
-
-          if (tokenResult.access_token) {
-            await SecureStore.setItemAsync(
-              "access_token",
-              tokenResult.access_token
-            );
-            setShowWebView(false);
-            navigation.replace("Main");
-          } else {
-            Alert.alert(
-              "토큰 발급 실패",
-              "카카오 서버에서 토큰을 받지 못했습니다."
-            );
-          }
-        } catch (error) {
-          console.error("토큰 요청 에러:", error);
-          Alert.alert("에러 발생", "토큰 요청 중 문제가 발생했습니다.");
-        }
-      }
-    }
-  };
-
   useEffect(() => {
-    const handleGoogleLogin = async () => {
-      if (response?.type === "success") {
-        const { authentication } = response;
-        try {
-          const userInfoResponse = await fetch(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            {
-              headers: {
-                Authorization: `Bearer ${authentication?.accessToken}`,
-              },
-            }
-          );
-          const userInfo = await userInfoResponse.json();
-
-          await SecureStore.setItemAsync(
-            "access_token",
-            authentication?.accessToken || ""
-          );
-          navigation.replace("Main");
-        } catch (e) {
-          console.error("Google 유저 정보 가져오기 실패:", e);
-          Alert.alert("Google 로그인 실패", "유저 정보를 가져오지 못했습니다.");
-        }
+    const go = async () => {
+      if (response?.type !== "success") return;
+      try {
+        const accessToken = response.authentication?.accessToken ?? "";
+        // console.log("google accessToken", accessToken);
+        const sessionToken = await exchangeWithServer("GOOGLE", accessToken);
+        await SecureStore.setItemAsync("session_token", sessionToken);
+        navigation.replace("Main");
+      } catch (e: any) {
+        Alert.alert("Google 로그인 실패", e?.message ?? "서버 교환 실패");
       }
     };
-
-    handleGoogleLogin();
+    go();
   }, [response]);
 
+  // 애플
   const handleAppleLogin = async () => {
     try {
       const credential = await AppleAuthentication.signInAsync({
@@ -124,39 +100,28 @@ export default function LoginScreen() {
         ],
       });
 
-      await SecureStore.setItemAsync("access_token", credential.user);
+      const idToken = credential.identityToken ?? ""; // JWT
+      const sessionToken = await exchangeWithServer("APPLE", idToken);
+      await SecureStore.setItemAsync("session_token", sessionToken);
       navigation.replace("Main");
     } catch (e: any) {
-      if (e.code !== "ERR_CANCELED") {
-        console.error("Apple 로그인 실패:", e);
-        Alert.alert("로그인 실패", "Apple 로그인에 실패했습니다.");
-      }
+      if (e?.code === "ERR_CANCELED") return;
+      Alert.alert("애플 로그인 실패", e?.message ?? "서버 교환 실패");
     }
   };
-
-  if (showWebView) {
-    return (
-      <WebView
-        source={{ uri: kakaoAuthUrl }}
-        incognito
-        onNavigationStateChange={handleWebViewNavigationStateChange}
-        startInLoadingState
-        javaScriptEnabled
-      />
-    );
-  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.appDescription}>신발부터 라켓까지,</Text>
       <Text style={styles.appDescription}>배드민턴 올인원 쇼핑몰</Text>
       <Text style={styles.appName}>영스배드민턴</Text>
-      <View style={{ flex: 0.5 }} />
+      <View style={{ flex: 0.55 }} />
 
       <Text style={styles.snsCaption}>SNS 계정으로 간편 가입하기</Text>
       <View style={styles.snsRow}>
+        {/* 카카오 */}
         <Pressable
-          onPress={() => setShowWebView(true)}
+          onPress={handleKakaoLogin}
           style={[styles.circleBtn, { backgroundColor: "#FEE500" }]}
           android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: true }}
         >
@@ -177,13 +142,11 @@ export default function LoginScreen() {
           </Svg>
         </Pressable>
 
+        {/* 애플 */}
         <Pressable
           onPress={handleAppleLogin}
           style={[styles.circleBtn, { backgroundColor: "#000" }]}
-          android_ripple={{
-            color: "rgba(255,255,255,0.1)",
-            borderless: true,
-          }}
+          android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
         >
           <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
             <Path
@@ -193,6 +156,7 @@ export default function LoginScreen() {
           </Svg>
         </Pressable>
 
+        {/* 구글 */}
         <Pressable
           onPress={() => promptAsync()}
           disabled={!request}

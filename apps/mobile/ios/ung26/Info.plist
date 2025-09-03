@@ -33,43 +33,13 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
           <string>com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>myapp</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.316693659926-q6v21fmg76fm8rc2tde3d10tsosvqf4b</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>myapp</string>
+          <string>kakao727bc21c996415be723d5c3d3b0ffb26</string>
         </array>
       </dict>
       <dict>
@@ -151,6 +121,10 @@
       <string>liivbank</string>
       <string>supertoss</string>
       <string>kakaobank</string>
+      <string>kakao</string>
+  <string>kakaokompassauth</string>
+  <string>kakaolink</string>
+  <string>kakaotalk</string>
     </array>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
@@ -208,5 +182,9 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>KAKAO_APP_KEY</key>
+<string>727bc21c996415be723d5c3d3b0ffb26</string>
+<key>KAKAO_APP_SCHEME</key>
+<string>kakao727bc21c996415be723d5c3d3b0ffb26</string>
   </dict>
 </plist>

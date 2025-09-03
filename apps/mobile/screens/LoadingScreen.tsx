@@ -8,18 +8,17 @@ const LoadingScreen: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1초 대기 (자연스러운 로딩처럼 보이게)
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const token = await SecureStore.getItemAsync("accessToken");
+      const token = await SecureStore.getItemAsync("session_token");
 
       if (token) {
         navigation.replace("Main");
       } else {
         // 테스트용
-        navigation.replace("Main");
+        // navigation.replace("Main");
 
-        //navigation.replace("Login");
+        navigation.replace("Login");
       }
     };
 
