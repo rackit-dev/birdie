@@ -25,6 +25,7 @@ export default function OrderPaymentScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "Purchase">>();
   const products = route.params.products;
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const totalProductPrice = products.reduce(
     (acc, product) => acc + product.price,
@@ -70,6 +71,7 @@ export default function OrderPaymentScreen() {
       buyer_email: "jiwoong@example.com",
       app_scheme: "myapp",
       m_redirect_url: "https://example.com", // 실제 앱 배포시엔 이 주소가 백엔드 or 앱딥링크 처리 페이지여야함
+      notice_url: `${API_URL}/orders/payment/test`, // 결제 후 백엔드에서 결과 받는 용도
       ...extraData,
     };
 

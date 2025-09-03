@@ -21,12 +21,16 @@ export default function PaymentWebviewScreen() {
   const route = useRoute<PaymentWebviewScreenRouteProp>();
   const rawParams = route.params.params;
   const userCode = "imp83677210"; // 아임포트 기본 테스트 코드
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: "center" }}>
       <IMP.Payment
         userCode={userCode}
-        data={rawParams}
+        data={{
+          ...rawParams,
+          notice_url: rawParams?.notice_url ?? `${API_URL}/orders/payment/test`,
+        }}
         loading={<Loading />}
         callback={(response) => {
           navigation.replace("PaymentResult", response);
