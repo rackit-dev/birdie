@@ -36,8 +36,8 @@ class Coupon(Base):
     __tablename__ = "Coupon"
 
     id = mapped_column(String(36), primary_key=True)
-    code = mapped_column(String(64), unique=True, nullable=True)
-    description = mapped_column(String(36), nullable=True)     
+    code = mapped_column(String(32), unique=True, nullable=True)
+    description = mapped_column(String(64), nullable=True)     
 
     discount_type = mapped_column(Enum("비율", "정액", name="discount_type"), nullable=False)
     discount_rate = mapped_column(Numeric(2, 0), nullable=True)    # 할인율 (~99%)

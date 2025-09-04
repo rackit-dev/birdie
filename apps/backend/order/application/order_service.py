@@ -20,48 +20,39 @@ class OrderService:
     def create_order(
         self,
         user_id: str,
+        subtotal_price: int,
+        coupon_discount_price: int,
+        point_discount_price: int,
+        total_price: int,
         recipient_name: str,
         phone_number: str,
         zipcode: str,
         address_line1: str,
         address_line2: Optional[str],
         order_memo: Optional[str],
-        user_coupon_id: Optional[str],
         items: List[dict],
     ) -> Order:
         now = datetime.now()
 
-        # Calculate subtotal price and validate items
-        subtotal_price = 0
+        # Validate items and prepare order items
         order_items = []
         for item in items:
-            if item.quantity == None or item.price == None:
-                raise HTTPException(status_code=400, detail="Item must include quantity and price")
-            item_total_price = item.quantity * item.price
-            subtotal_price += item_total_price
             order_items.append(
                 OrderItem(
                     id=self.ulid.generate(),
                     order_id="None",  # Will be set after order creation
                     product_id=item.product_id,
+                    coupon_wallet_id=item.coupon_wallet_id,
+                    status="주문완료",
                     quantity=item.quantity,
-                    price=item.price,
+                    unit_price=item.unit_price,
+                    coupon_discount_price=item.coupon_discount_price,
+                    point_discount_price=item.point_discount_price,
+                    final_price=item.final_price,
                     created_at=now,
                     updated_at=now,
                 )
             )
-
-        # Calculate discount price
-        discount_price = 0
-        if user_coupon_id:
-            coupon = self.order_repo.find_coupon_by_id(user_coupon_id)
-            discount_price = min(
-                coupon.discount_amount or 0,
-                coupon.max_discount_amount,
-            )
-
-        # Calculate total price
-        total_price = subtotal_price - discount_price
 
         # Create order
         order = Order(
@@ -69,9 +60,9 @@ class OrderService:
             user_id=user_id,
             status="결제대기",
             subtotal_price=subtotal_price,
-            discount_price=discount_price,
+            coupon_discount_price=coupon_discount_price,
+            point_discount_price=point_discount_price,
             total_price=total_price,
-            user_coupon_id=user_coupon_id,
             recipient_name=recipient_name,
             phone_number=phone_number,
             zipcode=zipcode,
@@ -91,23 +82,14 @@ class OrderService:
         return order
 
     def get_order(self, order_id: str) -> Order:
-        return self.order_repo.find_by_id(order_id)
-
-    def update_order(self, order_id: str, status: str) -> Order:
-        order = self.order_repo.find_by_id(order_id)
-        order.status = status
-        order.updated_at = datetime.now()
-        self.order_repo.update(order)
-        return order
-
-    def delete_order(self, order_id: str):
         order = self.order_repo.find_by_id(order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
-        self.order_repo.delete(order_id)
+        return order
 
     def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
-        return self.order_repo.get_orders(page, items_per_page)
+        total_count, orders = self.order_repo.get_orders(page, items_per_page)
+        return total_count, orders
 
     def create_coupon(
         self,
@@ -165,18 +147,23 @@ class OrderService:
         return coupon
 
     def get_coupon(self, coupon_id: str) -> Coupon:
-        return self.order_repo.find_coupon_by_id(coupon_id)
+        coupon = self.order_repo.find_coupon_by_id(coupon_id)
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        return coupon
 
-    def mark_coupon_inactive(self, coupon_id: str):
+    def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[Coupon]]:
+        total_count, coupons = self.order_repo.get_coupons(page, items_per_page)
+        return total_count, coupons
+    
+    def mark_coupon_inactive(self, coupon_id: str) -> Coupon:
         coupon = self.order_repo.find_coupon_by_id(coupon_id)
         if not coupon:
             raise HTTPException(status_code=404, detail="Coupon not found")
         coupon.is_active = False
         coupon.updated_at = datetime.now()
         self.order_repo.update_coupon(coupon)
-
-    def get_coupons(self, page: int, items_per_page: int) -> tuple[int, List[Coupon]]:
-        return self.order_repo.get_coupons(page, items_per_page)
+        return coupon
 
     def create_coupon_wallet(self, user_id: str, coupon_id: str) -> CouponWallet:
         now = datetime.now()
@@ -186,7 +173,6 @@ class OrderService:
             coupon_id=coupon_id,
             is_used=False,
             used_at=None,
-            order_id=None,
             created_at=now,
             updated_at=now,
         )
@@ -194,16 +180,21 @@ class OrderService:
         return coupon_wallet
 
     def get_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
-        return self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+        coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+        if not coupon_wallet:
+            raise HTTPException(status_code=404, detail="CouponWallet not found")
+        return coupon_wallet
+
+    def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWallet]]:
+        total_count, coupon_wallets = self.order_repo.get_coupon_wallets(page, items_per_page)
+        return total_count, coupon_wallets
+
+    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
+        coupon_wallets = self.order_repo.get_coupon_wallets_by_user(user_id)
+        return coupon_wallets
 
     def delete_coupon_wallet(self, coupon_wallet_id: str):
         coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
         if not coupon_wallet:
             raise HTTPException(status_code=404, detail="CouponWallet not found")
         self.order_repo.delete_coupon_wallet(coupon_wallet_id)
-
-    def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWallet]]:
-        return self.order_repo.get_coupon_wallets(page, items_per_page)
-
-    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
-        return self.order_repo.get_coupon_wallets_by_user(user_id)
