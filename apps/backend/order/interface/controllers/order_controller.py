@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 import json
 from pathlib import Path
@@ -118,13 +118,24 @@ def get_orders(
     return {"total_count": total_count, "orders": orders}
 
 
-@router.post("/payment/test")
-def payment_test(request: dict):
-    file_path = Path(f"tmp/payment_test_request_{datetime.now().isoformat()}.json")
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    with file_path.open("w") as file:
-        json.dump(request, file, indent=4)
-    return request
+@router.post("/payment/webhook/test")
+@inject
+async def payment_webhook(
+    request: Request,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    webhook = await order_service.handle_webhook(request, is_test=True)
+    return webhook
+
+
+@router.post("/payment/webhook")
+@inject
+async def payment_webhook(
+    request: Request,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    webhook = await order_service.handle_webhook(request, is_test=False)
+    return webhook
 
 
 """

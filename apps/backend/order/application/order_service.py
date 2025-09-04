@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from dependency_injector.wiring import inject
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from ulid import ULID
+import portone_server_sdk as portone
 
 from order.domain.order import Order, Coupon, CouponWallet, OrderItem
 from order.domain.repository.order_repo import IOrderRepository
+from config import get_settings
 
 
 class OrderService:
@@ -14,6 +16,7 @@ class OrderService:
         self,
         order_repo: IOrderRepository,
     ):
+        self.settings = get_settings()
         self.order_repo = order_repo
         self.ulid = ULID()
 
@@ -198,3 +201,20 @@ class OrderService:
         if not coupon_wallet:
             raise HTTPException(status_code=404, detail="CouponWallet not found")
         self.order_repo.delete_coupon_wallet(coupon_wallet_id)
+
+    async def handle_webhook(self, request: Request, is_test: bool):
+        if is_test == True:
+            secrets = self.settings.iamport_webhook_secret_test
+        else:
+            secrets = self.settings.iamport_webhook_secret
+        body_bytes = await request.body()
+        payload_string = body_bytes.decode('utf-8')
+        try:
+            webhook = portone.webhook.verify(
+                secret=secrets,
+                payload=payload_string,
+                headers=request.headers
+            )
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return webhook
