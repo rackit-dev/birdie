@@ -58,18 +58,32 @@ class UserRepository(IUserRepository):
                     url="https://kapi.kakao.com/v2/user/me",
                     headers={"Authorization": f"Bearer {social_token}"}
                 ).json()
+                if not social_response['id'] and social_response['code'] != 200:
+                    raise ValueError
             elif provider == "GOOGLE":
-                pass
+                social_response = requests.get(
+                    url="https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": f"Bearer {social_token}"}
+                ).json()
+                if not social_response['sub'] and social_response['error']:
+                    raise ValueError
             elif provider == "APPLE":
                 pass
+            else:
+                raise ValueError
         except:
-            raise HTTPException(status_code=502)
+            raise HTTPException(status_code=502, detail="Failed to retrieve social user information")
         
         return social_response
 
     def find_by_social_token(self, provider, social_token) -> UserVO:
         social_response = self.get_social_user_info(provider, social_token)
-        social_id = social_response["id"]
+        if provider == "KAKAO":
+            social_id = social_response["id"]
+        elif provider == "GOOGLE":
+            social_id = social_response["sub"]
+        elif provider == "APPLE":
+            pass
 
         with SessionLocal() as db:
             user = db.query(User).filter(
