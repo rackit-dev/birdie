@@ -3,14 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": ["./*"]
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
-  "include": [
-    "declarations.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ]
+  "include": ["declarations.d.ts", "**/*.ts", "**/*.tsx"]
 }

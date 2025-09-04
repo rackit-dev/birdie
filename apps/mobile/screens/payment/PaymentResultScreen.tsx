@@ -1,54 +1,36 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  SafeAreaView,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/RootNavigator";
 import CustomHeader from "../../components/CustomHeader";
 
-type PaymentResultScreenRouteProp = RouteProp<
-  RootStackParamList,
-  "PaymentResult"
->;
-type PaymentResultScreenNavProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "PaymentResult"
->;
-
-function getBoolean(value: any): boolean | undefined {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") return value === "true";
-  return undefined;
-}
+type Props = NativeStackScreenProps<RootStackParamList, "PaymentResult">;
 
 export default function PaymentResultScreen() {
-  const navigation = useNavigation<PaymentResultScreenNavProp>();
-  const route = useRoute<PaymentResultScreenRouteProp>();
-  const { imp_success, success, error_msg, error_code } = route.params ?? {};
+  const navigation = useNavigation<Props["navigation"]>();
+  const route = useRoute<Props["route"]>();
+
+  const { success, code, message, paymentId, orderId } = route.params ?? {};
 
   const isSuccess =
-    getBoolean(imp_success) ??
-    getBoolean(success) ??
-    (error_code == null && error_msg == null);
+    (typeof success === "boolean" ? success : success === "true") ??
+    (code == null && message == null);
 
   const title = isSuccess ? "결제가 완료되었어요" : "결제가 실패했어요";
   const leadIcon = isSuccess ? "✅" : "⚠️";
+
   const description = isSuccess
-    ? [
+    ? ([
         "결제가 정상적으로 처리되었습니다.",
         "영수증/주문 내역은 주문 상세에서 확인할 수 있습니다.",
-      ]
-    : [
+      ].filter(Boolean) as string[])
+    : ([
         "결제가 실패하였거나 취소되었습니다.",
+        // `사유: ${message ?? "알 수 없는 오류"}`,
+        // code ? `에러코드: ${code}` : undefined,
         "문제가 계속 발생하면 고객센터로 문의해 주세요.",
-      ];
+      ].filter(Boolean) as string[]);
 
   return (
     <View style={styles.safe}>

@@ -1,5 +1,4 @@
 import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabNavigator from "./TabNavigator";
 import CartScreen from "../screens/CartScreen";
@@ -13,6 +12,22 @@ import SearchScreen from "../screens/SearchScreen";
 import PurchaseScreen from "../screens/PurchaseScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+
+type PortOnePaymentRequest = {
+  storeId: string;
+  channelKey: string;
+  paymentId: string; // 가맹점 주문번호(고유)
+  orderName: string;
+  totalAmount: number;
+  currency: "CURRENCY_KRW" | "CURRENCY_USD" | string;
+  payMethod?: "CARD" | "MOBILE" | "VBANK";
+  customer?: {
+    fullName?: string;
+    phoneNumber?: string;
+    email?: string;
+  };
+  noticeUrls?: string[];
+};
 
 export type RootStackParamList = {
   Main: undefined;
@@ -36,14 +51,13 @@ export type RootStackParamList = {
   };
   ProductList: { category: string; brand: string };
   Search: undefined;
-  PaymentWebview: { params: any };
+  PaymentWebview: { params: PortOnePaymentRequest };
   PaymentResult: {
-    imp_success?: boolean | string;
     success?: boolean | string;
-    imp_uid?: string;
-    merchant_uid?: string;
-    error_msg?: string;
-    error_code?: string;
+    paymentId?: string;
+    orderId?: string;
+    code?: string;
+    message?: string;
   };
 };
 

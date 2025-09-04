@@ -8,74 +8,88 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
 import CustomHeader from "../components/CustomHeader";
 
+const STORE_ID = "store-3048375f-0af1-4793-82f8-83b099967e2e";
+const CH_KG = "channel-key-2d2b34cc-a56c-47df-8ffd-bbe0e2a47dad";
+const CH_KAKAO = "channel-key-75f610e0-fff1-44a4-994b-22b0411a6fba";
+const CH_TOSS = "channel-key-c5c6f532-1da0-4195-bd88-50f20697c8d0";
+
+type PurchaseScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Purchase"
+>;
+
+type Product = RootStackParamList["Purchase"]["products"][number];
+
+const makePaymentId = () =>
+  `mid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
 export default function OrderPaymentScreen() {
   const [point, setPoint] = useState("1750");
   const [selectedPayment, setSelectedPayment] = useState("tosspay");
-  const [normalType, setNormalType] = useState<"card" | "phone" | "vbank">(
-    "card"
-  );
+  const [normalType, setNormalType] = useState<"card" | "phone">("card");
   const formatName = (name: string) => name.replace(/_/g, " ");
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, "Purchase">>();
-  const products = route.params.products;
+  const navigation = useNavigation<PurchaseScreenProps["navigation"]>();
+  const route = useRoute<PurchaseScreenProps["route"]>();
+  const products = route.params.products as Product[];
+
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-  const totalProductPrice = products.reduce(
-    (acc, product) => acc + product.price,
+  const totalProductPrice = products.reduce<number>(
+    (acc: number, product: Product) => acc + product.price,
     0
   );
   const finalAmount = totalProductPrice - parseInt(point, 10);
 
-  const groupedByBrand = products.reduce((acc, product) => {
-    if (!acc[product.brand]) {
-      acc[product.brand] = [];
-    }
-    acc[product.brand].push(product);
-    return acc;
-  }, {} as Record<string, typeof products>);
+  const groupedByBrand = products.reduce<Record<string, Product[]>>(
+    (acc, product) => {
+      if (!acc[product.brand]) acc[product.brand] = [];
+      acc[product.brand].push(product);
+      return acc;
+    },
+    {}
+  );
 
   const handlePayment = () => {
-    let pg = "html5_inicis";
-    let pay_method = "card";
-    let extraData: { [key: string]: string } = {};
-
-    if (selectedPayment === "tosspay") {
-      pay_method = "tosspay";
-    } else if (selectedPayment === "kakaopay") {
-      pay_method = "kakaopay";
-    } else if (selectedPayment === "normal") {
-      if (normalType === "card") {
-        pay_method = "card";
-      } else if (normalType === "phone") {
-        pay_method = "phone";
+    const { channelKey, payMethod } = (() => {
+      if (selectedPayment === "kakaopay") {
+        return { channelKey: CH_KAKAO, payMethod: "EASY_PAY" as const };
       }
-    }
+      if (selectedPayment === "tosspay") {
+        return { channelKey: CH_TOSS, payMethod: "EASY_PAY" as const };
+      }
+      return {
+        channelKey: CH_KG,
+        payMethod:
+          normalType === "card" ? ("CARD" as const) : ("MOBILE" as const),
+      };
+    })();
 
-    const paymentData = {
-      pg,
-      pay_method,
-      digital: false,
-      merchant_uid: `mid_${Date.now()}`,
-      name: `${products.length}개 상품`,
-      amount: "2000",
-      // amount: finalAmount.toString(),
-      buyer_name: "강지웅",
-      buyer_tel: "01099999999",
-      buyer_email: "jiwoong@example.com",
-      app_scheme: "myapp",
-      m_redirect_url: "https://example.com", // 실제 앱 배포시엔 이 주소가 백엔드 or 앱딥링크 처리 페이지여야함
-      notice_url: `${API_URL}/orders/payment/test`, // 결제 후 백엔드에서 결과 받는 용도
-      ...extraData,
-    };
+    const productType =
+      payMethod === "MOBILE" ? ("PRODUCT_TYPE_REAL" as const) : undefined;
 
-    navigation.navigate("PaymentWebview", { params: paymentData });
+    const request = {
+      storeId: STORE_ID,
+      channelKey,
+      paymentId: makePaymentId(),
+      orderName: `${products.length}개 상품`,
+      totalAmount: 1000,
+      currency: "KRW",
+      payMethod,
+      ...(productType ? { productType } : {}),
+      customer: {
+        fullName: "강지웅",
+        phoneNumber: "01099999999",
+        email: "jiwoong@example.com",
+      },
+      noticeUrls: [`${API_URL}/orders/payment/test`],
+    } as const;
+    navigation.navigate("PaymentWebview", { params: request });
   };
 
   return (
