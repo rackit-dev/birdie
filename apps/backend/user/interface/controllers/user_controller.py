@@ -22,6 +22,7 @@ class CreateUserBody(BaseModel):
 class UserResponse(BaseModel):
     id: str
     name: str
+    provider: str | None
     email: str
     created_at: datetime
     updated_at: datetime
@@ -88,7 +89,7 @@ class GetUsersResponse(BaseModel):
     users: list[UserResponse]
 
 
-@router.get("", response_model=GetUsersResponse)
+@router.get("/all", response_model=GetUsersResponse)
 @inject
 def get_users(
     page: int = 1,
@@ -103,6 +104,16 @@ def get_users(
         "page": page,
         "users": users,
     }
+
+
+@router.get("", response_model=UserResponse)
+@inject
+def get_user(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user = user_service.get_user(current_user.id)
+    return user
 
 
 @router.delete("", status_code=204)
