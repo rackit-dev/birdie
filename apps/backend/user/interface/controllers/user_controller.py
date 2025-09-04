@@ -143,12 +143,12 @@ def social_login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    access_token = user_service.social_login(
+    access_token, user_status = user_service.social_login(
         provider=form_data.username,
         social_token=form_data.password
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"user_status": user_status, "access_token": access_token, "token_type": "bearer"}
 
 
 class UserInquiryResponse(BaseModel):

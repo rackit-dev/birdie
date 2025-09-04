@@ -55,19 +55,38 @@ class UserService:
     
     def _create_social_user(self, provider: str, social_token: str) -> User:
         social_response = self.user_repo.get_social_user_info(provider, social_token)
+
+        try:
+            now = datetime.now()
+            if provider == "KAKAO":
+                user: User = User(
+                    id=self.ulid.generate(),
+                    name=social_response["kakao_account"]["profile"]["nickname"],
+                    provider=provider,
+                    provider_id=social_response["id"],
+                    email=social_response["kakao_account"]["email"],
+                    password=None,
+                    memo=None,
+                    created_at=now,
+                    updated_at=now,
+                )
+            elif provider == "GOOGLE":
+                user: User = User(
+                    id=self.ulid.generate(),
+                    name=social_response["name"],
+                    provider=provider,
+                    provider_id=social_response["sub"],
+                    email=social_response["email"],
+                    password=None,
+                    memo=None,
+                    created_at=now,
+                    updated_at=now,
+                )
+            elif provider == "APPLE":
+                pass
+        except KeyError:
+            raise HTTPException(status_code=422, detail="Failed to retrieve social user information")
         
-        now = datetime.now()
-        user: User = User(
-            id=self.ulid.generate(),
-            name=social_response["kakao_account"]["profile"]["nickname"],
-            provider="KAKAO",
-            provider_id=social_response["id"],
-            email=social_response["kakao_account"]["email"],
-            password=None,
-            memo=None,
-            created_at=now,
-            updated_at=now,
-        )
         self.user_repo.save(user)
 
         return user
@@ -113,16 +132,20 @@ class UserService:
     
     def social_login(self, provider: str, social_token: str):
         user = self.user_repo.find_by_social_token(provider, social_token)
-
+        
+        user_status = ""
         if not user:
             user = self._create_social_user(provider, social_token)
+            user_status = "NEW"
+        else:
+            user_status = "EXISTING"
 
         access_token = create_access_token(
             payload={"user_id": user.id},
             role=Role.USER,
         )
         
-        return access_token
+        return access_token, user_status
     
     def create_user_inquiry(
         self,
