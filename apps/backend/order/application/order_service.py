@@ -8,7 +8,7 @@ from order.domain.order import Order, Coupon, CouponWallet, OrderItem
 from order.domain.repository.order_repo import IOrderRepository
 
 
-class OrderService: #test
+class OrderService:
     @inject
     def __init__(
         self,
