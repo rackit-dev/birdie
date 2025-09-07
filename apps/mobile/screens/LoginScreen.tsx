@@ -10,6 +10,7 @@ import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
 import { login } from "@react-native-seoul/kakao-login";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
+const APPLE_AUTH_ENDPOINT = process.env.EXPO_PUBLIC_APPLE_AUTH_ENDPOINT;
 const AUTH_ENDPOINT = `${API_BASE}/users/social-login`;
 
 export default function LoginScreen() {
@@ -20,10 +21,12 @@ export default function LoginScreen() {
     provider: "KAKAO" | "GOOGLE" | "APPLE",
     token: string
   ) {
-    const r = await fetch(AUTH_ENDPOINT, {
+    const endpoint = provider === "APPLE" ? APPLE_AUTH_ENDPOINT : AUTH_ENDPOINT;
+
+    const r = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `username=${encodeURIComponent(
+      body: `grant_type=password&username=${encodeURIComponent(
         provider
       )}&password=${encodeURIComponent(token)}`,
     });
@@ -36,7 +39,6 @@ export default function LoginScreen() {
       data = raw ? JSON.parse(raw) : {};
     } catch {}
 
-    // 서버 응답 키가 'sessionToken' 또는 'token' 등 다를 수 있으니 유연하게
     const sessionToken = data.sessionToken || data.token || data.access_token;
 
     if (!r.ok || !sessionToken) {
@@ -49,9 +51,9 @@ export default function LoginScreen() {
   const handleKakaoLogin = async () => {
     try {
       const { accessToken } = await login();
-      // console.log("kakao accessToken", accessToken);
+      console.log("kakao accessToken", accessToken);
       const sessionToken = await exchangeWithServer("KAKAO", accessToken);
-      await SecureStore.setItemAsync("session_token", sessionToken);
+      // await SecureStore.setItemAsync("session_token", sessionToken);
       navigation.replace("Main");
     } catch (e: any) {
       if (e?.code === "E_CANCELLED_OPERATION") return;
@@ -79,7 +81,7 @@ export default function LoginScreen() {
       if (response?.type !== "success") return;
       try {
         const accessToken = response.authentication?.accessToken ?? "";
-        // console.log("google accessToken", accessToken);
+        console.log("google accessToken", accessToken);
         const sessionToken = await exchangeWithServer("GOOGLE", accessToken);
         await SecureStore.setItemAsync("session_token", sessionToken);
         navigation.replace("Main");
@@ -101,6 +103,9 @@ export default function LoginScreen() {
       });
 
       const idToken = credential.identityToken ?? ""; // JWT
+      const authCode = credential.authorizationCode;
+      console.log("apple identityToken", idToken);
+      console.log("apple authCode", authCode);
       const sessionToken = await exchangeWithServer("APPLE", idToken);
       await SecureStore.setItemAsync("session_token", sessionToken);
       navigation.replace("Main");
