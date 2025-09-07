@@ -39,6 +39,5 @@ class UserAddress:
     address_line1: str
     address_line2: str | None
     order_memo: str | None
-    is_default: bool
     created_at: datetime
     updated_at: datetime

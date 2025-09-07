@@ -239,7 +239,6 @@ class UserService:
         address_line1: str,
         address_line2: str | None = None,
         order_memo: str | None = None,
-        is_default: bool = False,
     ) -> UserAddress:
         now = datetime.now()
         address = UserAddress(
@@ -251,10 +250,13 @@ class UserService:
             address_line1=address_line1,
             address_line2=address_line2,
             order_memo=order_memo,
-            is_default=is_default,
             created_at=now,
             updated_at=now,
         )
         self.user_repo.save_address(address)
 
         return address
+    
+    def get_user_addresses(self, user_id: str) -> List[UserAddress]:
+        addresses = self.user_repo.get_addresses_by_user(user_id)
+        return addresses

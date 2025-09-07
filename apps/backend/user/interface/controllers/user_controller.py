@@ -277,8 +277,7 @@ class UserAddressRequest(BaseModel):
     zipcode: str = Field(min_length=5, max_length=10)
     address_line1: str = Field(min_length=1, max_length=100)
     address_line2: str | None
-    order_memo: str | None
-    is_default: bool
+    order_memo: str | None = Field(max_length=200)
 
 
 class UserAddressResponse(BaseModel):
@@ -290,7 +289,6 @@ class UserAddressResponse(BaseModel):
     address_line1: str
     address_line2: str | None
     order_memo: str | None
-    is_default: bool
     created_at: datetime
     updated_at: datetime
 
@@ -310,6 +308,15 @@ def create_user_address(
         address_line1=body.address_line1,
         address_line2=body.address_line2,
         order_memo=body.order_memo,
-        is_default=body.is_default,
     )
     return user_address
+
+
+@router.get("/user_address", response_model=List[UserAddressResponse])
+@inject
+def get_user_addresses(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_addresses = user_service.get_user_addresses(user_id=current_user.id)
+    return user_addresses

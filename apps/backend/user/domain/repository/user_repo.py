@@ -111,3 +111,9 @@ class IUserRepository(metaclass=ABCMeta):
         """
         raise NotImplementedError
     
+    @abstractmethod
+    def get_addresses_by_user(self, user_id: str) -> List[UserAddress]:
+        """
+        특정 유저의 모든 주소를 반환.
+        """
+        raise NotImplementedError

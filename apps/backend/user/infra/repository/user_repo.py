@@ -250,11 +250,14 @@ class UserRepository(IUserRepository):
             address_line1=address.address_line1,
             address_line2=address.address_line2,
             order_memo=address.order_memo,
-            is_default=address.is_default,
             created_at=address.created_at,
             updated_at=address.updated_at,
         )
-
         with SessionLocal() as db:
             db.add(new_address)
             db.commit()
+
+    def get_addresses_by_user(self, user_id: str) -> List[UserAddressVO]:
+        with SessionLocal() as db:
+            addresses = db.query(UserAddress).filter(UserAddress.user_id == user_id).all()
+        return [UserAddressVO(**row_to_dict(address)) for address in addresses]
