@@ -10,7 +10,8 @@ from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from user.domain.repository.user_repo import IUserRepository
 from user.domain.user import User as UserVO
 from user.domain.user import UserInquiry as UserInquiryVO
-from user.infra.db_models.user import User, UserInquiry
+from user.domain.user import UserAddress as UserAddressVO
+from user.infra.db_models.user import User, UserInquiry, UserAddress
 
 
 class UserRepository(IUserRepository):
@@ -237,4 +238,23 @@ class UserRepository(IUserRepository):
             inquiry.answer = None
             inquiry.updated_at = datetime.now()
             db.add(inquiry)
+            db.commit()
+
+    def save_address(self, address: UserAddressVO):
+        new_address = UserAddress(
+            id=address.id,
+            user_id=address.user_id,
+            recipient_name=address.recipient_name,
+            phone_number=address.phone_number,
+            zipcode=address.zipcode,
+            address_line1=address.address_line1,
+            address_line2=address.address_line2,
+            order_memo=address.order_memo,
+            is_default=address.is_default,
+            created_at=address.created_at,
+            updated_at=address.updated_at,
+        )
+
+        with SessionLocal() as db:
+            db.add(new_address)
             db.commit()

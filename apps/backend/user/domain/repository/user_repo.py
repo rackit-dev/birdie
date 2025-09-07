@@ -2,7 +2,7 @@ from typing import List
 from abc import ABCMeta, abstractmethod
 from fastapi import UploadFile
 
-from user.domain.user import User, UserInquiry
+from user.domain.user import User, UserInquiry, UserAddress
 
 
 class IUserRepository(metaclass=ABCMeta):
@@ -101,6 +101,13 @@ class IUserRepository(metaclass=ABCMeta):
     def delete_inquiry_answer(self, inquiry_id: str):
         """
         특정 문의의 답변 삭제.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def save_address(self, address: UserAddress):
+        """
+        유저 주소 저장.
         """
         raise NotImplementedError
     

@@ -7,7 +7,7 @@ from ulid import ULID
 from common.auth import Role, create_access_token
 from utils.crypto import Crypto
 from utils.name_generator import generate_random_name
-from user.domain.user import User, UserInquiry
+from user.domain.user import User, UserInquiry, UserAddress
 from user.domain.repository.user_repo import IUserRepository
 
 
@@ -229,3 +229,32 @@ class UserService:
 
     def delete_inquiry_answer(self, inquiry_id: str):
         self.user_repo.delete_inquiry_answer(inquiry_id)
+
+    def create_user_address(
+        self,
+        user_id: str,
+        recipient_name: str,
+        phone_number: str,
+        zipcode: str,
+        address_line1: str,
+        address_line2: str | None = None,
+        order_memo: str | None = None,
+        is_default: bool = False,
+    ) -> UserAddress:
+        now = datetime.now()
+        address = UserAddress(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            recipient_name=recipient_name,
+            phone_number=phone_number,
+            zipcode=zipcode,
+            address_line1=address_line1,
+            address_line2=address_line2,
+            order_memo=order_memo,
+            is_default=is_default,
+            created_at=now,
+            updated_at=now,
+        )
+        self.user_repo.save_address(address)
+
+        return address

@@ -92,9 +92,9 @@ class GetUsersResponse(BaseModel):
 @router.get("/all", response_model=GetUsersResponse)
 @inject
 def get_users(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
     page: int = 1,
     itmes_per_page: int = 10,
-    current_user: CurrentUser = Depends(get_admin_user),
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     total_count, users = user_service.get_users(page, itmes_per_page)
@@ -269,3 +269,47 @@ def delete_inquiry_answer(
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_service.delete_inquiry_answer(inquiry_id)
+
+
+class UserAddressRequest(BaseModel):
+    recipient_name: str = Field(min_length=1, max_length=32)
+    phone_number: str = Field(min_length=9, max_length=15)
+    zipcode: str = Field(min_length=5, max_length=10)
+    address_line1: str = Field(min_length=1, max_length=100)
+    address_line2: str | None
+    order_memo: str | None
+    is_default: bool
+
+
+class UserAddressResponse(BaseModel):
+    id: str
+    user_id: str
+    recipient_name: str
+    phone_number: str
+    zipcode: str
+    address_line1: str
+    address_line2: str | None
+    order_memo: str | None
+    is_default: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+@router.post("/user_address", status_code=201, response_model=UserAddressResponse)
+@inject
+def create_user_address(
+    body: UserAddressRequest,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_address = user_service.create_user_address(
+        user_id=current_user.id,
+        recipient_name=body.recipient_name,
+        phone_number=body.phone_number,
+        zipcode=body.zipcode,
+        address_line1=body.address_line1,
+        address_line2=body.address_line2,
+        order_memo=body.order_memo,
+        is_default=body.is_default,
+    )
+    return user_address
