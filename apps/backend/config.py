@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str
+    iamport_webhook_secret: str
+    iamport_webhook_secret_test: str
+    iamport_payment_secret: str
 
 
 @lru_cache

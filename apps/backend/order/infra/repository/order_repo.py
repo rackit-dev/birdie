@@ -9,7 +9,8 @@ from order.domain.order import Order as OrderVO
 from order.domain.order import Coupon as CouponVO
 from order.domain.order import CouponWallet as CouponWalletVO
 from order.domain.order import OrderItem as OrderItemVO
-from order.infra.db_models.order import Order, Coupon, CouponWallet, OrderItem
+from order.domain.order import Payment as PaymentVO
+from order.infra.db_models.order import Order, Coupon, CouponWallet, OrderItem, Payment
 
 
 class OrderRepository(IOrderRepository):
@@ -185,3 +186,23 @@ class OrderRepository(IOrderRepository):
         with SessionLocal() as db:
             coupon_wallets = db.query(CouponWallet).filter(CouponWallet.user_id == user_id).all()
             return [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
+        
+    def save_payment(self, payment: PaymentVO):
+        new_payment = Payment(
+            id=payment.id,
+            order_id=payment.order_id,
+            merchant_id=payment.merchant_id,
+            status=payment.status,
+            method=payment.method,
+            amount=payment.amount,
+            paid_at=payment.paid_at,
+            created_at=payment.created_at,
+            updated_at=payment.updated_at,
+        )
+        with SessionLocal() as db:
+            try:
+                db.add(new_payment)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise e

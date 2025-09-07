@@ -69,6 +69,7 @@ class OrderItem:
 class Payment:
     id: str
     order_id: str
+    merchant_id: str
     status: str
     method: str
     amount: int

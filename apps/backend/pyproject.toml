@@ -24,7 +24,9 @@ dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "h11 (==0.16.0)",
     "boto3 (>=1.38.13,<2.0.0)",
-    "gunicorn (>=23.0.0,<24.0.0)"
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "portone-server-sdk (>=0.16.2,<0.17.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)"
 ]
 
 [tool.poetry]

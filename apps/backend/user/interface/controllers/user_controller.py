@@ -156,7 +156,7 @@ def social_login(
 ):
     access_token, user_status = user_service.social_login(
         provider=form_data.username,
-        social_token=form_data.password
+        social_token=form_data.password,
     )
 
     return {"user_status": user_status, "access_token": access_token, "token_type": "bearer"}

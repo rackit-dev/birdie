@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import List
 from fastapi import HTTPException, UploadFile
 import requests
-from datetime import datetime
+import jose.jwt as jwt
 
 from database import SessionLocal
 from utils.db_utils import row_to_dict
@@ -51,7 +52,7 @@ class UserRepository(IUserRepository):
 
         return UserVO(**row_to_dict(user))
     
-    def get_social_user_info(self, provider, social_token):
+    def get_social_user_info(self, provider: str, social_token: str):
         try:
             if provider == "KAKAO":
                 social_response = requests.get(
@@ -68,7 +69,17 @@ class UserRepository(IUserRepository):
                 if not social_response['sub'] and social_response['error']:
                     raise ValueError
             elif provider == "APPLE":
-                pass
+                key_payload = requests.get("https://appleid.apple.com/auth/keys")
+                kid = jwt.get_unverified_header(social_token)["kid"]
+                jwks = key_payload.json()["keys"]
+                public_key = None
+                for key in jwks:
+                    if key["kid"] == kid:
+                        public_key = key
+                        break
+                social_response = jwt.decode(social_token, public_key, algorithms=["RS256"], audience="com.ung26.mobile")
+                if social_response["iss"] not in ["https://appleid.apple.com", "appleid.apple.com"]:
+                    raise ValueError
             else:
                 raise ValueError
         except:
@@ -76,14 +87,14 @@ class UserRepository(IUserRepository):
         
         return social_response
 
-    def find_by_social_token(self, provider, social_token) -> UserVO:
+    def find_by_social_token(self, provider: str, social_token: str) -> UserVO:
         social_response = self.get_social_user_info(provider, social_token)
         if provider == "KAKAO":
             social_id = social_response["id"]
         elif provider == "GOOGLE":
             social_id = social_response["sub"]
         elif provider == "APPLE":
-            pass
+            social_id = social_response["sub"]
 
         with SessionLocal() as db:
             user = db.query(User).filter(
