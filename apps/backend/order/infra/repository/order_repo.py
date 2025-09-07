@@ -191,6 +191,7 @@ class OrderRepository(IOrderRepository):
         new_payment = Payment(
             id=payment.id,
             order_id=payment.order_id,
+            merchant_id=payment.merchant_id,
             status=payment.status,
             method=payment.method,
             amount=payment.amount,

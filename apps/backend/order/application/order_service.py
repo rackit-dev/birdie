@@ -227,9 +227,6 @@ class OrderService:
                     raise ValueError
                 
                 order_id = iamport_payment_response.custom_data
-                if not order_id:
-                    raise ValueError
-                
                 order = self.order_repo.find_by_id(order_id)
                 if not order:
                     raise ValueError
@@ -238,6 +235,7 @@ class OrderService:
                 payment = Payment(
                     id=self.ulid.generate(),
                     order_id=order_id,
+                    merchant_id=iamport_payment_response.merchant_id,
                     status="성공",
                     method=iamport_payment_response.method.provider,
                     amount=iamport_payment_response.amount.total,
@@ -246,6 +244,7 @@ class OrderService:
                     updated_at=now,
                 )
                 self.order_repo.save_payment(payment)
+                print(payment)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e))
         elif isinstance(webhook, portone.webhook.WebhookTransactionCancelled): # 결제 취소
