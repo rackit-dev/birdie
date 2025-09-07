@@ -96,7 +96,7 @@ class Payment(Base):
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False, unique=True)
 
     status = mapped_column(Enum("대기중", "성공", "실패", name="status"), default="대기중")
-    method = mapped_column(Enum("카드", "휴대폰", "카카오페이", "토스페이", "포인트", name="method"), nullable=False)
+    method = mapped_column(String(16), nullable=False)
     amount = mapped_column(Numeric(10, 0), nullable=False)
     paid_at = mapped_column(DateTime, nullable=True)
 
