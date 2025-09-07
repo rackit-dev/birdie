@@ -27,3 +27,18 @@ class UserInquiry:
     status: str  # pending, answered, closed
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class UserAddress:
+    id: str
+    user_id: str
+    recipient_name: str
+    phone_number: str
+    zipcode: str
+    address_line1: str
+    address_line2: str | None
+    order_memo: str | None
+    is_default: bool
+    created_at: datetime
+    updated_at: datetime
