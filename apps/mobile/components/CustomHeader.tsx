@@ -13,6 +13,7 @@ type Props = {
   onPressSearch?: () => void;
   onPressCart?: () => void;
   onPressHome?: () => void;
+  onPressClose?: () => void;
   cartCount?: number;
 };
 
@@ -25,6 +26,7 @@ const CustomHeader: React.FC<Props> = ({
   onPressSearch,
   onPressCart,
   onPressHome,
+  onPressClose,
 }) => {
   const insets = useSafeAreaInsets();
   const cartCount = useCartStore((state) => state.count);
@@ -61,6 +63,11 @@ const CustomHeader: React.FC<Props> = ({
       </View>
 
       <View style={styles.right}>
+        {onPressClose && (
+          <TouchableOpacity onPress={onPressClose} style={styles.iconWrapper}>
+            <Ionicons name="close" size={26} color="black" />
+          </TouchableOpacity>
+        )}
         {onPressSearch && (
           <TouchableOpacity onPress={onPressSearch} style={styles.iconWrapper}>
             <Ionicons name="search-outline" size={25} color="black" />

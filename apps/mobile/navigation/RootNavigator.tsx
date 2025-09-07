@@ -12,6 +12,8 @@ import SearchScreen from "../screens/SearchScreen";
 import PurchaseScreen from "../screens/PurchaseScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+import AddressListScreen from "@/screens/AddressListScreen";
+import AddressAddScreen from "@/screens/AddressAddScreen";
 
 type PortOnePaymentRequest = {
   storeId: string;
@@ -49,6 +51,8 @@ export type RootStackParamList = {
       image: string;
     }[];
   };
+  AddressList: undefined;
+  AddressAdd: undefined;
   ProductList: { category: string; brand: string };
   Search: undefined;
   PaymentWebview: { params: PortOnePaymentRequest };
@@ -83,6 +87,8 @@ export default function RootNavigator() {
       <Stack.Screen name="SearchModal" component={SearchModal} />
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Purchase" component={PurchaseScreen} />
+      <Stack.Screen name="AddressList" component={AddressListScreen} />
+      <Stack.Screen name="AddressAdd" component={AddressAddScreen} />
       <Stack.Screen name="PaymentWebview" component={PaymentWebviewScreen} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
     </Stack.Navigator>

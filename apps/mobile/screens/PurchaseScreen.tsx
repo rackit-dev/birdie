@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,11 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -33,12 +37,70 @@ export default function OrderPaymentScreen() {
   const [point, setPoint] = useState("1750");
   const [selectedPayment, setSelectedPayment] = useState("tosspay");
   const [normalType, setNormalType] = useState<"card" | "phone">("card");
+
+  const [userId, setUserId] = useState<string | null>(null);
+  const [recipientName, setRecipientName] = useState<string | null>(null);
+  const [addressLine1, setAddressLine1] = useState<string | null>(null);
+  const [addressLine2, setAddressLine2] = useState<string | null>(null);
+  const [zipcode, setZipcode] = useState<string | null>(null);
+  const [recipientPhone, setRecipientPhone] = useState<string | null>(null);
+
   const formatName = (name: string) => name.replace(/_/g, " ");
   const navigation = useNavigation<PurchaseScreenProps["navigation"]>();
   const route = useRoute<PurchaseScreenProps["route"]>();
-  const products = route.params.products as Product[];
+  const products = (route.params?.products || []) as Product[];
 
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_URL}/users`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await res.json();
+        setUserId(data.id);
+        setRecipientName(data.name);
+      } catch (err) {
+        console.error("유저 정보 불러오기 실패:", err);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  // 배송지 불러오기(api 주소 임의)
+  const fetchAddresses = async () => {
+    try {
+      const res = await fetch(`${API_URL}/addresses?user_id=${userId}`);
+      const data = await res.json();
+
+      if (data.length > 0) {
+        const defaultAddr = data.find((a: any) => a.isDefault) || data[0];
+        setRecipientName(defaultAddr.name);
+        setRecipientPhone(defaultAddr.phone);
+        setAddressLine1(defaultAddr.line1);
+        setAddressLine2(defaultAddr.line2 || "");
+        setZipcode(defaultAddr.zipcode);
+      } else {
+        setRecipientName(null);
+        setRecipientPhone(null);
+        setAddressLine1(null);
+        setAddressLine2(null);
+        setZipcode(null);
+      }
+    } catch (err) {
+      console.error("배송지 불러오기 실패:", err);
+    }
+  };
+
+  // 페이지 포커스될 때마다 새로 불러오기
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) fetchAddresses();
+    }, [userId])
+  );
 
   const totalProductPrice = products.reduce<number>(
     (acc: number, product: Product) => acc + product.price,
@@ -87,9 +149,38 @@ export default function OrderPaymentScreen() {
         phoneNumber: "01099999999",
         email: "jiwoong@example.com",
       },
-      noticeUrls: [`${API_URL}/orders/payment/test`],
+      customData: "12345",
+      // noticeUrls: [`${API_URL}/orders/payment/test`],
+
+      // 테스트용
+      noticeUrls: [
+        "https://positively-engaged-haddock.ngrok-free.app/orders/payment/webhook/test",
+      ],
     } as const;
-    navigation.navigate("PaymentWebview", { params: request });
+
+    const orderPayload = {
+      user_id: userId,
+      subtotal_price: totalProductPrice,
+      coupon_discount_price: 0,
+      point_discount_price: point,
+      total_price: finalAmount,
+      recipient_name: recipientName,
+      phone_number: recipientPhone,
+      zipcode, // 우편번호
+      address_line1: addressLine1, // 기본주소
+      address_line2: addressLine2, // 상세주소
+      order_memo: "", // 부재시 문앞에...
+      items: products.map((p) => ({
+        product_id: p.id,
+        coupon_wallet_id: null,
+        quantity: p.quantity,
+        unit_price: p.price,
+        coupon_discount_price: 0,
+        final_price: p.price * p.quantity,
+      })),
+    };
+
+    navigation.navigate("PaymentWebview", { params: request, orderPayload });
   };
 
   return (
@@ -102,16 +193,34 @@ export default function OrderPaymentScreen() {
       <ScrollView style={{ flex: 1 }}>
         <View style={styles.section}>
           <Text style={styles.title}>배송지</Text>
-          <Text style={styles.name}>
-            강지웅 <Text style={styles.badge}>기본 배송지</Text>
-          </Text>
-          <Text style={styles.text}>
-            충북 청주시 서원구 모충로3번길 61 벨엘타운302호
-          </Text>
-          <Text style={styles.text}>010-5548-2364</Text>
-          <TouchableOpacity activeOpacity={1} style={styles.changeBtn}>
-            <Text>배송지 변경</Text>
-          </TouchableOpacity>
+          {!recipientName ? (
+            <View style={{ alignItems: "center", marginVertical: 20 }}>
+              <Text style={{ color: "#999", marginBottom: 10 }}>
+                등록된 배송지가 없습니다.
+              </Text>
+              <TouchableOpacity
+                style={styles.changeBtn}
+                onPress={() => navigation.push("AddressAdd")}
+              >
+                <Text>배송지 추가</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.text}>
+                [{zipcode}] {addressLine1} {addressLine2}
+              </Text>
+              <Text style={styles.text}>
+                {recipientName} · {recipientPhone}
+              </Text>
+              <TouchableOpacity
+                style={styles.changeBtn}
+                onPress={() => navigation.push("AddressList")}
+              >
+                <Text>배송지 변경</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -442,5 +551,19 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "#000",
+  },
+  postcodeHeader: {
+    height: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontFamily: "P-Medium",
+    fontSize: 20,
+  },
+  headerClose: {
+    fontSize: 25,
   },
 });
