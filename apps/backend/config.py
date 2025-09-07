@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     aws_region: str
     iamport_webhook_secret: str
     iamport_webhook_secret_test: str
+    iamport_payment_secret: str
 
 
 @lru_cache

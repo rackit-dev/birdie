@@ -27,7 +27,7 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def get_social_user_info(self, provider: str, social_token: str):
+    def get_social_user_info(self, provider: str, social_token: str, code: str | None):
         """
         social provider에 따라 유저를 외부 API를 통해 검색.
         외부 요청 도중 에러가 발생할 경우 502 에러 발생.
@@ -35,7 +35,7 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def find_by_social_token(self, provider: str, social_token: str) -> User:
+    def find_by_social_token(self, provider: str, social_token: str, code: str | None) -> User:
         raise NotImplementedError
     
     @abstractmethod

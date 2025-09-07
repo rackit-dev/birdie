@@ -6,6 +6,7 @@ from ulid import ULID
 
 from common.auth import Role, create_access_token
 from utils.crypto import Crypto
+from utils.name_generator import generate_random_name
 from user.domain.user import User, UserInquiry
 from user.domain.repository.user_repo import IUserRepository
 
@@ -83,7 +84,17 @@ class UserService:
                     updated_at=now,
                 )
             elif provider == "APPLE":
-                pass
+                user: User = User(
+                    id=self.ulid.generate(),
+                    name=generate_random_name(),
+                    provider=provider,
+                    provider_id=social_response["sub"],
+                    email=social_response["email"],
+                    password=None,
+                    memo=None,
+                    created_at=now,
+                    updated_at=now,
+                )
         except KeyError:
             raise HTTPException(status_code=422, detail="Failed to retrieve social user information")
         

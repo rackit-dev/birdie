@@ -1,7 +1,7 @@
 from typing import List
 from abc import ABCMeta, abstractmethod
 
-from order.domain.order import Order, Coupon, CouponWallet, OrderItem
+from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment
 
 
 class IOrderRepository(metaclass=ABCMeta):
@@ -107,5 +107,12 @@ class IOrderRepository(metaclass=ABCMeta):
     def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
         """
         Get all coupon wallets for a specific user.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def save_payment(self, payment: Payment):
+        """
+        Save a new payment.
         """
         raise NotImplementedError

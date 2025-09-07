@@ -4,8 +4,9 @@ from dependency_injector.wiring import inject
 from fastapi import HTTPException, Request
 from ulid import ULID
 import portone_server_sdk as portone
+from dateutil import parser
 
-from order.domain.order import Order, Coupon, CouponWallet, OrderItem
+from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment
 from order.domain.repository.order_repo import IOrderRepository
 from config import get_settings
 
@@ -19,6 +20,7 @@ class OrderService:
         self.settings = get_settings()
         self.order_repo = order_repo
         self.ulid = ULID()
+        self.portone_client = portone.PaymentClient(secret=self.settings.iamport_payment_secret)
 
     def create_order(
         self,
@@ -217,4 +219,36 @@ class OrderService:
             )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
-        return webhook
+
+        if isinstance(webhook, portone.webhook.WebhookTransactionPaid): # 결제 승인
+            try:
+                iamport_payment_response = await self.portone_client.get_payment_async(payment_id=webhook.data.payment_id)
+                if not iamport_payment_response:
+                    raise ValueError
+                
+                order_id = iamport_payment_response.custom_data
+                if not order_id:
+                    raise ValueError
+                
+                order = self.order_repo.find_by_id(order_id)
+                if not order:
+                    raise ValueError
+
+                now = datetime.now()
+                payment = Payment(
+                    id=self.ulid.generate(),
+                    order_id=order_id,
+                    status="성공",
+                    method=iamport_payment_response.method.provider,
+                    amount=iamport_payment_response.amount.total,
+                    paid_at=parser.isoparse(iamport_payment_response.paid_at),
+                    created_at=now,
+                    updated_at=now,
+                )
+                self.order_repo.save_payment(payment)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=str(e))
+        elif isinstance(webhook, portone.webhook.WebhookTransactionCancelled): # 결제 취소
+            pass
+        else:
+            return {"status": "ignored", "message": "Unhandled webhook type"}
