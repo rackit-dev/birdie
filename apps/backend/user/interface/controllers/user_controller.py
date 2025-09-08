@@ -336,7 +336,7 @@ def get_user_addresses(
 @inject
 def update_user_address(
     body: UpdateUserAddressRequest,
-    #current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
     user_address = user_service.update_user_address(
