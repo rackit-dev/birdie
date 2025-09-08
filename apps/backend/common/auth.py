@@ -67,7 +67,7 @@ def _extract_user_from_token(token: str) -> tuple[str, str]:
 def get_current_user(token: Annotated[str, Depends(oauth2_social_scheme)]):
     user_id, role = _extract_user_from_token(token)
 
-    if role != Role.USER:
+    if role not in [Role.USER, Role.ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     return CurrentUser(user_id, Role(role))

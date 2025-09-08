@@ -7,7 +7,7 @@ from ulid import ULID
 from common.auth import Role, create_access_token
 from utils.crypto import Crypto
 from utils.name_generator import generate_random_name
-from user.domain.user import User, UserInquiry
+from user.domain.user import User, UserInquiry, UserAddress
 from user.domain.repository.user_repo import IUserRepository
 
 
@@ -229,3 +229,51 @@ class UserService:
 
     def delete_inquiry_answer(self, inquiry_id: str):
         self.user_repo.delete_inquiry_answer(inquiry_id)
+
+    def create_user_address(
+        self,
+        user_id: str,
+        recipient_name: str,
+        phone_number: str,
+        zipcode: str,
+        address_line1: str,
+        address_line2: str | None = None,
+        order_memo: str | None = None,
+    ) -> UserAddress:
+        now = datetime.now()
+        address = UserAddress(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            recipient_name=recipient_name,
+            phone_number=phone_number,
+            zipcode=zipcode,
+            address_line1=address_line1,
+            address_line2=address_line2,
+            order_memo=order_memo,
+            created_at=now,
+            updated_at=now,
+        )
+        self.user_repo.save_address(address)
+
+        return address
+    
+    def get_user_addresses(self, user_id: str) -> List[UserAddress]:
+        addresses = self.user_repo.get_addresses_by_user(user_id)
+        return addresses
+    
+    def update_user_address(self, user_address_id: str, **kwargs) -> UserAddress:
+        address = self.user_repo.find_address_by_id(user_address_id)
+        if not address:
+            raise HTTPException(status_code=404, detail="Address not found")
+        
+        for key, value in kwargs.items():
+            if hasattr(address, key) and value is not None:
+                setattr(address, key, value)
+        address.updated_at = datetime.now()
+
+        self.user_repo.update_address(address)
+
+        return address
+    
+    def delete_user_address(self, address_id: str):
+        self.user_repo.delete_address(address_id)

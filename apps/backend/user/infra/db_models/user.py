@@ -30,3 +30,20 @@ class UserInquiry(Base):
     status = mapped_column(String(32), default="pending")  # pending, answered, closed
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
+
+
+class UserAddress(Base):
+    __tablename__ = "UserAddress"
+    
+    id = mapped_column(String(36), primary_key=True)
+    user_id = mapped_column(ForeignKey("User.id"), nullable=False)
+
+    recipient_name = mapped_column(String(32), nullable=False)
+    phone_number = mapped_column(String(32), nullable=False)
+    zipcode = mapped_column(String(16), nullable=False)
+    address_line1 = mapped_column(String(128), nullable=False)
+    address_line2 = mapped_column(String(128), nullable=True)
+    order_memo = mapped_column(Text, nullable=True)
+
+    created_at = mapped_column(DateTime, nullable=False)
+    updated_at = mapped_column(DateTime, nullable=False)

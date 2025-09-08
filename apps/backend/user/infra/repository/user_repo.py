@@ -10,7 +10,8 @@ from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from user.domain.repository.user_repo import IUserRepository
 from user.domain.user import User as UserVO
 from user.domain.user import UserInquiry as UserInquiryVO
-from user.infra.db_models.user import User, UserInquiry
+from user.domain.user import UserAddress as UserAddressVO
+from user.infra.db_models.user import User, UserInquiry, UserAddress
 
 
 class UserRepository(IUserRepository):
@@ -119,8 +120,6 @@ class UserRepository(IUserRepository):
         user.updated_at = user_vo.updated_at
         db.add(user)
         db.commit()
-
-        return user
     
     def get_users(self, page: int = 1, items_per_page: int = 10,
     ) -> tuple[int, list[UserVO]]:
@@ -237,4 +236,63 @@ class UserRepository(IUserRepository):
             inquiry.answer = None
             inquiry.updated_at = datetime.now()
             db.add(inquiry)
+            db.commit()
+
+    def save_address(self, address: UserAddressVO):
+        new_address = UserAddress(
+            id=address.id,
+            user_id=address.user_id,
+            recipient_name=address.recipient_name,
+            phone_number=address.phone_number,
+            zipcode=address.zipcode,
+            address_line1=address.address_line1,
+            address_line2=address.address_line2,
+            order_memo=address.order_memo,
+            created_at=address.created_at,
+            updated_at=address.updated_at,
+        )
+        with SessionLocal() as db:
+            db.add(new_address)
+            db.commit()
+
+    def get_addresses_by_user(self, user_id: str) -> List[UserAddressVO]:
+        with SessionLocal() as db:
+            addresses = db.query(UserAddress).filter(UserAddress.user_id == user_id).all()
+        return [UserAddressVO(**row_to_dict(address)) for address in addresses]
+    
+    def find_address_by_id(self, address_id: str) -> UserAddressVO:
+        with SessionLocal() as db:
+            address = db.query(UserAddress).filter(UserAddress.id == address_id).first()
+
+            if not address:
+                raise HTTPException(status_code=422, detail="Address not found")
+
+        return UserAddressVO(**row_to_dict(address))
+    
+    def update_address(self, address_vo: UserAddressVO):
+        with SessionLocal() as db:
+            address = db.query(UserAddress).filter(UserAddress.id == address_vo.id).first()
+
+            if not address:
+                raise HTTPException(status_code=422, detail="Address not found")
+
+            address.recipient_name = address_vo.recipient_name
+            address.phone_number = address_vo.phone_number
+            address.zipcode = address_vo.zipcode
+            address.address_line1 = address_vo.address_line1
+            address.address_line2 = address_vo.address_line2
+            address.order_memo = address_vo.order_memo
+            address.updated_at = address_vo.updated_at
+
+            db.add(address)
+            db.commit()
+    
+    def delete_address(self, address_id: str):
+        with SessionLocal() as db:
+            address = db.query(UserAddress).filter(UserAddress.id == address_id).first()
+
+            if not address:
+                raise HTTPException(status_code=422, detail="Address not found")
+            
+            db.delete(address)
             db.commit()
