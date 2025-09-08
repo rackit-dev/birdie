@@ -124,6 +124,7 @@ def delete_for_user(
 ):
     user_service.update_user(
         user_id=current_user.id,
+        name="탈퇴유저",
         memo="탈퇴유저"
     )
 
