@@ -118,6 +118,7 @@ class UserRepository(IUserRepository):
         user.name = user_vo.name
         user.password = user_vo.password
         user.updated_at = user_vo.updated_at
+        user.memo = user_vo.memo
         db.add(user)
         db.commit()
     

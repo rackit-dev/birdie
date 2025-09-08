@@ -107,6 +107,7 @@ class UserService:
         user_id: str,
         name: str | None = None,
         password: str | None = None,
+        memo: str | None = None,
     ) -> User:
         user = self.user_repo.find_by_id(user_id)
 
@@ -114,8 +115,10 @@ class UserService:
             user.name = name
         if password:
             user.password = self.crypto.encrypt(password)
-        user.updated_at = datetime.now()
+        if memo:
+            user.memo = memo
 
+        user.updated_at = datetime.now()
         self.user_repo.update(user)
 
         return user

@@ -118,16 +118,19 @@ def get_user(
 
 @router.delete("", status_code=204)
 @inject
-def delete_user(
+def delete_for_user(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
-    user_service.delete_user(current_user.id)
+    user_service.update_user(
+        user_id=current_user.id,
+        memo="탈퇴유저"
+    )
 
 
 @router.delete("/admin", status_code=204)
 @inject
-def delete_admin(
+def delete_for_admin(
     current_user: Annotated[CurrentUser, Depends(get_admin_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
