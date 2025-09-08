@@ -271,13 +271,23 @@ def delete_inquiry_answer(
     user_service.delete_inquiry_answer(inquiry_id)
 
 
-class UserAddressRequest(BaseModel):
+class CreateUserAddressRequest(BaseModel):
     recipient_name: str = Field(min_length=1, max_length=32)
     phone_number: str = Field(min_length=9, max_length=15)
     zipcode: str = Field(min_length=5, max_length=10)
     address_line1: str = Field(min_length=1, max_length=100)
     address_line2: str | None
     order_memo: str | None = Field(max_length=200)
+
+
+class UpdateUserAddressRequest(BaseModel):
+    user_address_id: str = Field(min_length=10, max_length=36)
+    recipient_name: str = Field(min_length=1, max_length=32)
+    phone_number: str = Field(min_length=9, max_length=15)
+    zipcode: str = Field(min_length=5, max_length=10)
+    address_line1: str = Field(min_length=1, max_length=100)
+    address_line2: str | None
+    order_memo: str | None = Field(max_length=200, default=None)
 
 
 class UserAddressResponse(BaseModel):
@@ -296,7 +306,7 @@ class UserAddressResponse(BaseModel):
 @router.post("/user_address", status_code=201, response_model=UserAddressResponse)
 @inject
 def create_user_address(
-    body: UserAddressRequest,
+    body: CreateUserAddressRequest,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     user_service: UserService = Depends(Provide[Container.user_service]),
 ):
@@ -320,3 +330,32 @@ def get_user_addresses(
 ):
     user_addresses = user_service.get_user_addresses(user_id=current_user.id)
     return user_addresses
+
+
+@router.put("/user_address", response_model=UserAddressResponse)
+@inject
+def update_user_address(
+    body: UpdateUserAddressRequest,
+    #current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_address = user_service.update_user_address(
+        user_address_id=body.user_address_id,
+        recipient_name=body.recipient_name,
+        phone_number=body.phone_number,
+        zipcode=body.zipcode,
+        address_line1=body.address_line1,
+        address_line2=body.address_line2,
+        order_memo=body.order_memo,
+    )
+    return user_address
+
+
+@router.delete("/user_address", status_code=204)
+@inject
+def delete_user_address(
+    user_address_id: str,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    user_service.delete_user_address(user_address_id)

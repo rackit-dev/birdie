@@ -117,3 +117,26 @@ class IUserRepository(metaclass=ABCMeta):
         특정 유저의 모든 주소를 반환.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def find_address_by_id(self, address_id: str) -> UserAddress:
+        """
+        특정 주소를 ID로 검색.
+        검색된 주소가 없을 경우 422 에러 발생.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_address(self, address: UserAddress):
+        """
+        유저 주소 업데이트.
+        """
+        raise NotImplementedError
+
+
+    @abstractmethod
+    def delete_address(self, address_id: str):
+        """
+        특정 주소 삭제.
+        """
+        raise NotImplementedError

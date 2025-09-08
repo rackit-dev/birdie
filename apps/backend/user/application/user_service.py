@@ -260,3 +260,20 @@ class UserService:
     def get_user_addresses(self, user_id: str) -> List[UserAddress]:
         addresses = self.user_repo.get_addresses_by_user(user_id)
         return addresses
+    
+    def update_user_address(self, user_address_id: str, **kwargs) -> UserAddress:
+        address = self.user_repo.find_address_by_id(user_address_id)
+        if not address:
+            raise HTTPException(status_code=404, detail="Address not found")
+        
+        for key, value in kwargs.items():
+            if hasattr(address, key) and value is not None:
+                setattr(address, key, value)
+        address.updated_at = datetime.now()
+
+        self.user_repo.update_address(address)
+
+        return address
+    
+    def delete_user_address(self, address_id: str):
+        self.user_repo.delete_address(address_id)
