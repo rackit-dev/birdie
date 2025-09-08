@@ -37,7 +37,7 @@ class OrderService:
         order_memo: Optional[str],
         items: List[dict],
     ) -> Order:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         # Validate items and prepare order items
         order_items = []
@@ -166,12 +166,12 @@ class OrderService:
         if not coupon:
             raise HTTPException(status_code=404, detail="Coupon not found")
         coupon.is_active = False
-        coupon.updated_at = datetime.now()
+        coupon.updated_at = datetime.now(timezone.utc)
         self.order_repo.update_coupon(coupon)
         return coupon
 
     def create_coupon_wallet(self, user_id: str, coupon_id: str) -> CouponWallet:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         coupon_wallet = CouponWallet(
             id=self.ulid.generate(),
             user_id=user_id,
@@ -231,7 +231,7 @@ class OrderService:
                 if not order:
                     raise ValueError
 
-                now = datetime.now()
+                now = datetime.now(timezone.utc)
                 payment = Payment(
                     id=self.ulid.generate(),
                     order_id=order_id,

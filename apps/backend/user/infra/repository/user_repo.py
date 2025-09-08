@@ -88,7 +88,7 @@ class UserRepository(IUserRepository):
         
         return social_response
 
-    def find_by_social_token(self, provider: str, social_token: str) -> UserVO:
+    def find_by_social_token(self, provider: str, social_token: str, is_deleted: bool) -> UserVO:
         social_response = self.get_social_user_info(provider, social_token)
         if provider == "KAKAO":
             social_id = social_response["id"]
@@ -98,26 +98,34 @@ class UserRepository(IUserRepository):
             social_id = social_response["sub"]
 
         with SessionLocal() as db:
-            user = db.query(User).filter(
-                User.provider == provider,
-                User.provider_id == social_id,
-            ).first()
-
+            if not is_deleted:
+                user = db.query(User).filter(
+                    User.provider == provider,
+                    User.provider_id == social_id,
+                    (User.memo != "탈퇴유저") | (User.memo == None)
+                ).first()
+            else:
+                user = db.query(User).filter(
+                    User.provider == provider,
+                    User.provider_id == social_id,
+                    User.memo == "탈퇴유저"
+                ).order_by(User.updated_at.desc()).first()
         if not user:
             return None
         
         return UserVO(**row_to_dict(user)) 
-    
+
     def update(self, user_vo: UserVO):
         with SessionLocal() as db:
             user = db.query(User).filter(User.id == user_vo.id).first()
 
         if not user:
-            raise HTTPException(status_code=422)
+            raise HTTPException(status_code=422, detail="User not found")
         
         user.name = user_vo.name
         user.password = user_vo.password
         user.updated_at = user_vo.updated_at
+        user.memo = user_vo.memo
         db.add(user)
         db.commit()
     
@@ -161,6 +169,16 @@ class UserRepository(IUserRepository):
             db.flush()
             upload_images_to_s3(f"inquiries/{new_inquiry.id}", images)
             db.commit()
+    
+    def get_inquiries(self, page, items_per_page) -> tuple[int, list[UserInquiryVO]]:
+        with SessionLocal() as db:
+            query = db.query(UserInquiry)
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            inquiries = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [UserInquiryVO(**row_to_dict(inquiry)) for inquiry in inquiries]
 
     def get_inquiries_by_user(
         self, user_id: str, page: int, items_per_page: int

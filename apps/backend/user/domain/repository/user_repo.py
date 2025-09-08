@@ -35,9 +35,9 @@ class IUserRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def find_by_social_token(self, provider: str, social_token: str, code: str | None) -> User:
+    def find_by_social_token(self, provider: str, social_token: str, is_deleted: bool) -> User:
         raise NotImplementedError
-    
+
     @abstractmethod
     def update(self, user: User):
         raise NotImplementedError
@@ -54,6 +54,13 @@ class IUserRepository(metaclass=ABCMeta):
     def create_inquiry(self, inquiry: UserInquiry, images: List[UploadFile]) -> UserInquiry:
         """
         유저 문의 생성.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_inquiries(self, page: int, items_per_page: int) -> tuple[int, list[UserInquiry]]:
+        """
+        모든 유저 문의를 페이지네이션하여 반환.
         """
         raise NotImplementedError
 

@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from dependency_injector.wiring import inject
 from fastapi import HTTPException, status, UploadFile
 from ulid import ULID
@@ -38,7 +38,7 @@ class UserService:
         if _user:
             raise HTTPException(status_code=422)
         
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         user: User = User(
             id=self.ulid.generate(),
             name=name,
@@ -58,7 +58,7 @@ class UserService:
         social_response = self.user_repo.get_social_user_info(provider, social_token)
 
         try:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             if provider == "KAKAO":
                 user: User = User(
                     id=self.ulid.generate(),
@@ -107,6 +107,7 @@ class UserService:
         user_id: str,
         name: str | None = None,
         password: str | None = None,
+        memo: str | None = None,
     ) -> User:
         user = self.user_repo.find_by_id(user_id)
 
@@ -114,8 +115,10 @@ class UserService:
             user.name = name
         if password:
             user.password = self.crypto.encrypt(password)
-        user.updated_at = datetime.now()
+        if memo:
+            user.memo = memo
 
+        user.updated_at = datetime.now(timezone.utc)
         self.user_repo.update(user)
 
         return user
@@ -148,20 +151,27 @@ class UserService:
         return access_token
     
     def social_login(self, provider: str, social_token: str):
-        user = self.user_repo.find_by_social_token(provider, social_token)
-        
-        user_status = ""
-        if not user:
-            user = self._create_social_user(provider, social_token)
-            user_status = "NEW"
-        else:
+        # Check for active user
+        user = self.user_repo.find_by_social_token(provider, social_token, is_deleted=False)
+        now = datetime.now(timezone.utc)
+
+        if user:  # Active user exists
             user_status = "EXISTING"
+        else:  # No active user, check for withdrawn user
+            withdrawn_user = self.user_repo.find_by_social_token(provider, social_token, is_deleted=True)
+            if withdrawn_user:
+                days_since_withdrawal = (now - withdrawn_user.updated_at.replace(tzinfo=timezone.utc)).days
+                if days_since_withdrawal < 30:  # 30 days restriction
+                    raise HTTPException(status_code=422, detail="You can rejoin after 30 days from withdrawal.")
+
+            user = self._create_social_user(provider, social_token)
+            user_status = "NEW" if not withdrawn_user else "REJOINED"
 
         access_token = create_access_token(
             payload={"user_id": user.id},
             role=Role.USER,
         )
-        
+
         return access_token, user_status
     
     def create_user_inquiry(
@@ -180,7 +190,7 @@ class UserService:
                 raise HTTPException(status_code=422, detail=f"User id does not exist.")
             raise e
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         inquiry = UserInquiry(
             id=self.ulid.generate(),
             user_id=user_id,
@@ -196,6 +206,10 @@ class UserService:
         self.user_repo.create_inquiry(inquiry, images)
 
         return inquiry
+    
+    def get_inquiries(self, page: int, items_per_page: int) -> tuple[int, list[UserInquiry]]:
+        total_count, inquiries = self.user_repo.get_inquiries(page, items_per_page)
+        return total_count, inquiries
 
     def get_user_inquiries(
         self,
@@ -221,7 +235,7 @@ class UserService:
         inquiry = self.user_repo.find_inquiry_by_id(inquiry_id)
         
         inquiry.answer = answer
-        inquiry.updated_at = datetime.now()
+        inquiry.updated_at = datetime.now(timezone.utc)
 
         self.user_repo.create_inquiry_answer(inquiry)
 
@@ -240,7 +254,7 @@ class UserService:
         address_line2: str | None = None,
         order_memo: str | None = None,
     ) -> UserAddress:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         address = UserAddress(
             id=self.ulid.generate(),
             user_id=user_id,
@@ -269,7 +283,7 @@ class UserService:
         for key, value in kwargs.items():
             if hasattr(address, key) and value is not None:
                 setattr(address, key, value)
-        address.updated_at = datetime.now()
+        address.updated_at = datetime.now(timezone.utc)
 
         self.user_repo.update_address(address)
 

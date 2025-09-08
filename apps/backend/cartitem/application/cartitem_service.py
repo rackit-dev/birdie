@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from dependency_injector.wiring import inject
 from fastapi import HTTPException
 from ulid import ULID
@@ -33,7 +33,7 @@ class CartItemService:
         if _cartitem:
             raise HTTPException(status_code=422, detail="Item Already Exsists.")
         
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         cartitem: CartItem = CartItem(
             id=self.ulid.generate(),
             user_id=user_id,
@@ -75,7 +75,7 @@ class CartItemService:
 
         cartitem.product_option_id = product_option_id
         cartitem.quantity = quantity
-        cartitem.updated_at = datetime.now()
+        cartitem.updated_at = datetime.now(timezone.utc)
 
         self.cartitem_repo.update(cartitem)
 

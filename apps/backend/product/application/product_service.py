@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from dependency_injector.wiring import inject
 from fastapi import HTTPException, UploadFile
@@ -39,7 +39,7 @@ class ProductService:
         if _product:
             raise HTTPException(status_code=422)
         
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         product: Product = Product(
             id=self.ulid.generate(),
             product_number=None,
@@ -104,7 +104,7 @@ class ProductService:
         product.is_active = is_active
         product.category_main = category_main
         product.category_sub = category_sub
-        product.updated_at = datetime.now()
+        product.updated_at = datetime.now(timezone.utc)
 
         self.product_repo.update(product, image_thumbnail, image_detail)
 
@@ -121,7 +121,7 @@ class ProductService:
         product_option_list = []
 
         for option in options:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             product_option: ProductOption = ProductOption(
                 id=self.ulid.generate(),
                 product_id=product_id,
@@ -146,7 +146,7 @@ class ProductService:
 
         product_option.option = option
         product_option.is_active = is_active
-        product_option.updated_at = datetime.now()
+        product_option.updated_at = datetime.now(timezone.utc)
 
         self.product_repo.update_option(product_option)
 
@@ -156,7 +156,7 @@ class ProductService:
         self.product_repo.delete_option(product_option_id)
 
     def create_product_like(self, user_id: str, product_id: str) -> ProductLike:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         product_like: ProductLike = ProductLike(
             id=self.ulid.generate(),
             user_id=user_id,
@@ -184,7 +184,7 @@ class ProductService:
         images: List[UploadFile],
         content: str | None = None,
     ) -> ProductReview:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         product_review: ProductReview = ProductReview(
             id=self.ulid.generate(),
             user_id=user_id,

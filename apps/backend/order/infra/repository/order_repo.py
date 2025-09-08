@@ -112,8 +112,12 @@ class OrderRepository(IOrderRepository):
             updated_at=coupon.updated_at,
         )
         with SessionLocal() as db:
-            db.add(new_coupon)
-            db.commit()
+            try:
+                db.add(new_coupon)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="An error occurred while saving the coupon")
 
     def update_coupon(self, coupon: CouponVO):
         with SessionLocal() as db:
