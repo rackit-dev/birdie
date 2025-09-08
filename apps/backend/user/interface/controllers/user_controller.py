@@ -196,13 +196,27 @@ def create_user_inquiry(
         content=content,
         images=images,
     )
-
     return inquiry
 
 
 class GetUserInquiriesResponse(BaseModel):
     total_count: int
     inquiries: list[UserInquiryResponse]
+
+
+@router.get("/inquiry", response_model=GetUserInquiriesResponse)
+@inject
+def get_user_inquiries(
+    current_user: Annotated[CurrentUser, Depends(get_admin_user)],
+    page: int = 1,
+    items_per_page: int = 5,
+    user_service: UserService = Depends(Provide[Container.user_service]),
+):
+    total_count, inquiries = user_service.get_inquiries(page, items_per_page)
+    return {
+        "total_count": total_count,
+        "inquiries": inquiries,
+    }
 
 
 @router.get("/inquiry/by_user", response_model=GetUserInquiriesResponse)

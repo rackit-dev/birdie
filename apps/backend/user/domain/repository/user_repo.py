@@ -56,6 +56,13 @@ class IUserRepository(metaclass=ABCMeta):
         유저 문의 생성.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_inquiries(self, page: int, items_per_page: int) -> tuple[int, list[UserInquiry]]:
+        """
+        모든 유저 문의를 페이지네이션하여 반환.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def get_inquiries_by_user(

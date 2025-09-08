@@ -161,6 +161,16 @@ class UserRepository(IUserRepository):
             db.flush()
             upload_images_to_s3(f"inquiries/{new_inquiry.id}", images)
             db.commit()
+    
+    def get_inquiries(self, page, items_per_page) -> tuple[int, list[UserInquiryVO]]:
+        with SessionLocal() as db:
+            query = db.query(UserInquiry)
+            total_count = query.count()
+
+            offset = (page - 1) * items_per_page
+            inquiries = query.limit(items_per_page).offset(offset).all()
+
+        return total_count, [UserInquiryVO(**row_to_dict(inquiry)) for inquiry in inquiries]
 
     def get_inquiries_by_user(
         self, user_id: str, page: int, items_per_page: int

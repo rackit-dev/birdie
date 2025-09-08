@@ -196,6 +196,10 @@ class UserService:
         self.user_repo.create_inquiry(inquiry, images)
 
         return inquiry
+    
+    def get_inquiries(self, page: int, items_per_page: int) -> tuple[int, list[UserInquiry]]:
+        total_count, inquiries = self.user_repo.get_inquiries(page, items_per_page)
+        return total_count, inquiries
 
     def get_user_inquiries(
         self,
