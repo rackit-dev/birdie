@@ -18,6 +18,15 @@ class Product:
 
 
 @dataclass
+class ProductOptionType:
+    id: str
+    product_id: str
+    option_type: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
 class ProductOption:
     id: str
     product_id: str
