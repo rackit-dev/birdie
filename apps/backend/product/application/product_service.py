@@ -127,9 +127,21 @@ class ProductService:
     
     def get_product_option_types(self, product_id: str) -> tuple[int, list[ProductOptionType]]:
         product_option_types = self.product_repo.get_option_types(product_id)
-
         return product_option_types
     
+    def update_product_option_type(self, id: str, option_type: str) -> ProductOptionType:
+        product_option_type = self.product_repo.find_option_type_by_id(id)
+        if not product_option_type:
+            raise HTTPException(status_code=422, detail="Product option type not found.")
+        
+        product_option_type.option_type = option_type
+        product_option_type.updated_at = datetime.now(timezone.utc)
+        self.product_repo.update_option_type(product_option_type)
+        return product_option_type
+    
+    def delete_product_option_type(self, product_option_type_id: str):
+        self.product_repo.delete_option_type(product_option_type_id)
+
     def create_product_options(
         self,
         product_id: str,

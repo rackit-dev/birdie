@@ -164,6 +164,11 @@ class CreateProductOptionBody(BaseModel):
     options: list[str] = Field(min_length=1, max_length=10)
 
 
+class UpdateProductOptionTypeBody(BaseModel):
+    id: str = Field(min_length=10, max_length=36)
+    option_type: str = Field(min_length=1, max_length=32)
+
+
 class ProductOptionTypeResponse(BaseModel):
     id: str
     product_id: str
@@ -217,19 +222,16 @@ def get_product_option_types(
     }
 
 
-"""
 @router.put("/option_types", response_model=ProductOptionTypeResponse)
 @inject
 def update_product_option_type(
-    id: Annotated[str, Form(..., min_length=10, max_length=36)],
-    option_type: Annotated[str, Form(..., min_length=1, max_length=32)],
+    body: UpdateProductOptionTypeBody,
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_option_type = product_service.update_product_option_type(
-        id=id,
-        option_type=option_type,
+        id=body.id,
+        option_type=body.option_type,
     )
-
     return product_option_type
 
 
@@ -240,7 +242,6 @@ def delete_product_option_type(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product_option_type(product_option_type_id)
-"""
 
 
 @router.post("/options", status_code=201, response_model=ProductOptionsResponse)

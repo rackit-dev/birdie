@@ -209,6 +209,46 @@ class ProductRepository(IProductRepository):
                 raise HTTPException(status_code=422)
 
         return total_count, [ProductOptionTypeVO(**row_to_dict(product_option_type)) for product_option_type in product_option_types]
+    
+    def find_option_type_by_id(self, id: str) -> ProductOptionTypeVO:
+        with SessionLocal() as db:
+            product_option_type = db.query(ProductOptionType).filter(ProductOptionType.id == id).first()
+
+        if not product_option_type:
+            raise HTTPException(status_code=422)
+        
+        return ProductOptionTypeVO(**row_to_dict(product_option_type))
+    
+    def update_option_type(self, product_option_type: ProductOptionTypeVO):
+        with SessionLocal() as db:
+            option_type = db.query(ProductOptionType).filter(ProductOptionType.id == product_option_type.id).first()
+        
+        if not option_type:
+            raise HTTPException(status_code=422)
+        
+        option_type.option_type = product_option_type.option_type
+        option_type.updated_at = product_option_type.updated_at
+
+        try:
+            db.add(option_type)
+            db.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to Update product option type.")
+
+    def delete_option_type(self, id: str):
+        with SessionLocal() as db:
+            product_option_type = db.query(ProductOptionType).filter(
+                ProductOptionType.id == id
+            ).first()
+            
+            if not product_option_type:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_option_type)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product option type.")
 
     def save_options(self, product_options: List[ProductOptionVO]):
         with SessionLocal() as db:

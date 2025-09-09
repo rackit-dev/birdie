@@ -82,6 +82,18 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def get_option_types(self, product_id: str) -> tuple[int, list[ProductOptionType]]:
         raise NotImplementedError
+    
+    @abstractmethod
+    def find_option_type_by_id(self, id: str) -> ProductOptionType:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_option_type(self, product_option_type: ProductOptionType):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def delete_option_type(self, product_option_type_id: str):
+        raise NotImplementedError
 
     @abstractmethod
     def save_options(self, options: List[ProductOption]) -> tuple[int, list[ProductOption]]:
