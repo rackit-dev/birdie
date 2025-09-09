@@ -88,6 +88,13 @@ class IOrderRepository(metaclass=ABCMeta):
         Find a coupon wallet by its ID.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def update_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
+        """
+        Mark a coupon wallet as used.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def delete_coupon_wallet(self, coupon_wallet_id: str):

@@ -197,6 +197,18 @@ class OrderService:
     def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
         coupon_wallets = self.order_repo.get_coupon_wallets_by_user(user_id)
         return coupon_wallets
+    
+    def use_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
+        coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+        if not coupon_wallet:
+            raise HTTPException(status_code=404, detail="CouponWallet not found")
+        if coupon_wallet.is_used:
+            raise HTTPException(status_code=400, detail="CouponWallet is already used")
+        coupon_wallet.is_used = True
+        coupon_wallet.used_at = datetime.now(timezone.utc)
+        coupon_wallet.updated_at = datetime.now(timezone.utc)
+        self.order_repo.update_coupon_wallet(coupon_wallet)
+        return coupon_wallet
 
     def delete_coupon_wallet(self, coupon_wallet_id: str):
         coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)

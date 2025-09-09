@@ -70,23 +70,34 @@ class OrderRepository(IOrderRepository):
             db.commit()
 
     def save_order_item(self, order_item: OrderItemVO):
-        new_order_item = OrderItem(
-            id=order_item.id,
-            order_id=order_item.order_id,
-            product_id=order_item.product_id,
-            coupon_wallet_id=order_item.coupon_wallet_id,
-            status=order_item.status,
-            quantity=order_item.quantity,
-            unit_price=order_item.unit_price,
-            coupon_discount_price=order_item.coupon_discount_price,
-            point_discount_price=order_item.point_discount_price,
-            final_price=order_item.final_price,
-            created_at=order_item.created_at,
-            updated_at=order_item.updated_at,
-        )
-        with SessionLocal() as db:
-            db.add(new_order_item)
-            db.commit()
+        try:
+            new_order_item = OrderItem(
+                id=order_item.id,
+                order_id=order_item.order_id,
+                product_id=order_item.product_id,
+                coupon_wallet_id=order_item.coupon_wallet_id,
+                status=order_item.status,
+                quantity=order_item.quantity,
+                unit_price=order_item.unit_price,
+                coupon_discount_price=order_item.coupon_discount_price,
+                point_discount_price=order_item.point_discount_price,
+                final_price=order_item.final_price,
+                created_at=order_item.created_at,
+                updated_at=order_item.updated_at,
+            )
+            with SessionLocal() as db:
+                db.add(new_order_item)
+                db.commit()
+        except IntegrityError as e:
+            if "foreign key constraint fails" in str(e.orig):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid foreign key: order_id or coupon_wallet_id does not exist"
+                )
+            raise HTTPException(
+                status_code=500,
+                detail="An error occurred while saving the order item"
+            )
 
     def find_coupon_by_id(self, coupon_id: str) -> CouponVO:
         with SessionLocal() as db:
@@ -169,6 +180,17 @@ class OrderRepository(IOrderRepository):
             if not coupon_wallet:
                 raise HTTPException(status_code=404, detail="CouponWallet not found")
             return CouponWalletVO(**row_to_dict(coupon_wallet))
+        
+    def update_coupon_wallet(self, coupon_wallet: CouponWalletVO):
+        with SessionLocal() as db:
+            existing_coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == coupon_wallet.id).first()
+            if not existing_coupon_wallet:
+                raise HTTPException(status_code=404, detail="CouponWallet not found")
+            existing_coupon_wallet.is_used = coupon_wallet.is_used
+            existing_coupon_wallet.used_at = coupon_wallet.used_at
+            existing_coupon_wallet.updated_at = coupon_wallet.updated_at
+            db.add(existing_coupon_wallet)
+            db.commit()
 
     def delete_coupon_wallet(self, coupon_wallet_id: str):
         with SessionLocal() as db:

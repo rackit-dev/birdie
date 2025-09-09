@@ -160,6 +160,16 @@ def get_coupon_wallets_by_user(
     return coupon_wallets
 
 
+@router.put("/wallet/use", response_model=CouponWalletResponse)
+@inject
+def use_coupon_wallet(
+    coupon_wallet_id: str,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    coupon_wallet = order_service.use_coupon_wallet(coupon_wallet_id)
+    return coupon_wallet
+
+
 @router.delete("/wallet", status_code=204)
 @inject
 def delete_coupon_wallet(
