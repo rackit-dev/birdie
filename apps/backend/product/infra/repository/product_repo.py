@@ -163,7 +163,7 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except Exception as e:
                 db.rollback()
-                raise HTTPException(status_code=500, detail="Failed to Delete product.")
+                raise HTTPException(status_code=500, detail=str(e))
     
     def _delete_img(self, name: str):
         prefix = f"products/{name}/"

@@ -71,7 +71,7 @@ class ProductOption(Base):
     )
     product_option_type_id: Mapped[str] = mapped_column(
         String(36),
-        ForeignKey("ProductOptionType.id", ondelete="CASECADE"),
+        ForeignKey("ProductOptionType.id", ondelete="CASCADE"),
         nullable=False
     )
     option: Mapped[str] = mapped_column(String(32), nullable=False)

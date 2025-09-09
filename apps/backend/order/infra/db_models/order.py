@@ -7,7 +7,7 @@ class Order(Base):
     __tablename__ = "Orders"
 
     id = mapped_column(String(36), primary_key=True)
-    user_id = mapped_column(ForeignKey("User.id"), nullable=False)
+    user_id = mapped_column(String(36), nullable=False)
 
     status = mapped_column(
         Enum("결제대기", "결제완료", "상품준비중", "배송중", "배송완료", "구매확정", "주문취소", "부분취소", name="status"),
@@ -58,7 +58,7 @@ class CouponWallet(Base):
     __tablename__ = "CouponWallet"
 
     id = mapped_column(String(36), primary_key=True)
-    user_id = mapped_column(ForeignKey("User.id"), nullable=False)
+    user_id = mapped_column(String(36), nullable=False)
     coupon_id = mapped_column(ForeignKey("Coupon.id"), nullable=False)
 
     is_used = mapped_column(Boolean, default=False)
@@ -73,7 +73,7 @@ class OrderItem(Base):
 
     id = mapped_column(String(36), primary_key=True)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False)
-    product_id = mapped_column(ForeignKey("Product.id"), nullable=False)
+    product_id = mapped_column(String(36), nullable=False)
     coupon_wallet_id = mapped_column(ForeignKey("CouponWallet.id"), nullable=True)
 
     status = mapped_column(Enum("주문완료", "주문취소", "환불", name="status"), default="주문완료")
@@ -84,6 +84,13 @@ class OrderItem(Base):
     coupon_discount_price = mapped_column(Numeric(10, 0), default=0)  # 할인된 금액 (쿠폰)
     point_discount_price = mapped_column(Numeric(10, 0), default=0)   # 할인된 금액 (포인트)
     final_price = mapped_column(Numeric(10, 0), nullable=False)       # 최종 결제 금액
+
+    option_1_type = mapped_column(String(32), nullable=True)
+    option_1_value = mapped_column(String(32), nullable=True)
+    option_2_type = mapped_column(String(32), nullable=True)
+    option_2_value = mapped_column(String(32), nullable=True)
+    option_3_type = mapped_column(String(32), nullable=True)
+    option_3_value = mapped_column(String(32), nullable=True)
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
@@ -109,7 +116,7 @@ class PointTransaction(Base):
     __tablename__ = "PointTransaction"
 
     id = mapped_column(String(36), primary_key=True)
-    user_id = mapped_column(ForeignKey("User.id"), nullable=False)
+    user_id = mapped_column(String(36), nullable=False)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=True)
 
     type = mapped_column(Enum("적립", "사용", "취소", name="type"), nullable=False)
