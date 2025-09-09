@@ -62,11 +62,19 @@ export default function OrderPaymentScreen() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const token = await SecureStore.getItemAsync("session_token");
+        if (!token) throw new Error("로그인 토큰 없음");
+
         const res = await fetch(`${API_URL}/users`, {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         });
+        if (!res.ok) {
+          throw new Error(`유저 API 실패 (status ${res.status})`);
+        }
+
         const data = await res.json();
         setUserId(data.id);
         setRecipientName(data.name);
@@ -138,7 +146,7 @@ export default function OrderPaymentScreen() {
     {}
   );
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     const { channelKey, payMethod } = (() => {
       if (selectedPayment === "kakaopay") {
         return { channelKey: CH_KAKAO, payMethod: "EASY_PAY" as const };
@@ -156,47 +164,68 @@ export default function OrderPaymentScreen() {
     const productType =
       payMethod === "MOBILE" ? ("PRODUCT_TYPE_REAL" as const) : undefined;
 
-    const request = {
-      storeId: STORE_ID,
-      channelKey,
-      paymentId: makePaymentId(),
-      orderName: `${products.length}개 상품`,
-      totalAmount: 1000,
-      currency: "KRW",
-      payMethod,
-      ...(productType ? { productType } : {}),
-      customer: {
-        fullName: "강지웅",
-        phoneNumber: "01099999999",
-        email: "jiwoong@example.com",
-      },
-      customData: "12345",
-      noticeUrls: ["`${API_URL}/orders/payment/webhook`"],
-    } as const;
-
     const orderPayload = {
       user_id: userId,
       subtotal_price: totalProductPrice,
       coupon_discount_price: 0,
-      point_discount_price: point,
+      point_discount_price: parseInt(point, 10),
       total_price: finalAmount,
       recipient_name: recipientName,
       phone_number: recipientPhone,
-      zipcode, // 우편번호
-      address_line1: addressLine1, // 기본주소
-      address_line2: addressLine2, // 상세주소
-      order_memo: "", // 부재시 문앞에...
+      zipcode,
+      address_line1: addressLine1,
+      address_line2: addressLine2,
+      order_memo: orderMemo || "",
       items: products.map((p) => ({
         product_id: p.id,
         coupon_wallet_id: null,
         quantity: p.quantity,
         unit_price: p.price,
         coupon_discount_price: 0,
+        point_discount_price: 0,
         final_price: p.price * p.quantity,
       })),
     };
 
-    navigation.navigate("PaymentWebview", { params: request, orderPayload });
+    try {
+      const token = await SecureStore.getItemAsync("session_token");
+      if (!token) throw new Error("로그인 토큰 없음");
+
+      const res = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`주문 생성 실패 (status ${res.status}): ${errText}`);
+      }
+
+      const orderData = await res.json();
+      console.log("주문 생성 성공:", orderData);
+
+      const request = {
+        storeId: STORE_ID,
+        channelKey,
+        paymentId: makePaymentId(),
+        orderName: `${products.length}개 상품`,
+        totalAmount: finalAmount,
+        currency: "KRW",
+        payMethod,
+        ...(productType ? { productType } : {}),
+        customData: orderData.id,
+        noticeUrls: [`${API_URL}/orders/payment/webhook`],
+      } as const;
+
+      navigation.navigate("PaymentWebview", { params: request });
+    } catch (err) {
+      console.error("결제 처리 중 오류:", err);
+      alert("주문 생성 중 문제가 발생했습니다.");
+    }
   };
 
   return (

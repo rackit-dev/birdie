@@ -476,7 +476,6 @@ export default function ProductDetail() {
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>결제혜택</Text>
-            <Text>무신사페이 x 무신사현대카드 1만원 할인</Text>
             <Text>카카오페이 x 페이머니 6천원 할인</Text>
             <Text style={{ marginTop: 15 }}>무이자 혜택 보기</Text>
           </View>
@@ -490,7 +489,11 @@ export default function ProductDetail() {
         <View style={styles.cardContainer}>
           <View style={styles.tabBar}>
             {TABS.map((tab, index) => (
-              <TouchableOpacity key={tab} onPress={() => setCurrentTab(index)}>
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setCurrentTab(index)}
+                style={styles.tabButton}
+              >
                 <Text
                   style={[
                     styles.tabText,
@@ -720,7 +723,7 @@ export default function ProductDetail() {
                   products: [
                     {
                       id: product.id,
-                      brand: product.brand,
+                      brand: product.category_sub,
                       image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
                       name: product.name.replace(/_/g, " "),
                       option: selectedOption,
@@ -805,9 +808,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     borderBottomColor: "#ddd",
     borderBottomWidth: 1,
-    paddingVertical: 12,
     backgroundColor: "#fff",
     marginTop: 5,
+  },
+  tabButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    alignItems: "center",
+    justifyContent: "center",
   },
   tabText: {
     fontSize: 15,
