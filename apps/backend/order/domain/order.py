@@ -54,6 +54,7 @@ class OrderItem:
     id: str
     order_id: str
     product_id: str
+    product_name: str
     coupon_wallet_id: str | None
     status: str
     quantity: int
@@ -61,6 +62,12 @@ class OrderItem:
     coupon_discount_price: int
     point_discount_price: int
     final_price: int
+    option_1_type: str | None
+    option_1_value: str | None
+    option_2_type: str | None
+    option_2_value: str | None
+    option_3_type: str | None
+    option_3_value: str | None
     created_at: datetime
     updated_at: datetime
 

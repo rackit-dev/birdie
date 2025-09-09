@@ -9,10 +9,11 @@ from utils.db_utils import row_to_dict
 from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
+from product.domain.product import ProductOptionType as ProductOptionTypeVO
 from product.domain.product import ProductOption as ProductOptionVO
 from product.domain.product import ProductLike as ProductLikeVO
 from product.domain.product import ProductReview as ProductReviewVO
-from product.infra.db_models.product import Product, ProductOption, ProductLike, ProductReview
+from product.infra.db_models.product import Product, ProductOptionType, ProductOption, ProductLike, ProductReview
 
 
 class ProductRepository(IProductRepository):
@@ -162,7 +163,7 @@ class ProductRepository(IProductRepository):
                 db.commit()
             except Exception as e:
                 db.rollback()
-                raise HTTPException(status_code=500, detail="Failed to Delete product.")
+                raise HTTPException(status_code=500, detail=str(e))
     
     def _delete_img(self, name: str):
         prefix = f"products/{name}/"
@@ -180,20 +181,88 @@ class ProductRepository(IProductRepository):
                 Bucket=bucket_name,
                 Delete={"Objects": delete_keys}
             )
-
-    def save_options(self, product_options: List[ProductOptionVO]):
+    
+    def save_option_type(self, product_option_type_vo: ProductOptionTypeVO):
+        product_option_type = ProductOptionType(
+            id=product_option_type_vo.id,
+            product_id=product_option_type_vo.product_id,
+            option_type=product_option_type_vo.option_type,
+            created_at=product_option_type_vo.created_at,
+            updated_at=product_option_type_vo.updated_at,
+        )
         with SessionLocal() as db:
             try:
-                for product_option in product_options:
-                    new_option = ProductOption(
-                        id=product_option.id,
-                        product_id=product_option.product_id,
-                        option=product_option.option,
-                        is_active=product_option.is_active,
-                        created_at=product_option.created_at,
-                        updated_at=product_option.updated_at,
-                    )
-                    db.add(new_option)
+                db.add(product_option_type)
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save product option type.")
+
+    def get_option_types(self, product_id: str) -> tuple[int, List[ProductOptionTypeVO]]:
+        with SessionLocal() as db:
+            product_option_types = db.query(ProductOptionType).filter(
+                ProductOptionType.product_id == product_id
+            ).order_by(ProductOptionType.option_type.asc())
+            total_count = product_option_types.count()
+
+            if not product_option_types:
+                raise HTTPException(status_code=422)
+
+        return total_count, [ProductOptionTypeVO(**row_to_dict(product_option_type)) for product_option_type in product_option_types]
+    
+    def find_option_type_by_id(self, id: str) -> ProductOptionTypeVO:
+        with SessionLocal() as db:
+            product_option_type = db.query(ProductOptionType).filter(ProductOptionType.id == id).first()
+
+        if not product_option_type:
+            raise HTTPException(status_code=422)
+        
+        return ProductOptionTypeVO(**row_to_dict(product_option_type))
+    
+    def update_option_type(self, product_option_type: ProductOptionTypeVO):
+        with SessionLocal() as db:
+            option_type = db.query(ProductOptionType).filter(ProductOptionType.id == product_option_type.id).first()
+        
+        if not option_type:
+            raise HTTPException(status_code=422)
+        
+        option_type.option_type = product_option_type.option_type
+        option_type.updated_at = product_option_type.updated_at
+
+        try:
+            db.add(option_type)
+            db.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to Update product option type.")
+
+    def delete_option_type(self, id: str):
+        with SessionLocal() as db:
+            product_option_type = db.query(ProductOptionType).filter(
+                ProductOptionType.id == id
+            ).first()
+            
+            if not product_option_type:
+                raise HTTPException(status_code=422)
+            
+            try:
+                db.delete(product_option_type)
+                db.commit()
+            except:
+                raise HTTPException(status_code=500, detail="Failed to Delete product option type.")
+
+    def save_option(self, product_options: ProductOptionVO):
+        with SessionLocal() as db:
+            try:
+                new_option = ProductOption(
+                    id=product_options.id,
+                    product_id=product_options.product_id,
+                    product_option_type_id=product_options.product_option_type_id,
+                    option=product_options.option,
+                    is_active=product_options.is_active,
+                    created_at=product_options.created_at,
+                    updated_at=product_options.updated_at,
+                )
+                db.add(new_option)
                 db.commit()
             except Exception:
                 db.rollback()

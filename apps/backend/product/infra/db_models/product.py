@@ -18,6 +18,11 @@ class Product(Base):
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
 
+    option_types: Mapped[list["ProductOptionType"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
     options: Mapped[list["ProductOption"]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan"
@@ -34,20 +39,48 @@ class Product(Base):
     )
 
 
-class ProductOption(Base):
-    __tablename__ = "ProductOption"
+class ProductOptionType(Base):
+    __tablename__ = "ProductOptionType"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # UUID
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
     product_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    option_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+    updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
+    product: Mapped["Product"] = relationship(back_populates="option_types")
+
+    options: Mapped[list["ProductOption"]] = relationship(
+        back_populates="product_option_type",
+        cascade="all, delete-orphan"
+    )
+
+
+class ProductOption(Base):
+    __tablename__ = "ProductOption"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    product_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("Product.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    product_option_type_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("ProductOptionType.id", ondelete="CASCADE"),
         nullable=False
     )
     option: Mapped[str] = mapped_column(String(32), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[str] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[str] = mapped_column(DateTime, nullable=False)
+
     product: Mapped["Product"] = relationship(back_populates="options")
+    product_option_type: Mapped["ProductOptionType"] = relationship(back_populates="options")
 
 
 class ProductLike(Base):

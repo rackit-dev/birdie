@@ -47,6 +47,7 @@ class OrderService:
                     id=self.ulid.generate(),
                     order_id="None",  # Will be set after order creation
                     product_id=item.product_id,
+                    product_name=item.product_name,
                     coupon_wallet_id=item.coupon_wallet_id,
                     status="주문완료",
                     quantity=item.quantity,
@@ -54,6 +55,12 @@ class OrderService:
                     coupon_discount_price=item.coupon_discount_price,
                     point_discount_price=item.point_discount_price,
                     final_price=item.final_price,
+                    option_1_type=item.option_1_type,
+                    option_1_value=item.option_1_value,
+                    option_2_type=item.option_2_type,
+                    option_2_value=item.option_2_value,
+                    option_3_type=item.option_3_type,
+                    option_3_value=item.option_3_value,
                     created_at=now,
                     updated_at=now,
                 )
@@ -86,11 +93,16 @@ class OrderService:
 
         return order
 
-    def get_order(self, order_id: str) -> Order:
+    def get_order(self, order_id: str) -> tuple[Order, List[OrderItem]]:
         order = self.order_repo.find_by_id(order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
-        return order
+
+        order_items = self.order_repo.get_order_items(order_id)
+        if not order_items:
+            raise HTTPException(status_code=404, detail="Order items not found")
+        
+        return order, order_items
 
     def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
         total_count, orders = self.order_repo.get_orders(page, items_per_page)

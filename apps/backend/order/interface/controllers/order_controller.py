@@ -3,8 +3,6 @@ from typing import List
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
-import json
-from pathlib import Path
 
 from containers import Container
 from order.application.order_service import OrderService
@@ -16,6 +14,7 @@ class OrderItemResponse(BaseModel):
     id: str
     order_id: str
     product_id: str
+    product_name: str
     coupon_wallet_id: str | None
     status: str
     quantity: int
@@ -23,6 +22,12 @@ class OrderItemResponse(BaseModel):
     coupon_discount_price: int
     point_discount_price: int
     final_price: int
+    option_1_type: str | None
+    option_1_value: str | None
+    option_2_type: str | None
+    option_2_value: str | None
+    option_3_type: str | None
+    option_3_value: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -45,14 +50,30 @@ class OrderResponse(BaseModel):
     updated_at: datetime
 
 
+class GetOrderResponse(BaseModel):
+    order: OrderResponse
+    items: List[OrderItemResponse]
+
+class GetOrdersResponse(BaseModel):
+    total_count: int
+    orders: List[OrderResponse]
+
+
 class CreateOrderItemRequest(BaseModel):
     product_id: str
+    product_name: str = Field(min_length=1, max_length=128)
     coupon_wallet_id: str | None = None
     quantity: int = Field(ge=0, le=99999)
     unit_price: int = Field(ge=0, le=999999999)
     coupon_discount_price: int = Field(ge=0, le=999999999, default=0)
     point_discount_price: int = Field(ge=0, le=999999999, default=0)
     final_price: int = Field(ge=0, le=999999999)
+    option_1_type: str | None = None
+    option_1_value: str | None = None
+    option_2_type: str | None = None
+    option_2_value: str | None = None
+    option_3_type: str | None = None
+    option_3_value: str | None = None
 
 
 class CreateOrderRequest(BaseModel):
@@ -93,18 +114,14 @@ def create_order(
     return order
 
 
-@router.get("/by_id", response_model=OrderResponse)
+@router.get("/by_id", response_model=GetOrderResponse)
 @inject
 def get_order(
     order_id: str,
     order_service: OrderService = Depends(Provide[Container.order_service]),
 ):
-    return order_service.get_order(order_id)
-
-
-class GetOrdersResponse(BaseModel):
-    total_count: int
-    orders: List[OrderResponse]
+    order, orderitems = order_service.get_order(order_id)
+    return {"order": order, "items": orderitems}
 
 
 @router.get("", response_model=GetOrdersResponse)

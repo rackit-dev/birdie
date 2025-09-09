@@ -18,9 +18,19 @@ class Product:
 
 
 @dataclass
+class ProductOptionType:
+    id: str
+    product_id: str
+    option_type: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
 class ProductOption:
     id: str
     product_id: str
+    product_option_type_id: str
     option: str
     is_active: bool
     created_at: datetime

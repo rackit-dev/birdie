@@ -153,9 +153,33 @@ def delete_product(
     product_service.delete_product(product_id)
 
 
+class CreateProductOptionTypeBody(BaseModel):
+    product_id: str = Field(min_length=10, max_length=36)
+    option_type: str = Field(min_length=1, max_length=32)
+
+
 class CreateProductOptionBody(BaseModel):
-    product_id: str = Field(min_length=10, max_length=32)
+    product_id: str = Field(min_length=10, max_length=36)
+    product_option_type_id: str = Field(min_length=10, max_length=36)
     options: list[str] = Field(min_length=1, max_length=10)
+
+
+class UpdateProductOptionTypeBody(BaseModel):
+    id: str = Field(min_length=10, max_length=36)
+    option_type: str = Field(min_length=1, max_length=32)
+
+
+class ProductOptionTypeResponse(BaseModel):
+    id: str
+    product_id: str
+    option_type: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class GetProductOptionTypesResponse(BaseModel):
+    total_count: int
+    product_option_types: list[ProductOptionTypeResponse]
 
 
 class ProductOptionResponse(BaseModel):
@@ -165,11 +189,59 @@ class ProductOptionResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+
 
 class ProductOptionsResponse(BaseModel):
     total_count: int
     product_options: list
+
+
+@router.post("/option_types", status_code=201, response_model=None)
+@inject
+def create_product_option_type(
+    body: CreateProductOptionTypeBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_option_type = product_service.create_product_option_type(
+        product_id=body.product_id,
+        option_type=body.option_type,
+    )
+    return product_option_type
+
+
+@router.get("/option_types", response_model=GetProductOptionTypesResponse)
+@inject
+def get_product_option_types(
+    product_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, product_option_types = product_service.get_product_option_types(product_id)
+    return {
+        "total_count": total_count,
+        "product_option_types": product_option_types,
+    }
+
+
+@router.put("/option_types", response_model=ProductOptionTypeResponse)
+@inject
+def update_product_option_type(
+    body: UpdateProductOptionTypeBody,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_option_type = product_service.update_product_option_type(
+        id=body.id,
+        option_type=body.option_type,
+    )
+    return product_option_type
+
+
+@router.delete("/option_types", status_code=204)
+@inject
+def delete_product_option_type(
+    product_option_type_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product_service.delete_product_option_type(product_option_type_id)
 
 
 @router.post("/options", status_code=201, response_model=ProductOptionsResponse)
@@ -179,8 +251,9 @@ def create_product_option(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     total_count, product_options = product_service.create_product_options(
-        product_option.product_id,
-        product_option.options,
+        product_id=product_option.product_id,
+        product_option_type_id=product_option.product_option_type_id,
+        options=product_option.options,
     )
 
     return {

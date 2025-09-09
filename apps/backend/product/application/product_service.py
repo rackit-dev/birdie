@@ -4,7 +4,7 @@ from dependency_injector.wiring import inject
 from fastapi import HTTPException, UploadFile
 from ulid import ULID
 
-from product.domain.product import Product, ProductOption, ProductLike, ProductReview
+from product.domain.product import Product, ProductOption, ProductLike, ProductReview, ProductOptionType
 from product.domain.repository.product_repo import IProductRepository
 
 
@@ -113,30 +113,59 @@ class ProductService:
     def delete_product(self, product_id: str):
         self.product_repo.delete(product_id)
 
+    def create_product_option_type(self, product_id: str, option_type: str) -> ProductOptionType:
+        now = datetime.now(timezone.utc)
+        product_option_type: ProductOptionType = ProductOptionType(
+            id=self.ulid.generate(),
+            product_id=product_id,
+            option_type=option_type,
+            created_at=now,
+            updated_at=now,
+        )
+        self.product_repo.save_option_type(product_option_type)
+        return product_option_type
+    
+    def get_product_option_types(self, product_id: str) -> tuple[int, list[ProductOptionType]]:
+        product_option_types = self.product_repo.get_option_types(product_id)
+        return product_option_types
+    
+    def update_product_option_type(self, id: str, option_type: str) -> ProductOptionType:
+        product_option_type = self.product_repo.find_option_type_by_id(id)
+        if not product_option_type:
+            raise HTTPException(status_code=422, detail="Product option type not found.")
+        
+        product_option_type.option_type = option_type
+        product_option_type.updated_at = datetime.now(timezone.utc)
+        self.product_repo.update_option_type(product_option_type)
+        return product_option_type
+    
+    def delete_product_option_type(self, product_option_type_id: str):
+        self.product_repo.delete_option_type(product_option_type_id)
+
     def create_product_options(
         self,
         product_id: str,
+        product_option_type_id: str,
         options: List[str],
     ) -> tuple[int, list[ProductOption]]:
-        product_option_list = []
-
+        option_list = []
         for option in options:
             now = datetime.now(timezone.utc)
             product_option: ProductOption = ProductOption(
                 id=self.ulid.generate(),
                 product_id=product_id,
+                product_option_type_id=product_option_type_id,
                 option=option,
                 is_active=True,
                 created_at=now,
                 updated_at=now,
             )
-            product_option_list.append(product_option)
+            self.product_repo.save_option(product_option)
+            option_list.append(product_option)
 
-        self.product_repo.save_options(product_option_list)
-        
-        return len(product_option_list), product_option_list
-    
-    def get_product_options(self, product_id: str) -> tuple[int, list[Product]]:
+        return len(option_list), option_list
+
+    def get_product_options(self, product_id: str) -> tuple[int, list[ProductOption]]:
         product_options = self.product_repo.get_options(product_id)
 
         return product_options
@@ -167,7 +196,7 @@ class ProductService:
 
         return product_like
     
-    def get_product_likes(self, user_id: str) -> tuple[int, list[Product]]:
+    def get_product_likes(self, user_id: str) -> tuple[int, list[ProductLike]]:
         product_likes = self.product_repo.get_likes(user_id)
 
         return product_likes
