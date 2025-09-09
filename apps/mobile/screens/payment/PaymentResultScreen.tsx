@@ -1,57 +1,92 @@
-import React from "react";
-import { View, Text, Button } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation/RootNavigator";
+import CustomHeader from "../../components/CustomHeader";
 
-type PaymentResultScreenRouteProp = RouteProp<
-  RootStackParamList,
-  "PaymentResult"
->;
-type PaymentResultScreenNavProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "PaymentResult"
->;
-
-function getBoolean(value: any): boolean | undefined {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") return value === "true";
-  return undefined;
-}
+type Props = NativeStackScreenProps<RootStackParamList, "PaymentResult">;
 
 export default function PaymentResultScreen() {
-  const navigation = useNavigation<PaymentResultScreenNavProp>();
-  const route = useRoute<PaymentResultScreenRouteProp>();
-  const { imp_success, success, imp_uid, merchant_uid, error_msg, error_code } =
-    route.params ?? {};
+  const navigation = useNavigation<Props["navigation"]>();
+  const route = useRoute<Props["route"]>();
+
+  const { success, code, message, paymentId, orderId } = route.params ?? {};
 
   const isSuccess =
-    getBoolean(imp_success) ??
-    getBoolean(success) ??
-    (error_code == null && error_msg == null);
+    (typeof success === "boolean" ? success : success === "true") ??
+    (code == null && message == null);
+
+  const title = isSuccess ? "결제가 완료되었어요" : "결제가 실패했어요";
+  const leadIcon = isSuccess ? "✅" : "⚠️";
+
+  const description = isSuccess
+    ? ([
+        "결제가 정상적으로 처리되었습니다.",
+        "영수증/주문 내역은 주문 상세에서 확인할 수 있습니다.",
+      ].filter(Boolean) as string[])
+    : ([
+        "결제가 실패하였거나 취소되었습니다.",
+        // `사유: ${message ?? "알 수 없는 오류"}`,
+        // code ? `에러코드: ${code}` : undefined,
+        "문제가 계속 발생하면 고객센터로 문의해 주세요.",
+      ].filter(Boolean) as string[]);
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
-        결제 {isSuccess ? "성공" : "실패"}하였습니다
-      </Text>
+    <View style={styles.safe}>
+      <CustomHeader onPressHome={() => navigation.navigate("Main")} />
+      <View style={styles.container}>
+        <Text accessibilityRole="image" style={styles.icon}>
+          {leadIcon}
+        </Text>
 
-      <View style={{ marginBottom: 24 }}>
-        <Text>아임포트 UID: {imp_uid ?? "-"}</Text>
-        <Text>주문번호: {merchant_uid ?? "-"}</Text>
-        {!isSuccess && (
-          <>
-            <Text>에러코드: {error_code ?? "-"}</Text>
-            <Text>에러메시지: {error_msg ?? "-"}</Text>
-          </>
-        )}
+        <Text style={styles.title}>{title}</Text>
+
+        <View style={styles.descriptionWrap}>
+          {description.map((line, idx) => (
+            <Text key={idx} style={styles.description} numberOfLines={2}>
+              {line}
+            </Text>
+          ))}
+        </View>
       </View>
-
-      <Button
-        title="홈으로 돌아가기"
-        onPress={() => navigation.navigate("Main")}
-      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  container: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: Platform.select({ ios: "700", android: "700" }),
+    letterSpacing: -0.2,
+    color: "#111827",
+    marginBottom: 8,
+  },
+  descriptionWrap: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+});

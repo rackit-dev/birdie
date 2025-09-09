@@ -1,5 +1,4 @@
 import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabNavigator from "./TabNavigator";
 import CartScreen from "../screens/CartScreen";
@@ -14,6 +13,22 @@ import PurchaseScreen from "../screens/PurchaseScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
 
+type PortOnePaymentRequest = {
+  storeId: string;
+  channelKey: string;
+  paymentId: string; // 가맹점 주문번호(고유)
+  orderName: string;
+  totalAmount: number;
+  currency: "CURRENCY_KRW" | "CURRENCY_USD" | string;
+  payMethod?: "CARD" | "MOBILE" | "VBANK";
+  customer?: {
+    fullName?: string;
+    phoneNumber?: string;
+    email?: string;
+  };
+  noticeUrls?: string[];
+};
+
 export type RootStackParamList = {
   Main: undefined;
   ProductDetail: { id: string };
@@ -22,11 +37,28 @@ export type RootStackParamList = {
   Login: undefined;
   Loading: undefined;
   SearchModal: undefined;
-  Purchase: { id: string };
+  Purchase: {
+    fromCart: boolean;
+    products: {
+      id: string;
+      brand: string;
+      name: string;
+      option: string;
+      quantity: number;
+      price: number;
+      image: string;
+    }[];
+  };
   ProductList: { category: string; brand: string };
   Search: undefined;
-  PaymentWebview: { params: any };
-  PaymentResult: any;
+  PaymentWebview: { params: PortOnePaymentRequest };
+  PaymentResult: {
+    success?: boolean | string;
+    paymentId?: string;
+    orderId?: string;
+    code?: string;
+    message?: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

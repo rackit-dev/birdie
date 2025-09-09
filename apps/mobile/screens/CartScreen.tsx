@@ -16,6 +16,7 @@ import axios from "axios";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
 
@@ -42,11 +43,15 @@ export default function CartScreen() {
   const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
   const IMAGE_URL = `${process.env.EXPO_PUBLIC_API_IMAGE_URL}`;
 
+  const userId = useUserIdStore((s) => s.id);
+
   useEffect(() => {
     const fetchCartItemsWithProducts = async () => {
+      if (!userId) return;
+
       try {
         const cartRes = await axios.get(`${API_URL}/cartitems`, {
-          params: { user_id: "test_user" },
+          params: { user_id: userId },
         });
 
         const cartItemsRaw = cartRes.data.cartitems;
@@ -89,7 +94,7 @@ export default function CartScreen() {
     };
 
     fetchCartItemsWithProducts();
-  }, []);
+  }, [userId]);
 
   const toggleSelectAll = () => {
     if (selectedItems.length === cartItems.length) {
@@ -385,11 +390,36 @@ export default function CartScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomBar}>
+      <TouchableOpacity
+        style={styles.bottomBar}
+        onPress={() => {
+          const selectedProducts = cartItems
+            .filter((item) => selectedItems.includes(item.id))
+            .map((item) => ({
+              id: item.product_id,
+              brand: item.brand,
+              name: item.name,
+              option: item.option,
+              quantity: item.quantity,
+              price: item.priceDiscounted * item.quantity,
+              image: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
+            }));
+
+          if (selectedProducts.length === 0) {
+            Alert.alert("선택된 상품이 없습니다.");
+            return;
+          }
+
+          navigation.navigate("Purchase", {
+            fromCart: true,
+            products: selectedProducts,
+          });
+        }}
+      >
         <Text style={styles.bottomBarText}>
           {getTotalPrice().toLocaleString()}원 주문하기
         </Text>
-      </View>
+      </TouchableOpacity>
 
       <Modal
         isVisible={modalVisible}

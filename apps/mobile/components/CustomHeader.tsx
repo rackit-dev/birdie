@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity, Image, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCartStore } from "../store/useCartStore";
 
 type Props = {
   title?: string;
@@ -11,6 +12,8 @@ type Props = {
   onPressBack?: () => void;
   onPressSearch?: () => void;
   onPressCart?: () => void;
+  onPressHome?: () => void;
+  onPressClose?: () => void;
   cartCount?: number;
 };
 
@@ -22,35 +25,49 @@ const CustomHeader: React.FC<Props> = ({
   onPressBack,
   onPressSearch,
   onPressCart,
-  cartCount = 0,
+  onPressHome,
+  onPressClose,
 }) => {
   const insets = useSafeAreaInsets();
+  const cartCount = useCartStore((state) => state.count);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.left}>
+      <View style={[styles.left, customLeftComponent ? { flex: 1 } : null]}>
         {customLeftComponent ? (
           customLeftComponent
         ) : logo ? (
-          <Image
-            source={require("../assets/images/logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Text style={styles.appName}>YOUNG'S MINTION</Text>
+        ) : showBackButton && title ? (
+          <View style={styles.backWithTitle}>
+            <TouchableOpacity
+              onPress={onPressBack}
+              style={styles.backButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.title}>{title}</Text>
+          </View>
         ) : showBackButton ? (
-          <TouchableOpacity onPress={onPressBack}>
+          <TouchableOpacity
+            onPress={onPressBack}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="chevron-back" size={28} color="black" />
           </TouchableOpacity>
+        ) : title ? (
+          <Text style={styles.title}>{title}</Text>
         ) : null}
       </View>
 
-      {title && !logo && !customLeftComponent && (
-        <View style={[styles.centerAbsolute, { top: insets.top + 45 }]}>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-      )}
-
       <View style={styles.right}>
+        {onPressClose && (
+          <TouchableOpacity onPress={onPressClose} style={styles.iconWrapper}>
+            <Ionicons name="close" size={26} color="black" />
+          </TouchableOpacity>
+        )}
         {onPressSearch && (
           <TouchableOpacity onPress={onPressSearch} style={styles.iconWrapper}>
             <Ionicons name="search-outline" size={25} color="black" />
@@ -66,6 +83,11 @@ const CustomHeader: React.FC<Props> = ({
             )}
           </TouchableOpacity>
         )}
+        {onPressHome && (
+          <TouchableOpacity onPress={onPressHome} style={styles.iconWrapper}>
+            <Ionicons name="home-sharp" size={23} color="black" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -77,14 +99,13 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    height: 120,
+    height: 100,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     position: "relative",
   },
   left: {
-    flex: 1,
     justifyContent: "flex-start",
   },
   right: {
@@ -94,23 +115,18 @@ const styles = StyleSheet.create({
     marginBottom: -5,
     marginRight: 5,
   },
-  centerAbsolute: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "50%",
-    transform: [{ translateY: -26 }],
-    alignItems: "center",
-    pointerEvents: "none",
-  },
   title: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#000",
   },
-  logo: {
-    width: 100,
-    height: 40,
+  appName: {
+    fontFamily: "P-Bold",
+    fontSize: 21,
+    alignSelf: "center",
+    textAlign: "center",
+    marginTop: 5,
+    color: "#000",
   },
   iconWrapper: {
     marginLeft: 15,
@@ -130,5 +146,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 10,
     fontWeight: "bold",
+  },
+  backWithTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButton: {
+    marginRight: 8,
   },
 });

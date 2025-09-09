@@ -1,25 +1,50 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
+import { useUserIdStore } from "@/store/useUserIdStore";
 
 const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const setUser = useUserIdStore((state) => state.setUser);
+
+  const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1초 대기 (자연스러운 로딩처럼 보이게)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const token = await SecureStore.getItemAsync("accessToken");
+      const token = await SecureStore.getItemAsync("session_token");
+
+      console.log("token", token);
 
       if (token) {
-        navigation.replace("Main"); // or your home screen stack name
+        try {
+          const res = await fetch(`${API_BASE}/users`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!res.ok) throw new Error("Failed to fetch user");
+
+          const data = await res.json();
+
+          setUser({ id: data.id, name: data.name, email: data.email });
+
+          navigation.replace("Main");
+
+          // 테스트용
+          // navigation.replace("Login");
+        } catch (err) {
+          console.error("유저정보 불러오기 실패:", err);
+          navigation.replace("Login");
+        }
       } else {
         // 테스트용
-        navigation.replace("Main");
+        // navigation.replace("Main");
 
-        // navigation.replace("Login"); -> 실제 앱에서는 로그인 화면으로 이동하도록 수정 필요
+        navigation.replace("Login");
       }
     };
 
@@ -28,8 +53,7 @@ const LoadingScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#000" />
-      <Text style={{ marginTop: 10 }}>잠시만 기다려주세요...</Text>
+      <Text style={styles.appName}>YOUNG'S MINTION</Text>
     </View>
   );
 };
@@ -39,7 +63,19 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#000",
+  },
+  logo: {
+    width: 180,
+    height: 60,
+  },
+  appName: {
+    fontFamily: "P-Bold",
+    fontSize: 30,
+    alignSelf: "center",
+    textAlign: "center",
+    color: "#fff",
+    letterSpacing: -0.5,
   },
 });
 

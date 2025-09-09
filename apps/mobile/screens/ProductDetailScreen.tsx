@@ -22,6 +22,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
+import useLikeStore, { Product } from "@/store/useLikeStore";
+import { useCartStore } from "../store/useCartStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -72,12 +75,16 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
   const [pendingQty, setPendingQty] = useState<number>(1);
-  const [cartCount, setCartCount] = useState(0);
   const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
   const [detailImages, setDetailImages] = useState<string[]>([]);
   const { width: screenWidth } = useWindowDimensions();
   const [imageHeights, setImageHeights] = useState<number[]>([]);
+  const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+  const fetchCartCount = useCartStore((s) => s.fetchCount);
+  const invalidateCart = useCartStore((s) => s.invalidate);
+
+  const userId = useUserIdStore((s) => s.id);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
@@ -92,20 +99,29 @@ export default function ProductDetail() {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCartCount = async () => {
-        try {
-          const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: "test_user" },
-          });
-          setCartCount(res.data.total_count);
-        } catch (err) {
-          console.error("장바구니 개수 불러오기 실패:", err);
-        }
-      };
-
-      fetchCartCount();
-    }, [id])
+      if (userId) {
+        fetchCartCount();
+        fetchLikedItems();
+      }
+    }, [fetchLikedItems, fetchCartCount])
   );
+
+  const handleDeleteLike = async (product: Product) => {
+    try {
+      if (!product.product_like_id) {
+        console.warn("삭제할 product_like_id가 없습니다.");
+        return;
+      }
+      await axios.delete(`${API_URL}/products/like`, {
+        params: { product_like_id: product.product_like_id },
+      });
+      if (userId) {
+        fetchLikedItems();
+      }
+    } catch (err) {
+      console.error("좋아요 삭제 실패:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -232,78 +248,6 @@ export default function ProductDetail() {
               96%가 만족했어요
             </Text>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginBottom: 20 }}
-            >
-              {[1, 2, 3, 4, 5].map((_, i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 80,
-                    height: 80,
-                    backgroundColor: "#ddd",
-                    borderRadius: 8,
-                    marginRight: 10,
-                  }}
-                />
-              ))}
-            </ScrollView>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <View>
-                <Text style={{ fontSize: 16, marginBottom: 4 }}>색상</Text>
-                <Text style={{ fontWeight: "600" }}>화면과 같아요</Text>
-              </View>
-              <Text style={{ alignSelf: "center" }}>96%</Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <View>
-                <Text style={{ fontSize: 16, marginBottom: 4 }}>사이즈</Text>
-                <Text style={{ fontWeight: "600" }}>잘 맞아요</Text>
-              </View>
-              <Text style={{ alignSelf: "center" }}>95%</Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {["신발 사이즈", "옵션", "만족도"].map((label, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    backgroundColor: "#fff",
-                  }}
-                >
-                  <Text>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{ fontWeight: "700", fontSize: 16, marginBottom: 6 }}
@@ -313,19 +257,6 @@ export default function ProductDetail() {
               </Text>
               <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
                 감튀조아 🌟 Yellow · 2025.05.14
-              </Text>
-              <Text
-                style={{
-                  alignSelf: "flex-start",
-                  backgroundColor: "#f1f1f1",
-                  paddingVertical: 4,
-                  paddingHorizontal: 10,
-                  borderRadius: 12,
-                  fontSize: 12,
-                  marginBottom: 10,
-                }}
-              >
-                다음날 발송되었어요 📦
               </Text>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -352,9 +283,6 @@ export default function ProductDetail() {
                 </Text>
                 <Text style={{ fontSize: 14, marginBottom: 4 }}>
                   <Text style={{ fontWeight: "600" }}>사이즈</Text> 잘 맞아요
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>색상</Text> 화면과 같아요
                 </Text>
               </View>
 
@@ -491,9 +419,8 @@ export default function ProductDetail() {
       <CustomHeader
         showBackButton
         onPressBack={() => navigation.goBack()}
-        onPressSearch={() => navigation.navigate("SearchModal")}
+        onPressSearch={() => navigation.navigate("Search")}
         onPressCart={() => navigation.navigate("Cart")}
-        cartCount={cartCount}
       />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -554,7 +481,6 @@ export default function ProductDetail() {
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>결제혜택</Text>
-            <Text>무신사페이 x 무신사현대카드 1만원 할인</Text>
             <Text>카카오페이 x 페이머니 6천원 할인</Text>
             <Text style={{ marginTop: 15 }}>무이자 혜택 보기</Text>
           </View>
@@ -568,7 +494,11 @@ export default function ProductDetail() {
         <View style={styles.cardContainer}>
           <View style={styles.tabBar}>
             {TABS.map((tab, index) => (
-              <TouchableOpacity key={tab} onPress={() => setCurrentTab(index)}>
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setCurrentTab(index)}
+                style={styles.tabButton}
+              >
                 <Text
                   style={[
                     styles.tabText,
@@ -585,9 +515,23 @@ export default function ProductDetail() {
       </ScrollView>
 
       <View style={styles.fixedBuy}>
-        <TouchableOpacity style={styles.likeButton}>
-          <Ionicons name="heart-outline" size={24} color="#FF2D55" />
-          <Text style={styles.likeText}>1.3만</Text>
+        <TouchableOpacity
+          style={styles.likeButton}
+          onPress={() => {
+            if (userId) toggleLike(product);
+          }}
+        >
+          {!likedItems.some((liked) => liked.id === product.id) ? (
+            <>
+              <Ionicons name="heart-outline" size={24} color="#000" />
+              <Text style={[styles.likeText, { color: "#000" }]}></Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="heart" size={24} color="#FF2D55" />
+              <Text style={[styles.likeText, { color: "#FF2D55" }]}></Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -749,7 +693,7 @@ export default function ProductDetail() {
               onPress={async () => {
                 try {
                   const res = await axios.post(`${API_URL}/cartitems`, {
-                    user_id: "test_user",
+                    user_id: userId,
                     product_id: product.id,
                     product_option_id: selectedOption,
                     quantity: quantity,
@@ -759,10 +703,13 @@ export default function ProductDetail() {
                   setTimeout(() => setCartSuccessVisible(false), 2000);
                   setShowModal(false);
 
-                  const cartRes = await axios.get(`${API_URL}/cartitems`, {
-                    params: { user_id: "test_user" },
-                  });
-                  setCartCount(cartRes.data.total_count);
+                  if (!userId) return;
+
+                  if (invalidateCart) {
+                    await invalidateCart();
+                  } else {
+                    await fetchCartCount();
+                  }
                 } catch (error: any) {
                   if (error?.response?.status === 422) {
                     setAlreadyInCartAlert(true);
@@ -779,7 +726,20 @@ export default function ProductDetail() {
               style={styles.buyButton}
               onPress={() => {
                 setShowModal(false);
-                navigation.navigate("Purchase", { id: product.id });
+                navigation.navigate("Purchase", {
+                  fromCart: false,
+                  products: [
+                    {
+                      id: product.id,
+                      brand: product.category_sub,
+                      image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                      name: product.name.replace(/_/g, " "),
+                      option: selectedOption,
+                      quantity,
+                      price: product.price_sell * quantity,
+                    },
+                  ],
+                });
               }}
             >
               <Text style={styles.buyText}>구매하기</Text>
@@ -812,10 +772,23 @@ const styles = StyleSheet.create({
   headerIcon: { padding: 4 },
   headerIconsRight: { flexDirection: "row", alignItems: "center" },
   productImage: { width: "100%", height: 450 },
-  brandText: { fontSize: 16, fontWeight: "600" },
-  smallText: { fontSize: 14 },
-  productInfo: { paddingHorizontal: 16, paddingBottom: 12, paddingTop: 15 },
-  title: { fontSize: 22, fontWeight: "600", marginVertical: 5 },
+  brandText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  smallText: {
+    fontSize: 14,
+  },
+  productInfo: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 15,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    marginVertical: 5,
+  },
   priceOriginal: {
     fontSize: 16,
     color: "#999",
@@ -833,19 +806,36 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  sectionTitle: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
   tabBar: {
     flexDirection: "row",
     justifyContent: "space-around",
     borderBottomColor: "#ddd",
     borderBottomWidth: 1,
-    paddingVertical: 12,
     backgroundColor: "#fff",
     marginTop: 5,
   },
-  tabText: { fontSize: 15, color: "#999" },
-  tabTextActive: { color: "#000", fontWeight: "700" },
-  tabContent: { padding: 20 },
+  tabButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabText: {
+    fontSize: 15,
+    color: "#999",
+  },
+  tabTextActive: {
+    color: "#000",
+    fontWeight: "700",
+  },
+  tabContent: {
+    padding: 20,
+  },
   fixedBuy: {
     position: "absolute",
     bottom: 0,
@@ -860,12 +850,14 @@ const styles = StyleSheet.create({
     borderTopColor: "#eee",
     borderTopWidth: 1,
   },
-  likeButton: { flexDirection: "row", alignItems: "center" },
+  likeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   likeText: {
     marginLeft: 4,
-    marginRight: 15,
+    marginRight: 4,
     fontSize: 16,
-    color: "#FF2D55",
     fontWeight: "500",
   },
   buttonRow: {

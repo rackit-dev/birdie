@@ -1,55 +1,74 @@
-import { StyleSheet, FlatList, Image, Pressable } from "react-native";
+import { StyleSheet, FlatList, Image, Pressable, Platform } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { useState, useEffect, useCallback } from "react";
-import useLikeStore from "@/store/useLikeStore";
+import useLikeStore, { Product } from "@/store/useLikeStore";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
-
-type Product = {
-  id: string;
-  image: any;
-  brand: string;
-  name: string;
-  priceSell: number;
-  priceOriginal: number;
-  discount: number;
-};
+import LinearGradient from "react-native-linear-gradient";
+import { useCartStore } from "../store/useCartStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
 };
 
 export default function HomeScreen() {
+  const [bannerImage, setBannerImage] = useState(
+    require("../assets/images/image2.png")
+  );
   const [shuffledImages1, setShuffledImages1] = useState<Product[]>([]);
   const [shuffledImages2, setShuffledImages2] = useState<Product[]>([]);
-  const { likedItems, toggleLike } = useLikeStore();
-  const [cartCount, setCartCount] = useState(0);
+  const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+  const [randomSlogan, setRandomSlogan] = useState("");
+  const fetchCount = useCartStore((s) => s.fetchCount);
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
+  const userId = useUserIdStore((s) => s.id);
+
+  const wrapName = (raw: string) => {
+    let s = raw.replace(/_/g, " ");
+
+    // -, /, . 뒤에는 줄바꿈 허용
+    s = s.replace(/([\-\/\.])/g, "$1\u200B");
+
+    // 영문↔숫자 경계
+    s = s
+      .replace(/([A-Za-z])(\d)/g, "$1\u200B$2")
+      .replace(/(\d)([A-Za-z])/g, "$1\u200B$2");
+
+    // 긴 영숫자 연속(8자 이상)은 4자마다 포인트
+    s = s.replace(/[A-Za-z0-9]{8,}/g, (m) => m.replace(/(.{4})/g, "$1\u200B"));
+
+    return s;
+  };
+
+  const slogans = [
+    "매일의 플레이를 특별하게,\n영스배드민턴",
+    "당신만의 배드민턴\n라이프를 시작하세요",
+    "초보부터 고수까지,\n모두의 배드민턴 스토어",
+    "스포츠를 즐기는 가장 빠른 방법,\n영스 배드민턴",
+  ];
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCartCount = async () => {
-        try {
-          const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: "test_user" },
-          });
-          setCartCount(res.data.total_count);
-        } catch (err) {
-          console.error("장바구니 개수 불러오기 실패:", err);
-        }
-      };
-
-      fetchCartCount();
-    }, [])
+      if (userId) {
+        fetchCount(userId);
+        fetchLikedItems();
+      }
+    }, [fetchCount, fetchLikedItems, userId])
   );
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * slogans.length);
+    setRandomSlogan(slogans[randomIndex]);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -63,7 +82,6 @@ export default function HomeScreen() {
             name: item.name,
             brand: item.category_sub,
             priceSell: item.price_sell,
-            priceWhole: item.price_whole,
             priceOriginal: item.price_whole,
             discount: item.discount_rate,
             image: {
@@ -79,6 +97,12 @@ export default function HomeScreen() {
           const sampled = getRandomSample(fullData, 20);
           setShuffledImages1(sampled);
           setShuffledImages2(getRandomSample(fullData, 20));
+
+          const randomBanner =
+            fullData[Math.floor(Math.random() * fullData.length)];
+          if (randomBanner?.image) {
+            setBannerImage(randomBanner.image);
+          }
         }
       } catch (err) {
         console.error("상품 API 호출 실패:", err);
@@ -116,6 +140,7 @@ export default function HomeScreen() {
         const sampled = shuffleArray(dummyData);
         setShuffledImages1(sampled);
         setShuffledImages2(sampled);
+        setBannerImage(dummyData[0].image);
       }
     };
 
@@ -128,17 +153,28 @@ export default function HomeScreen() {
         logo
         onPressSearch={() => navigation.navigate("Search")}
         onPressCart={() => navigation.navigate("Cart")}
-        cartCount={cartCount}
       />
       <FlatList
         ListHeaderComponent={
           <>
-            <View style={styles.imageContainer}>
+            <View style={styles.bannerWrapper}>
               <Image
-                source={require("../assets/images/image2.png")}
+                source={bannerImage}
                 style={styles.image}
                 resizeMode="cover"
+                onError={() =>
+                  setBannerImage(require("../assets/images/image2.png"))
+                }
               />
+              <LinearGradient
+                colors={["rgba(0,0,0,0.5)", "transparent"]}
+                start={{ x: 0.5, y: 1 }}
+                end={{ x: 0.5, y: 0 }}
+                style={styles.gradientOverlay}
+              />
+              <View style={styles.overlay}>
+                <Text style={styles.sloganText}>{randomSlogan}</Text>
+              </View>
             </View>
 
             <View style={styles.textContainer}>
@@ -172,7 +208,13 @@ export default function HomeScreen() {
                       }}
                     />
                     <Pressable
-                      onPress={() => toggleLike(item)}
+                      onPress={() => {
+                        if (userId) {
+                          toggleLike(item);
+                        } else {
+                          console.warn("로그인이 필요합니다");
+                        }
+                      }}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -197,22 +239,28 @@ export default function HomeScreen() {
 
                   <View style={{ alignItems: "flex-start" }}>
                     <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText} numberOfLines={2}>
-                      {item.name.replace(/_/g, " ")}
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                      {...(Platform.OS === "ios"
+                        ? { lineBreakStrategyIOS: "none" as const }
+                        : { textBreakStrategy: "balanced" as const })}
+                    >
+                      {wrapName(item.name)}
                     </Text>
-
-                    {item.discount > 0 ? (
+                    {(item.discount ?? 0) > 0 ? (
                       <View style={{ flexDirection: "row", gap: 3 }}>
                         <Text style={styles.discountText}>
                           {item.discount}%
                         </Text>
                         <Text style={styles.priceText}>
-                          {item.priceSell.toLocaleString()}원
+                          {item.priceSell?.toLocaleString()}원
                         </Text>
                       </View>
                     ) : (
                       <Text style={styles.priceText}>
-                        {item.priceSell.toLocaleString()}원
+                        {item.priceSell?.toLocaleString()}원
                       </Text>
                     )}
                   </View>
@@ -244,7 +292,13 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                     <Pressable
-                      onPress={() => toggleLike(item)}
+                      onPress={() => {
+                        if (userId) {
+                          toggleLike(item);
+                        } else {
+                          console.warn("로그인이 필요합니다");
+                        }
+                      }}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -269,22 +323,28 @@ export default function HomeScreen() {
 
                   <View style={{ alignItems: "flex-start" }}>
                     <Text style={styles.brandText}>{item.brand}</Text>
-                    <Text style={styles.nameText} numberOfLines={2}>
-                      {item.name.replace(/_/g, " ")}
+                    <Text
+                      style={styles.nameText}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                      {...(Platform.OS === "ios"
+                        ? { lineBreakStrategyIOS: "none" as const }
+                        : { textBreakStrategy: "balanced" as const })}
+                    >
+                      {wrapName(item.name)}
                     </Text>
-
-                    {item.discount > 0 ? (
+                    {(item.discount ?? 0) > 0 ? (
                       <View style={{ flexDirection: "row", gap: 3 }}>
                         <Text style={styles.discountText}>
                           {item.discount}%
                         </Text>
                         <Text style={styles.priceText}>
-                          {item.priceSell.toLocaleString()}원
+                          {item.priceSell?.toLocaleString()}원
                         </Text>
                       </View>
                     ) : (
                       <Text style={styles.priceText}>
-                        {item.priceSell.toLocaleString()}원
+                        {item.priceSell?.toLocaleString()}원
                       </Text>
                     )}
                   </View>
@@ -428,16 +488,48 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  imageContainer: {
+  bannerWrapper: {
     width: "95%",
-    aspectRatio: 5 / 5,
-    marginBottom: 35,
+    aspectRatio: 4.5 / 5,
+    marginBottom: 27,
     alignSelf: "center",
+    position: "relative",
   },
   image: {
     width: "100%",
     height: "100%",
     borderRadius: 10,
+  },
+  gradientOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "60%",
+    borderRadius: 10,
+  },
+  overlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    justifyContent: "flex-end",
+    alignItems: "flex-start",
+    paddingLeft: 20,
+    paddingBottom: 20,
+    backgroundColor: "transparent",
+    borderRadius: 10,
+    pointerEvents: "none",
+  },
+  sloganText: {
+    fontFamily: "P-Bold",
+    fontSize: 28,
+    color: "#fff",
+    textAlign: "left",
+    textShadowColor: "rgba(45, 45, 45, 0.6)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   textContainer: {
     width: "100%",
