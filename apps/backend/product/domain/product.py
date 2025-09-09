@@ -30,6 +30,7 @@ class ProductOptionType:
 class ProductOption:
     id: str
     product_id: str
+    product_option_type_id: str
     option: str
     is_active: bool
     created_at: datetime

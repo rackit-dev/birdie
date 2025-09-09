@@ -2,7 +2,7 @@ from typing import List
 from abc import ABCMeta, abstractmethod
 from fastapi import UploadFile
 
-from product.domain.product import Product, ProductOption, ProductLike, ProductReview
+from product.domain.product import Product, ProductOptionType, ProductOption, ProductLike, ProductReview
 
 
 class IProductRepository(metaclass=ABCMeta):
@@ -75,6 +75,14 @@ class IProductRepository(metaclass=ABCMeta):
     def _delete_img(self, name: str):
         raise NotImplementedError
     
+    @abstractmethod
+    def save_option_type(self, product_option_type: ProductOptionType):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_option_types(self, product_id: str) -> tuple[int, list[ProductOptionType]]:
+        raise NotImplementedError
+
     @abstractmethod
     def save_options(self, options: List[ProductOption]) -> tuple[int, list[ProductOption]]:
         raise NotImplementedError

@@ -9,10 +9,11 @@ from utils.db_utils import row_to_dict
 from common.s3_upload import upload_images_to_s3, delete_images_from_s3
 from product.domain.repository.product_repo import IProductRepository
 from product.domain.product import Product as ProductVO
+from product.domain.product import ProductOptionType as ProductOptionTypeVO
 from product.domain.product import ProductOption as ProductOptionVO
 from product.domain.product import ProductLike as ProductLikeVO
 from product.domain.product import ProductReview as ProductReviewVO
-from product.infra.db_models.product import Product, ProductOption, ProductLike, ProductReview
+from product.infra.db_models.product import Product, ProductOptionType, ProductOption, ProductLike, ProductReview
 
 
 class ProductRepository(IProductRepository):
@@ -180,6 +181,34 @@ class ProductRepository(IProductRepository):
                 Bucket=bucket_name,
                 Delete={"Objects": delete_keys}
             )
+    
+    def save_option_type(self, product_option_type_vo: ProductOptionTypeVO):
+        product_option_type = ProductOptionType(
+            id=product_option_type_vo.id,
+            product_id=product_option_type_vo.product_id,
+            option_type=product_option_type_vo.option_type,
+            created_at=product_option_type_vo.created_at,
+            updated_at=product_option_type_vo.updated_at,
+        )
+        with SessionLocal() as db:
+            try:
+                db.add(product_option_type)
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save product option type.")
+
+    def get_option_types(self, product_id: str) -> tuple[int, List[ProductOptionTypeVO]]:
+        with SessionLocal() as db:
+            product_option_types = db.query(ProductOptionType).filter(
+                ProductOptionType.product_id == product_id
+            ).order_by(ProductOptionType.option_type.asc())
+            total_count = product_option_types.count()
+
+            if not product_option_types:
+                raise HTTPException(status_code=422)
+
+        return total_count, [ProductOptionTypeVO(**row_to_dict(product_option_type)) for product_option_type in product_option_types]
 
     def save_options(self, product_options: List[ProductOptionVO]):
         with SessionLocal() as db:
