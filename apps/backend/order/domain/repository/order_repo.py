@@ -46,6 +46,13 @@ class IOrderRepository(metaclass=ABCMeta):
         Save a new order item.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_order_items(self, order_id: str) -> List[OrderItem]:
+        """
+        Get all order items for a specific order.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def find_coupon_by_id(self, coupon_id: str) -> Coupon:

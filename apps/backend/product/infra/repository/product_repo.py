@@ -250,19 +250,19 @@ class ProductRepository(IProductRepository):
             except:
                 raise HTTPException(status_code=500, detail="Failed to Delete product option type.")
 
-    def save_options(self, product_options: List[ProductOptionVO]):
+    def save_option(self, product_options: ProductOptionVO):
         with SessionLocal() as db:
             try:
-                for product_option in product_options:
-                    new_option = ProductOption(
-                        id=product_option.id,
-                        product_id=product_option.product_id,
-                        option=product_option.option,
-                        is_active=product_option.is_active,
-                        created_at=product_option.created_at,
-                        updated_at=product_option.updated_at,
-                    )
-                    db.add(new_option)
+                new_option = ProductOption(
+                    id=product_options.id,
+                    product_id=product_options.product_id,
+                    product_option_type_id=product_options.product_option_type_id,
+                    option=product_options.option,
+                    is_active=product_options.is_active,
+                    created_at=product_options.created_at,
+                    updated_at=product_options.updated_at,
+                )
+                db.add(new_option)
                 db.commit()
             except Exception:
                 db.rollback()

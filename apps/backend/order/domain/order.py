@@ -61,6 +61,12 @@ class OrderItem:
     coupon_discount_price: int
     point_discount_price: int
     final_price: int
+    option_1_type: str | None
+    option_1_value: str | None
+    option_2_type: str | None
+    option_2_value: str | None
+    option_3_type: str | None
+    option_3_value: str | None
     created_at: datetime
     updated_at: datetime
 

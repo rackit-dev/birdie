@@ -82,6 +82,12 @@ class OrderRepository(IOrderRepository):
                 coupon_discount_price=order_item.coupon_discount_price,
                 point_discount_price=order_item.point_discount_price,
                 final_price=order_item.final_price,
+                option_1_type=order_item.option_1_type,
+                option_1_value=order_item.option_1_value,
+                option_2_type=order_item.option_2_type,
+                option_2_value=order_item.option_2_value,
+                option_3_type=order_item.option_3_type,
+                option_3_value=order_item.option_3_value,
                 created_at=order_item.created_at,
                 updated_at=order_item.updated_at,
             )
@@ -98,6 +104,11 @@ class OrderRepository(IOrderRepository):
                 status_code=500,
                 detail="An error occurred while saving the order item"
             )
+
+    def get_order_items(self, order_id: str) -> List[OrderItemVO]:
+        with SessionLocal() as db:
+            order_items = db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
+            return [OrderItemVO(**row_to_dict(item)) for item in order_items]
 
     def find_coupon_by_id(self, coupon_id: str) -> CouponVO:
         with SessionLocal() as db:

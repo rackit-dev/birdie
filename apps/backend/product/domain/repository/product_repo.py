@@ -96,7 +96,7 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def save_options(self, options: List[ProductOption]) -> tuple[int, list[ProductOption]]:
+    def save_option(self, options: ProductOption):
         raise NotImplementedError
     
     @abstractmethod

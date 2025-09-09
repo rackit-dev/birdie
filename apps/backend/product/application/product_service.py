@@ -148,25 +148,24 @@ class ProductService:
         product_option_type_id: str,
         options: List[str],
     ) -> tuple[int, list[ProductOption]]:
-        product_option_list = []
-
+        option_list = []
         for option in options:
             now = datetime.now(timezone.utc)
             product_option: ProductOption = ProductOption(
                 id=self.ulid.generate(),
                 product_id=product_id,
+                product_option_type_id=product_option_type_id,
                 option=option,
                 is_active=True,
                 created_at=now,
                 updated_at=now,
             )
-            product_option_list.append(product_option)
+            self.product_repo.save_option(product_option)
+            option_list.append(product_option)
 
-        self.product_repo.save_options(product_option_list, product_option_type_id)
-        
-        return len(product_option_list), product_option_list
-    
-    def get_product_options(self, product_id: str) -> tuple[int, list[Product]]:
+        return len(option_list), option_list
+
+    def get_product_options(self, product_id: str) -> tuple[int, list[ProductOption]]:
         product_options = self.product_repo.get_options(product_id)
 
         return product_options
@@ -197,7 +196,7 @@ class ProductService:
 
         return product_like
     
-    def get_product_likes(self, user_id: str) -> tuple[int, list[Product]]:
+    def get_product_likes(self, user_id: str) -> tuple[int, list[ProductLike]]:
         product_likes = self.product_repo.get_likes(user_id)
 
         return product_likes
