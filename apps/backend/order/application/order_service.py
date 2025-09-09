@@ -47,6 +47,7 @@ class OrderService:
                     id=self.ulid.generate(),
                     order_id="None",  # Will be set after order creation
                     product_id=item.product_id,
+                    product_name=item.product_name,
                     coupon_wallet_id=item.coupon_wallet_id,
                     status="주문완료",
                     quantity=item.quantity,

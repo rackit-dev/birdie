@@ -14,6 +14,7 @@ class OrderItemResponse(BaseModel):
     id: str
     order_id: str
     product_id: str
+    product_name: str
     coupon_wallet_id: str | None
     status: str
     quantity: int
@@ -60,6 +61,7 @@ class GetOrdersResponse(BaseModel):
 
 class CreateOrderItemRequest(BaseModel):
     product_id: str
+    product_name: str = Field(min_length=1, max_length=128)
     coupon_wallet_id: str | None = None
     quantity: int = Field(ge=0, le=99999)
     unit_price: int = Field(ge=0, le=999999999)

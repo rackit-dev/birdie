@@ -54,6 +54,7 @@ class OrderItem:
     id: str
     order_id: str
     product_id: str
+    product_name: str
     coupon_wallet_id: str | None
     status: str
     quantity: int

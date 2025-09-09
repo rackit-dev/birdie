@@ -74,6 +74,7 @@ class OrderItem(Base):
     id = mapped_column(String(36), primary_key=True)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False)
     product_id = mapped_column(String(36), nullable=False)
+    product_name = mapped_column(String(128), nullable=False)
     coupon_wallet_id = mapped_column(ForeignKey("CouponWallet.id"), nullable=True)
 
     status = mapped_column(Enum("주문완료", "주문취소", "환불", name="status"), default="주문완료")

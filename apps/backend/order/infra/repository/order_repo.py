@@ -75,6 +75,7 @@ class OrderRepository(IOrderRepository):
                 id=order_item.id,
                 order_id=order_item.order_id,
                 product_id=order_item.product_id,
+                product_name=order_item.product_name,
                 coupon_wallet_id=order_item.coupon_wallet_id,
                 status=order_item.status,
                 quantity=order_item.quantity,
