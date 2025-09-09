@@ -100,7 +100,7 @@ export default function ProductDetail() {
   useFocusEffect(
     useCallback(() => {
       if (userId) {
-        fetchCartCount(userId);
+        fetchCartCount();
         fetchLikedItems();
       }
     }, [fetchLikedItems, fetchCartCount])
@@ -706,9 +706,9 @@ export default function ProductDetail() {
                   if (!userId) return;
 
                   if (invalidateCart) {
-                    await invalidateCart(userId);
+                    await invalidateCart();
                   } else {
-                    await fetchCartCount(userId);
+                    await fetchCartCount();
                   }
                 } catch (error: any) {
                   if (error?.response?.status === 422) {

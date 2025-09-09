@@ -30,7 +30,7 @@ const LoadingScreen: React.FC = () => {
 
           const data = await res.json();
 
-          setUser(data);
+          setUser({ id: data.id, name: data.name, email: data.email });
 
           navigation.replace("Main");
 

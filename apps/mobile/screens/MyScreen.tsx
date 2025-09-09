@@ -6,20 +6,24 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import axios from "axios";
 import CustomHeader from "../components/CustomHeader";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 export default function MyScreen() {
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
   const [cartCount, setCartCount] = useState(0);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const USER_ID = "test_user1";
+  const userId = useUserIdStore((s) => s.id);
+  const name = useUserIdStore((s) => s.name);
 
   useFocusEffect(
     useCallback(() => {
+      if (!userId) return;
+
       const fetchCartCount = async () => {
         try {
           const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: USER_ID },
+            params: { user_id: userId },
           });
           setCartCount(res.data.total_count);
         } catch (err) {
@@ -28,7 +32,7 @@ export default function MyScreen() {
       };
 
       fetchCartCount();
-    }, [])
+    }, [userId])
   );
 
   return (
@@ -42,7 +46,7 @@ export default function MyScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
           <View>
-            <Text style={styles.userId}>zszsm1*****</Text>
+            <Text style={styles.userId}>{name ? name : "로그인 필요"}</Text>
             <Text style={styles.linkText}>자세히 보기 &gt;</Text>
           </View>
         </View>

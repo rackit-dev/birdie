@@ -51,7 +51,7 @@ export default function CategoryScreen() {
   useFocusEffect(
     useCallback(() => {
       if (userId) {
-        fetchCount(userId);
+        fetchCount();
       }
     }, [fetchCount, userId])
   );

@@ -1,20 +1,25 @@
 import { create } from "zustand";
 import axios from "axios";
+import { useUserIdStore } from "./useUserIdStore";
 
 type CartState = {
   count: number;
   loading: boolean;
   error?: string;
-  fetchCount: (userId: string) => Promise<void>;
+  fetchCount: () => Promise<void>;
   setCount: (n: number) => void;
-  invalidate: (userId: string) => Promise<void>;
+  invalidate: () => Promise<void>;
 };
 
 export const useCartStore = create<CartState>((set) => ({
   count: 0,
   loading: false,
   error: undefined,
-  async fetchCount(userId: string) {
+
+  async fetchCount() {
+    const userId = useUserIdStore.getState().id;
+    if (!userId) return;
+
     try {
       set({ loading: true, error: undefined });
       const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
@@ -29,7 +34,7 @@ export const useCartStore = create<CartState>((set) => ({
   setCount(n) {
     set({ count: n });
   },
-  async invalidate(userId: string) {
-    await useCartStore.getState().fetchCount(userId);
+  async invalidate() {
+    await useCartStore.getState().fetchCount();
   },
 }));
