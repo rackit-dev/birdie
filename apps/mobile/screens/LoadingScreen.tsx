@@ -12,8 +12,13 @@ const LoadingScreen: React.FC = () => {
 
       const token = await SecureStore.getItemAsync("session_token");
 
+      console.log("token", token);
+
       if (token) {
         navigation.replace("Main");
+
+        // 테스트용
+        // navigation.replace("Login");
       } else {
         // 테스트용
         // navigation.replace("Main");

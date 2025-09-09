@@ -15,8 +15,11 @@ import {
 } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import * as SecureStore from "expo-secure-store";
 
 import CustomHeader from "../components/CustomHeader";
+import AddressListModal from "./AddressListModal";
+import AddressAddModal from "./AddressAddModal";
 
 const STORE_ID = "store-3048375f-0af1-4793-82f8-83b099967e2e";
 const CH_KG = "channel-key-2d2b34cc-a56c-47df-8ffd-bbe0e2a47dad";
@@ -44,6 +47,10 @@ export default function OrderPaymentScreen() {
   const [addressLine2, setAddressLine2] = useState<string | null>(null);
   const [zipcode, setZipcode] = useState<string | null>(null);
   const [recipientPhone, setRecipientPhone] = useState<string | null>(null);
+  const [orderMemo, setOrderMemo] = useState<string | null>(null);
+
+  const [showListModal, setShowListModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const formatName = (name: string) => name.replace(/_/g, " ");
   const navigation = useNavigation<PurchaseScreenProps["navigation"]>();
@@ -70,25 +77,39 @@ export default function OrderPaymentScreen() {
     fetchUser();
   }, []);
 
-  // 배송지 불러오기(api 주소 임의)
   const fetchAddresses = async () => {
     try {
-      const res = await fetch(`${API_URL}/addresses?user_id=${userId}`);
-      const data = await res.json();
+      const token = await SecureStore.getItemAsync("session_token");
+      if (!token) {
+        console.error("토큰 없음");
+        return;
+      }
 
-      if (data.length > 0) {
-        const defaultAddr = data.find((a: any) => a.isDefault) || data[0];
-        setRecipientName(defaultAddr.name);
-        setRecipientPhone(defaultAddr.phone);
-        setAddressLine1(defaultAddr.line1);
-        setAddressLine2(defaultAddr.line2 || "");
-        setZipcode(defaultAddr.zipcode);
+      const res = await fetch(`${API_URL}/users/user_address`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // 토큰 넣기
+        },
+      });
+
+      if (!res.ok) throw new Error("주소 API 호출 실패");
+
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const firstAddr = data[0]; // 첫 번째 주소 사용
+        setRecipientName(firstAddr.recipient_name);
+        setRecipientPhone(firstAddr.phone_number);
+        setAddressLine1(firstAddr.address_line1);
+        setAddressLine2(firstAddr.address_line2 || "");
+        setZipcode(firstAddr.zipcode);
+        setOrderMemo(firstAddr.order_memo);
       } else {
         setRecipientName(null);
         setRecipientPhone(null);
         setAddressLine1(null);
         setAddressLine2(null);
         setZipcode(null);
+        setOrderMemo(null);
       }
     } catch (err) {
       console.error("배송지 불러오기 실패:", err);
@@ -98,8 +119,8 @@ export default function OrderPaymentScreen() {
   // 페이지 포커스될 때마다 새로 불러오기
   useFocusEffect(
     useCallback(() => {
-      if (userId) fetchAddresses();
-    }, [userId])
+      fetchAddresses();
+    }, [])
   );
 
   const totalProductPrice = products.reduce<number>(
@@ -150,12 +171,7 @@ export default function OrderPaymentScreen() {
         email: "jiwoong@example.com",
       },
       customData: "12345",
-      // noticeUrls: [`${API_URL}/orders/payment/test`],
-
-      // 테스트용
-      noticeUrls: [
-        "https://positively-engaged-haddock.ngrok-free.app/orders/payment/webhook/test",
-      ],
+      noticeUrls: ["`${API_URL}/orders/payment/webhook`"],
     } as const;
 
     const orderPayload = {
@@ -200,25 +216,37 @@ export default function OrderPaymentScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.changeBtn}
-                onPress={() => navigation.push("AddressAdd")}
+                onPress={() => setShowAddModal(true)}
               >
                 <Text>배송지 추가</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
-              <Text style={styles.text}>
-                [{zipcode}] {addressLine1} {addressLine2}
-              </Text>
-              <Text style={styles.text}>
-                {recipientName} · {recipientPhone}
-              </Text>
-              <TouchableOpacity
-                style={styles.changeBtn}
-                onPress={() => navigation.push("AddressList")}
-              >
-                <Text>배송지 변경</Text>
-              </TouchableOpacity>
+              <View style={styles.addressBox}>
+                <Text style={styles.name}>{recipientName}</Text>
+                <Text style={styles.text}>
+                  {recipientName} · {recipientPhone}
+                </Text>
+                <Text style={styles.text}>
+                  [{zipcode}] {addressLine1} {addressLine2}
+                </Text>
+                {orderMemo ? (
+                  <Text style={[styles.text, { color: "#666" }]}>
+                    배송 메모: {orderMemo}
+                  </Text>
+                ) : (
+                  <Text style={[styles.text, { color: "#aaa" }]}>
+                    배송 메모가 없습니다.
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={styles.changeBtn}
+                  onPress={() => setShowListModal(true)}
+                >
+                  <Text>배송지 변경</Text>
+                </TouchableOpacity>
+              </View>
             </>
           )}
         </View>
@@ -226,7 +254,7 @@ export default function OrderPaymentScreen() {
         <View style={styles.section}>
           <Text style={styles.title}>주문 상품 {products.length}개</Text>
           {Object.entries(groupedByBrand).map(([brand, items]) => (
-            <View key={brand}>
+            <View style={styles.title} key={brand}>
               {items.map((item, index) => (
                 <View
                   key={`${item.name}-${item.option}-${index}`}
@@ -364,6 +392,31 @@ export default function OrderPaymentScreen() {
           {finalAmount.toLocaleString()}원 결제하기
         </Text>
       </TouchableOpacity>
+
+      <AddressListModal
+        visible={showListModal}
+        onClose={() => setShowListModal(false)}
+        onSelect={(addr) => {
+          setRecipientName(addr.recipient_name);
+          setRecipientPhone(addr.phone_number);
+          setAddressLine1(addr.address_line1);
+          setAddressLine2(addr.address_line2 || "");
+          setZipcode(addr.zipcode);
+          setOrderMemo(addr.order_memo || "");
+          setShowListModal(false);
+        }}
+        onAdd={() => {
+          setShowListModal(false);
+          setShowAddModal(true);
+        }}
+      />
+      <AddressAddModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSaved={() => {
+          fetchAddresses();
+        }}
+      />
     </View>
   );
 }
@@ -380,8 +433,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "P-600",
     marginBottom: 14,
+  },
+  addressBox: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#fff",
   },
   name: {
     fontWeight: "600",
