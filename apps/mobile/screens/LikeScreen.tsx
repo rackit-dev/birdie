@@ -1,6 +1,7 @@
 import { StyleSheet, FlatList, View } from "react-native";
 import { Text } from "@/components/Themed";
 import useLikeStore, { Product } from "@/store/useLikeStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 import ItemCard from "@/components/ItemCard";
 import CustomHeader from "../components/CustomHeader";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -13,13 +14,15 @@ export default function LikeScreen() {
   const { likedItems, fetchLikedItems } = useLikeStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const USER_ID = "test_user1";
+  const userId = useUserIdStore((s) => s.id);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useFocusEffect(
     useCallback(() => {
-      fetchLikedItems(USER_ID);
-    }, [])
+      if (userId) {
+        fetchLikedItems();
+      }
+    }, [userId])
   );
 
   const handleDeleteLike = async (product: Product) => {
@@ -31,7 +34,9 @@ export default function LikeScreen() {
       await axios.delete(`${API_URL}/products/like`, {
         params: { product_like_id: product.product_like_id },
       });
-      fetchLikedItems(USER_ID);
+      if (userId) {
+        fetchLikedItems();
+      }
     } catch (err) {
       console.error("좋아요 삭제 실패:", err);
     }
@@ -55,7 +60,7 @@ export default function LikeScreen() {
                   item={item}
                   isLiked={isLiked}
                   toggleLike={(_, product) => handleDeleteLike(product)}
-                  userId={USER_ID}
+                  userId={userId ?? ""}
                   size="large"
                   onPress={() =>
                     navigation.navigate("ProductDetail", { id: item.id })

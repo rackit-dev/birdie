@@ -10,6 +10,7 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import LinearGradient from "react-native-linear-gradient";
 import { useCartStore } from "../store/useCartStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
@@ -29,7 +30,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<Navigation>();
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
-  const USER_ID = "test_user1";
+  const userId = useUserIdStore((s) => s.id);
 
   const wrapName = (raw: string) => {
     let s = raw.replace(/_/g, " ");
@@ -57,9 +58,11 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCount(USER_ID);
-      fetchLikedItems(USER_ID);
-    }, [fetchCount, fetchLikedItems])
+      if (userId) {
+        fetchCount(userId);
+        fetchLikedItems();
+      }
+    }, [fetchCount, fetchLikedItems, userId])
   );
 
   useEffect(() => {
@@ -205,7 +208,13 @@ export default function HomeScreen() {
                       }}
                     />
                     <Pressable
-                      onPress={() => toggleLike(USER_ID, item)}
+                      onPress={() => {
+                        if (userId) {
+                          toggleLike(item);
+                        } else {
+                          console.warn("로그인이 필요합니다");
+                        }
+                      }}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -283,7 +292,13 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                     <Pressable
-                      onPress={() => toggleLike(USER_ID, item)}
+                      onPress={() => {
+                        if (userId) {
+                          toggleLike(item);
+                        } else {
+                          console.warn("로그인이 필요합니다");
+                        }
+                      }}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (

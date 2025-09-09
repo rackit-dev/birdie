@@ -11,6 +11,7 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import ItemCard from "@/components/ItemCard";
 import useLikeStore, { Product } from "@/store/useLikeStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 export default function ProductListScreen() {
   const route = useRoute<any>();
@@ -22,7 +23,7 @@ export default function ProductListScreen() {
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
-  const USER_ID = "test_user1";
+  const userId = useUserIdStore((s) => s.id);
 
   const categoryMap: Record<string, string> = {
     배드민턴화: "신발",
@@ -35,10 +36,12 @@ export default function ProductListScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (!userId) return;
+
       const fetchCartCount = async () => {
         try {
           const res = await axios.get(`${API_URL}/cartitems`, {
-            params: { user_id: "test_user" },
+            params: { user_id: userId },
           });
           setCartCount(res.data.total_count);
         } catch (err) {
@@ -47,8 +50,8 @@ export default function ProductListScreen() {
       };
 
       fetchCartCount();
-      fetchLikedItems(USER_ID);
-    }, [])
+      fetchLikedItems();
+    }, [userId, fetchLikedItems])
   );
 
   useEffect(() => {
@@ -98,7 +101,7 @@ export default function ProductListScreen() {
           toggleLike={toggleLike}
           size="large"
           onPress={() => navigation.navigate("ProductDetail", { id: item.id })}
-          userId={USER_ID}
+          userId={userId ?? ""}
         />
       </View>
     );

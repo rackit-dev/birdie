@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import { useCartStore } from "../store/useCartStore";
-import axios from "axios";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const categories = [
   { id: "1", name: "베스트" },
@@ -46,12 +46,14 @@ export default function CategoryScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
   const fetchCount = useCartStore((s) => s.fetchCount);
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+  const userId = useUserIdStore((s) => s.id);
 
   useFocusEffect(
     useCallback(() => {
-      fetchCount("test_user1");
-    }, [fetchCount])
+      if (userId) {
+        fetchCount(userId);
+      }
+    }, [fetchCount, userId])
   );
 
   return (

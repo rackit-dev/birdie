@@ -1,12 +1,12 @@
 import { View, Image, Pressable, StyleSheet } from "react-native";
 import { Text } from "@/components/Themed";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Product } from "@/store/useLikeStore"; // ✅ 재사용
+import { Product } from "@/store/useLikeStore";
 
 type ItemCardProps = {
   item: Product;
   isLiked: boolean;
-  toggleLike: (userId: string, item: Product) => void;
+  toggleLike: (item: Product) => void;
   userId: string;
   size?: "small" | "large";
   onPress?: () => void;
@@ -35,10 +35,7 @@ export default function ItemCard({
           style={size === "large" ? styles.itemImageLarge : styles.itemImage}
           resizeMode="cover"
         />
-        <Pressable
-          onPress={() => toggleLike(userId, item)}
-          style={styles.heartWrapper}
-        >
+        <Pressable onPress={() => toggleLike(item)} style={styles.heartWrapper}>
           {!isLiked ? (
             <>
               <Ionicons

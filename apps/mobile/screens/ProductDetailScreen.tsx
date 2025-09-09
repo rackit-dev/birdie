@@ -24,6 +24,7 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import useLikeStore, { Product } from "@/store/useLikeStore";
 import { useCartStore } from "../store/useCartStore";
+import { useUserIdStore } from "../store/useUserIdStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
@@ -83,7 +84,7 @@ export default function ProductDetail() {
   const fetchCartCount = useCartStore((s) => s.fetchCount);
   const invalidateCart = useCartStore((s) => s.invalidate);
 
-  const USER_ID = "test_user1";
+  const userId = useUserIdStore((s) => s.id);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
@@ -98,8 +99,10 @@ export default function ProductDetail() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchLikedItems(USER_ID);
-      fetchCartCount(USER_ID);
+      if (userId) {
+        fetchCartCount(userId);
+        fetchLikedItems();
+      }
     }, [fetchLikedItems, fetchCartCount])
   );
 
@@ -112,7 +115,9 @@ export default function ProductDetail() {
       await axios.delete(`${API_URL}/products/like`, {
         params: { product_like_id: product.product_like_id },
       });
-      fetchLikedItems(USER_ID);
+      if (userId) {
+        fetchLikedItems();
+      }
     } catch (err) {
       console.error("좋아요 삭제 실패:", err);
     }
@@ -512,7 +517,9 @@ export default function ProductDetail() {
       <View style={styles.fixedBuy}>
         <TouchableOpacity
           style={styles.likeButton}
-          onPress={() => toggleLike(USER_ID, product)}
+          onPress={() => {
+            if (userId) toggleLike(product);
+          }}
         >
           {!likedItems.some((liked) => liked.id === product.id) ? (
             <>
@@ -686,7 +693,7 @@ export default function ProductDetail() {
               onPress={async () => {
                 try {
                   const res = await axios.post(`${API_URL}/cartitems`, {
-                    user_id: USER_ID,
+                    user_id: userId,
                     product_id: product.id,
                     product_option_id: selectedOption,
                     quantity: quantity,
@@ -696,11 +703,12 @@ export default function ProductDetail() {
                   setTimeout(() => setCartSuccessVisible(false), 2000);
                   setShowModal(false);
 
-                  // 전역 스토어 갱신
+                  if (!userId) return;
+
                   if (invalidateCart) {
-                    await invalidateCart(USER_ID);
+                    await invalidateCart(userId);
                   } else {
-                    await fetchCartCount(USER_ID);
+                    await fetchCartCount(userId);
                   }
                 } catch (error: any) {
                   if (error?.response?.status === 422) {

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { useUserIdStore } from "./useUserIdStore";
 
 export type Product = {
   id: string;
@@ -14,21 +15,24 @@ export type Product = {
 
 type LikeStore = {
   likedItems: Product[];
-  fetchLikedItems: (userId: string) => Promise<void>;
-  toggleLike: (userId: string, item: Product) => Promise<void>;
+  fetchLikedItems: () => Promise<void>;
+  toggleLike: (item: Product) => Promise<void>;
 };
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
 const useLikeStore = create<LikeStore>((set, get) => ({
   likedItems: [],
 
-  fetchLikedItems: async (userId) => {
+  fetchLikedItems: async () => {
+    const userId = useUserIdStore.getState().id;
+    if (!userId) return;
+
     try {
       const res = await axios.get(`${API_URL}/products/like`, {
         params: { user_id: userId },
       });
-
       const productsArray = res.data?.products || [];
       const likeIds = res.data?.product_like_ids || [];
 
@@ -40,7 +44,7 @@ const useLikeStore = create<LikeStore>((set, get) => ({
         priceOriginal: p.price_whole,
         discount: p.discount_rate,
         image: {
-          uri: `${process.env.EXPO_PUBLIC_API_IMAGE_URL}/products/${p.name}/thumbnail.jpg`,
+          uri: `${IMAGE_URL}/products/${p.name}/thumbnail.jpg`,
         },
         product_like_id: likeIds[index],
       }));
@@ -51,24 +55,46 @@ const useLikeStore = create<LikeStore>((set, get) => ({
     }
   },
 
-  toggleLike: async (userId, item) => {
+  toggleLike: async (item) => {
+    const userId = useUserIdStore.getState().id;
+    if (!userId) {
+      console.error("userId가 없음");
+      return;
+    }
+
     const isLiked = get().likedItems.some((liked) => liked.id === item.id);
 
     try {
       if (isLiked) {
         const target = get().likedItems.find((liked) => liked.id === item.id);
         if (!target?.product_like_id) return;
+
         await axios.delete(`${API_URL}/products/like`, {
           params: { product_like_id: target.product_like_id },
         });
+
         set({
           likedItems: get().likedItems.filter((liked) => liked.id !== item.id),
         });
       } else {
-        const res = await axios.post(`${API_URL}/products/like`, {
+        console.log("좋아요 요청 바디", {
           user_id: userId,
           product_id: item.id,
         });
+
+        const res = await axios.post(
+          `${API_URL}/products/like`,
+          {
+            user_id: userId,
+            product_id: item.id,
+          },
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        console.log("좋아요 응답:", res.data);
+
         set({
           likedItems: [
             ...get().likedItems,

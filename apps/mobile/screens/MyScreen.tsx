@@ -89,18 +89,18 @@ export default function MyScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>문의</Text>
-          {["고객센터/공지사항", "채팅 상담", "상품 문의", "1:1 문의"].map(
-            (label, idx) => (
-              <TouchableOpacity key={idx} style={styles.menuRow}>
-                <Text style={styles.menuText}>{label}</Text>
-              </TouchableOpacity>
-            )
-          )}
+          {["고객센터/공지사항", "상품 문의"].map((label, idx) => (
+            <TouchableOpacity key={idx} style={styles.menuRow}>
+              <Text style={styles.menuText}>{label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <TouchableOpacity style={styles.menuRow}>
-          <Text style={styles.menuText}>로그아웃</Text>
-        </TouchableOpacity>
+        <View style={{ padding: 16 }}>
+          <TouchableOpacity style={styles.menuRow}>
+            <Text style={styles.menuText}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
 
         <View
           style={{
@@ -232,16 +232,27 @@ export default function MyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContainer: { paddingBottom: 50 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  scrollContainer: {
+    paddingBottom: 50,
+  },
   profileSection: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 16,
     alignItems: "center",
   },
-  userId: { fontSize: 18, fontWeight: "bold" },
-  grade: { color: "pink", marginTop: 4 },
+  userId: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  grade: {
+    color: "pink",
+    marginTop: 4,
+  },
 
   iconRow: {
     flexDirection: "row",
@@ -250,23 +261,54 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  iconItem: { alignItems: "center" },
-  iconValue: { fontWeight: "bold", fontSize: 16 },
-  iconLabel: { fontSize: 12, color: "#555" },
-
-  section: { padding: 16, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  iconItem: {
+    alignItems: "center",
+  },
+  iconValue: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  iconLabel: {
+    fontSize: 12,
+    color: "#555",
+  },
+  section: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 16, fontWeight: "bold" },
-  linkText: { color: "#888" },
-  orderStatusRow: { flexDirection: "row", justifyContent: "space-between" },
-  orderStatus: { alignItems: "center", flex: 1 },
-  orderCount: { fontSize: 18, fontWeight: "bold" },
-  orderLabel: { fontSize: 12, marginTop: 4 },
-
-  menuRow: { paddingVertical: 12 },
-  menuText: { fontSize: 14 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  linkText: {
+    color: "#888",
+  },
+  orderStatusRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  orderStatus: {
+    alignItems: "center",
+    flex: 1,
+  },
+  orderCount: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  orderLabel: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  menuRow: {
+    paddingVertical: 12,
+  },
+  menuText: {
+    fontSize: 14,
+  },
 });
