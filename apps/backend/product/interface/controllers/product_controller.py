@@ -272,9 +272,10 @@ class UpdateProductOptionBody(BaseModel):
 @inject
 def get_product_option(
     product_id: str,
+    product_option_type_id: str,
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
-    total_count, product_options = product_service.get_product_options(product_id)
+    total_count, product_options = product_service.get_product_options(product_id, product_option_type_id)
 
     return {
         "total_count": total_count,

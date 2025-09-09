@@ -100,7 +100,7 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def get_options(self, product_id: str) -> tuple[int, list[ProductOption]]:
+    def get_options(self, product_id: str, product_option_type_id: str) -> tuple[int, list[ProductOption]]:
         raise NotImplementedError
 
     @abstractmethod

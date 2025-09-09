@@ -268,10 +268,11 @@ class ProductRepository(IProductRepository):
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to save product options.")
 
-    def get_options(self, product_id: str) -> tuple[int, List[ProductOptionVO]]:
+    def get_options(self, product_id: str, product_option_type_id: str) -> tuple[int, List[ProductOptionVO]]:
         with SessionLocal() as db:
             product_options = db.query(ProductOption).filter(
-                ProductOption.product_id == product_id
+                ProductOption.product_id == product_id,
+                ProductOption.product_option_type_id == product_option_type_id
             ).order_by(ProductOption.option.asc())
             total_count = product_options.count()
 
