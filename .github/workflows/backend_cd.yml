@@ -1,0 +1,38 @@
+name: Backend CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Internal Instance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup SSH and deploy
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat <<EOF >> ~/.ssh/config
+          Host internal-host
+            HostName ${{ secrets.INTERNAL_HOST }}
+            User ${{ secrets.INTERNAL_USER }}
+            ProxyJump ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}
+            StrictHostKeyChecking=no
+            UserKnownHostsFile=/dev/null
+          EOF
+
+          ssh internal-host <<EOF
+            cd ~/birdie
+            git pull
+            sudo systemctl reload fastapi
+            sudo systemctl status fastapi
+            echo "✅ SUCCESSFULLY FINISHED ✅"
+          EOF

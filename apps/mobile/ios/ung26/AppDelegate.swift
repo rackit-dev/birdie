@@ -2,7 +2,6 @@ import Expo
 import React
 import ReactAppDependencyProvider
 
-
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
