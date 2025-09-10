@@ -117,6 +117,13 @@ class OrderRepository(IOrderRepository):
             if not coupon:
                 raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
             return CouponVO(**row_to_dict(coupon))
+        
+    def find_coupon_by_code(self, coupon_code: str) -> CouponVO:
+        with SessionLocal() as db:
+            coupon = db.query(Coupon).filter(Coupon.code == coupon_code, Coupon.is_active == True).first()
+            if not coupon:
+                raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
+            return CouponVO(**row_to_dict(coupon))
 
     def save_coupon(self, coupon: CouponVO):
         new_coupon = Coupon(
@@ -191,6 +198,16 @@ class OrderRepository(IOrderRepository):
             coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == coupon_wallet_id).first()
             if not coupon_wallet:
                 raise HTTPException(status_code=404, detail="CouponWallet not found")
+            return CouponWalletVO(**row_to_dict(coupon_wallet))
+        
+    def find_coupon_wallet_by_user_and_coupon(self, user_id: str, coupon_id: str) -> CouponWalletVO:
+        with SessionLocal() as db:
+            coupon_wallet = db.query(CouponWallet).filter(
+                CouponWallet.user_id == user_id,
+                CouponWallet.coupon_id == coupon_id
+            ).first()
+            if not coupon_wallet:
+                return None
             return CouponWalletVO(**row_to_dict(coupon_wallet))
         
     def update_coupon_wallet(self, coupon_wallet: CouponWalletVO):

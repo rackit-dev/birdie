@@ -60,6 +60,13 @@ class IOrderRepository(metaclass=ABCMeta):
         Find a coupon by its ID.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def find_coupon_by_code(self, coupon_code: str) -> Coupon:
+        """
+        Find a coupon by its code.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def save_coupon(self, coupon: Coupon):
@@ -93,6 +100,13 @@ class IOrderRepository(metaclass=ABCMeta):
     def find_coupon_wallet_by_id(self, coupon_wallet_id: str) -> CouponWallet:
         """
         Find a coupon wallet by its ID.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def find_coupon_wallet_by_user_and_coupon(self, user_id: str, coupon_id: str) -> CouponWallet:
+        """
+        Find a coupon wallet by user ID and coupon ID.
         """
         raise NotImplementedError
     

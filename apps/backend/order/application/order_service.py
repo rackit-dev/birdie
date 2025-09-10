@@ -195,6 +195,36 @@ class OrderService:
         )
         self.order_repo.save_coupon_wallet(coupon_wallet)
         return coupon_wallet
+    
+    def create_coupon_wallet_by_code(self, user_id: str, coupon_code: str) -> CouponWallet:
+        coupon = self.order_repo.find_coupon_by_code(coupon_code)
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        if not coupon.is_active:
+            raise HTTPException(status_code=400, detail="Coupon is inactive")
+        
+        now = datetime.now(timezone.utc)
+        valid_from = coupon.valid_from.replace(tzinfo=timezone.utc)
+        valid_until = coupon.valid_until.replace(tzinfo=timezone.utc)
+        
+        if not (valid_from <= now <= valid_until):
+            raise HTTPException(status_code=400, detail="Coupon is not valid at this time")
+        
+        existing_wallet = self.order_repo.find_coupon_wallet_by_user_and_coupon(user_id, coupon.id)
+        if existing_wallet:
+            raise HTTPException(status_code=400, detail="Coupon already in wallet")
+        
+        coupon_wallet = CouponWallet(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            coupon_id=coupon.id,
+            is_used=False,
+            used_at=None,
+            created_at=now,
+            updated_at=now,
+        )
+        self.order_repo.save_coupon_wallet(coupon_wallet)
+        return coupon_wallet
 
     def get_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
         total_count, coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)

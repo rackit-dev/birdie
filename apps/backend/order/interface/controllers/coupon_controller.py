@@ -129,6 +129,17 @@ def create_coupon_wallet(
     return coupon_wallet
 
 
+@router.post("/wallet/by_code", status_code=201, response_model=CouponWalletResponse)
+@inject
+def create_coupon_wallet_by_code(
+    user_id: str,
+    coupon_code: str,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    coupon_wallet = order_service.create_coupon_wallet_by_code(user_id, coupon_code)
+    return coupon_wallet
+
+
 @router.get("/wallet", response_model=GetCouponWalletsResponse)
 @inject
 def get_coupon_wallets(
