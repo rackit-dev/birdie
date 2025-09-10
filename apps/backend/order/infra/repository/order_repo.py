@@ -117,6 +117,13 @@ class OrderRepository(IOrderRepository):
             if not coupon:
                 raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
             return CouponVO(**row_to_dict(coupon))
+        
+    def find_coupon_by_code(self, coupon_code: str) -> CouponVO:
+        with SessionLocal() as db:
+            coupon = db.query(Coupon).filter(Coupon.code == coupon_code, Coupon.is_active == True).first()
+            if not coupon:
+                raise HTTPException(status_code=400, detail="Invalid or inactive coupon")
+            return CouponVO(**row_to_dict(coupon))
 
     def save_coupon(self, coupon: CouponVO):
         new_coupon = Coupon(
@@ -193,6 +200,16 @@ class OrderRepository(IOrderRepository):
                 raise HTTPException(status_code=404, detail="CouponWallet not found")
             return CouponWalletVO(**row_to_dict(coupon_wallet))
         
+    def find_coupon_wallet_by_user_and_coupon(self, user_id: str, coupon_id: str) -> CouponWalletVO:
+        with SessionLocal() as db:
+            coupon_wallet = db.query(CouponWallet).filter(
+                CouponWallet.user_id == user_id,
+                CouponWallet.coupon_id == coupon_id
+            ).first()
+            if not coupon_wallet:
+                return None
+            return CouponWalletVO(**row_to_dict(coupon_wallet))
+        
     def update_coupon_wallet(self, coupon_wallet: CouponWalletVO):
         with SessionLocal() as db:
             existing_coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == coupon_wallet.id).first()
@@ -220,10 +237,15 @@ class OrderRepository(IOrderRepository):
             coupon_wallets = query.limit(items_per_page).offset(offset).all()
             return total_count, [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
 
-    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWalletVO]:
+    def get_coupon_wallets_by_user(self, user_id: str) -> tuple[int, List[CouponWalletVO]]:
         with SessionLocal() as db:
-            coupon_wallets = db.query(CouponWallet).filter(CouponWallet.user_id == user_id).all()
-            return [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
+            query = db.query(CouponWallet).filter(
+                CouponWallet.user_id == user_id,
+                CouponWallet.is_used == False
+            )
+            total_count = query.count()
+            coupon_wallets = query.all()
+            return total_count, [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
         
     def save_payment(self, payment: PaymentVO):
         new_payment = Payment(

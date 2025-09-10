@@ -195,12 +195,42 @@ class OrderService:
         )
         self.order_repo.save_coupon_wallet(coupon_wallet)
         return coupon_wallet
+    
+    def create_coupon_wallet_by_code(self, user_id: str, coupon_code: str) -> CouponWallet:
+        coupon = self.order_repo.find_coupon_by_code(coupon_code)
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        if not coupon.is_active:
+            raise HTTPException(status_code=400, detail="Coupon is inactive")
+        
+        now = datetime.now(timezone.utc)
+        valid_from = coupon.valid_from.replace(tzinfo=timezone.utc)
+        valid_until = coupon.valid_until.replace(tzinfo=timezone.utc)
+        
+        if not (valid_from <= now <= valid_until):
+            raise HTTPException(status_code=400, detail="Coupon is not valid at this time")
+        
+        existing_wallet = self.order_repo.find_coupon_wallet_by_user_and_coupon(user_id, coupon.id)
+        if existing_wallet:
+            raise HTTPException(status_code=400, detail="Coupon already in wallet")
+        
+        coupon_wallet = CouponWallet(
+            id=self.ulid.generate(),
+            user_id=user_id,
+            coupon_id=coupon.id,
+            is_used=False,
+            used_at=None,
+            created_at=now,
+            updated_at=now,
+        )
+        self.order_repo.save_coupon_wallet(coupon_wallet)
+        return coupon_wallet
 
     def get_coupon_wallet(self, coupon_wallet_id: str) -> CouponWallet:
-        coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
+        total_count, coupon_wallet = self.order_repo.find_coupon_wallet_by_id(coupon_wallet_id)
         if not coupon_wallet:
             raise HTTPException(status_code=404, detail="CouponWallet not found")
-        return coupon_wallet
+        return total_count, coupon_wallet
 
     def get_coupon_wallets(self, page: int, items_per_page: int) -> tuple[int, List[CouponWallet]]:
         total_count, coupon_wallets = self.order_repo.get_coupon_wallets(page, items_per_page)
@@ -259,7 +289,7 @@ class OrderService:
                 payment = Payment(
                     id=self.ulid.generate(),
                     order_id=order_id,
-                    merchant_id=iamport_payment_response.merchant_id,
+                    merchant_id=webhook.data.payment_id,
                     status="성공",
                     method=iamport_payment_response.method.provider,
                     amount=iamport_payment_response.amount.total,
@@ -268,7 +298,6 @@ class OrderService:
                     updated_at=now,
                 )
                 self.order_repo.save_payment(payment)
-                print(payment)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e))
         elif isinstance(webhook, portone.webhook.WebhookTransactionCancelled): # 결제 취소
