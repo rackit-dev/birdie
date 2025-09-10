@@ -4,6 +4,7 @@ import { Text, View } from "@/components/Themed";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
+import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import CustomHeader from "../components/CustomHeader";
 import { useUserIdStore } from "../store/useUserIdStore";
@@ -16,6 +17,7 @@ export default function MyScreen() {
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const userId = useUserIdStore((s) => s.id);
   const name = useUserIdStore((s) => s.name);
+  const clearUser = useUserIdStore((s) => s.clearUser);
 
   useFocusEffect(
     useCallback(() => {
@@ -47,6 +49,21 @@ export default function MyScreen() {
       fetchCouponCount();
     }, [userId])
   );
+
+  const handleLogout = async () => {
+    try {
+      await SecureStore.deleteItemAsync("accessToken");
+
+      clearUser();
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" as never }],
+      });
+    } catch (err) {
+      console.error("로그아웃 실패:", err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -120,7 +137,7 @@ export default function MyScreen() {
         </View>
 
         <View style={{ padding: 16 }}>
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={handleLogout}>
             <Text style={styles.menuText}>로그아웃</Text>
           </TouchableOpacity>
         </View>
