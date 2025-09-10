@@ -27,7 +27,6 @@ import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
-const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
 const mockQnA = [
   {
     category: "상품상세문의",
@@ -69,7 +68,10 @@ export default function ProductDetail() {
   const [currentTab, setCurrentTab] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
+  // 기존 selectedOption 대신 이거 사용
+  const [optionTypes, setOptionTypes] = useState<any[]>([]);
+  const [options, setOptions] = useState<Record<string, string[]>>({});
+  const [selected, setSelected] = useState<Record<string, string>>({});
   const [isOptionOpen, setIsOptionOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
   const [quantity, setQuantity] = useState(1);
@@ -88,6 +90,15 @@ export default function ProductDetail() {
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
+  const buildOptionPayload = () => {
+    const payload: any = {};
+    optionTypes.forEach((t, idx) => {
+      payload[`option_${idx + 1}_type`] = t.option_type;
+      payload[`option_${idx + 1}_value`] = selected[t.option_type] ?? null;
+    });
+    return payload;
+  };
+
   useLayoutEffect(() => {
     const parent = navigation.getParent();
     parent?.setOptions({ tabBarStyle: { display: "none" } });
@@ -105,6 +116,39 @@ export default function ProductDetail() {
       }
     }, [fetchLikedItems, fetchCartCount])
   );
+
+  console.log("지금 product id:", id);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/products/option_types`, {
+          params: { product_id: id },
+        });
+        const types = res.data.product_option_types;
+        console.log("받아온 optionTypes:", types);
+        setOptionTypes(types);
+
+        const optionValues: Record<string, string[]> = {};
+        for (const t of types) {
+          const optRes = await axios.get(`${API_URL}/products/options`, {
+            params: { product_id: id, product_option_type_id: t.id },
+          });
+          optionValues[t.option_type] = optRes.data.product_options;
+
+          console.log(
+            `옵션값 for ${t.option_type}:`,
+            optRes.data.product_options
+          );
+        }
+
+        setOptions(optionValues);
+      } catch (err) {
+        console.error("옵션 불러오기 실패", err);
+      }
+    };
+    fetchOptions();
+  }, [id]);
 
   const handleDeleteLike = async (product: Product) => {
     try {
@@ -571,45 +615,46 @@ export default function ProductDetail() {
                   alignItems: "center",
                 }}
               >
-                <Text style={styles.dropdownText}>{selectedOption}</Text>
-                <Text>
-                  {isOptionOpen ? (
-                    <Ionicons name="chevron-up" size={18} color="black" />
-                  ) : (
-                    <Ionicons name="chevron-down" size={18} color="black" />
-                  )}
+                <Text style={styles.dropdownText}>
+                  {Object.values(selected).join(", ") || "옵션을 선택하세요"}
                 </Text>
+                <Ionicons
+                  name={isOptionOpen ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color="black"
+                />
               </View>
             </TouchableOpacity>
 
             {isOptionOpen && (
               <View style={styles.optionScrollContainer}>
                 <ScrollView>
-                  {OPTIONS.map((opt, index) => (
-                    <TouchableOpacity
-                      key={opt}
-                      style={[
-                        styles.optionItem,
-                        opt === selectedOption && styles.optionItemSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedOption(opt);
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text>{opt}</Text>
-                        {index === 0 && (
-                          <Text style={{ color: "red", fontSize: 12 }}>
-                            마지막 1개
-                          </Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
+                  {optionTypes.map((t) => (
+                    <View key={t.id} style={{ marginTop: 15 }}>
+                      <Text style={styles.sectionTitle}>
+                        {t.option_type} 선택
+                      </Text>
+                      <ScrollView horizontal>
+                        {options[t.option_type]?.map((val) => (
+                          <TouchableOpacity
+                            key={val}
+                            style={[
+                              styles.optionItem,
+                              selected[t.option_type] === val &&
+                                styles.optionItemSelected,
+                            ]}
+                            onPress={() =>
+                              setSelected((prev) => ({
+                                ...prev,
+                                [t.option_type]: val,
+                              }))
+                            }
+                          >
+                            <Text>{val}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
                   ))}
                 </ScrollView>
               </View>
@@ -692,11 +737,11 @@ export default function ProductDetail() {
               style={styles.cartButton}
               onPress={async () => {
                 try {
-                  const res = await axios.post(`${API_URL}/cartitems`, {
+                  await axios.post(`${API_URL}/cartitems`, {
                     user_id: userId,
                     product_id: product.id,
-                    product_option_id: selectedOption,
-                    quantity: quantity,
+                    quantity,
+                    ...buildOptionPayload(), // ✅ 옵션 추가
                   });
 
                   setCartSuccessVisible(true);
@@ -734,9 +779,9 @@ export default function ProductDetail() {
                       brand: product.category_sub,
                       image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
                       name: product.name.replace(/_/g, " "),
-                      option: selectedOption,
                       quantity,
                       price: product.price_sell * quantity,
+                      ...buildOptionPayload(),
                     },
                   ],
                 });
