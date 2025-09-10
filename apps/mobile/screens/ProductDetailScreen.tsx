@@ -17,6 +17,7 @@ import {
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -27,38 +28,6 @@ import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
-const mockQnA = [
-  {
-    category: "상품상세문의",
-    title: "끊어짐",
-    content: "우포스 오리지널 끊어짐 이슈가 많은데 보완됐나요?",
-    user: "gse***",
-    date: "25.06.22",
-    answered: false,
-    secret: false,
-  },
-  {
-    category: "상품상세문의",
-    title: "문의 입니다.",
-    content: "박스에 풀리 씌워져 왔는데 정상인가요?",
-    user: "yu1***",
-    date: "25.06.13",
-    answered: true,
-    secret: false,
-    answer: "안녕하세요 우포스입니다. 일부 사이즈는 신형박스로 출고 중입니다.",
-    answerUser: "우포스 담당자",
-    answerDate: "25.06.16",
-  },
-  {
-    category: "배송",
-    title: "상품 관련 문의입니다.",
-    content: "",
-    user: "jim***",
-    date: "25.06.07",
-    answered: true,
-    secret: true,
-  },
-];
 
 export default function ProductDetail() {
   const route = useRoute();
@@ -68,7 +37,6 @@ export default function ProductDetail() {
   const [currentTab, setCurrentTab] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  // 기존 selectedOption 대신 이거 사용
   const [optionTypes, setOptionTypes] = useState<any[]>([]);
   const [options, setOptions] = useState<Record<string, string[]>>({});
   const [selected, setSelected] = useState<Record<string, string>>({});
@@ -83,12 +51,35 @@ export default function ProductDetail() {
   const { width: screenWidth } = useWindowDimensions();
   const [imageHeights, setImageHeights] = useState<number[]>([]);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewImages, setReviewImages] = useState<Record<string, string[]>>(
+    {}
+  );
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedReviewImages, setSelectedReviewImages] = useState<string[]>(
+    []
+  );
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [inquiryCount, setInquiryCount] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const fetchCartCount = useCartStore((s) => s.fetchCount);
   const invalidateCart = useCartStore((s) => s.invalidate);
 
   const userId = useUserIdStore((s) => s.id);
+  // const name = useUserIdStore((s) => s.name);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
+
+  /* 테스트용
+  useEffect(() => {
+    if (!product || !userId) return;
+
+    console.log("리뷰 POST에 필요한 값 확인");
+    console.log("user_id:", userId);
+    console.log("user_name:", name);
+    console.log("product_id:", product.id);
+  }, [product, userId]); */
 
   const buildOptionPayload = () => {
     const payload: any = {};
@@ -117,7 +108,72 @@ export default function ProductDetail() {
     }, [fetchLikedItems, fetchCartCount])
   );
 
-  console.log("지금 product id:", id);
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/products/reviews/by_product`, {
+          params: { product_id: id },
+        });
+        const list = res.data.product_reviews || [];
+
+        setReviews(list);
+
+        const imagesMap: Record<string, string[]> = {};
+
+        for (const rev of list) {
+          const imgs: string[] = [];
+
+          for (let idx = 1; idx <= 5; idx++) {
+            const url = `${IMAGE_URL}/reviews/${rev.id}/img_${idx}.png`;
+            try {
+              console.log("HEAD 요청:", url);
+              const head = await axios.head(url);
+
+              if (head.status === 200) {
+                imgs.push(url);
+              } else {
+                console.log("이미지 없음 (status !== 200):", url);
+                break;
+              }
+            } catch (err: any) {
+              console.log("요청 실패:", url, err.message);
+              break;
+            }
+          }
+
+          imagesMap[rev.id] = imgs;
+        }
+        setReviewImages(imagesMap);
+      } catch (err) {
+        console.error("리뷰 불러오기 실패:", err);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
+  // 이름 마스킹 함수
+  const maskName = (name: string) => {
+    if (!name) return "";
+    return name[0] + "**";
+  };
+
+  useEffect(() => {
+    const fetchInquiries = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/users/inquiry/by_product`, {
+          params: { product_id: id },
+        });
+        setInquiries(res.data.inquiries || []);
+        setInquiryCount(res.data.total_count || 0);
+      } catch (err) {
+        console.error("문의 불러오기 실패:", err);
+      }
+    };
+
+    if (currentTab === 3) {
+      fetchInquiries();
+    }
+  }, [id, currentTab]);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -288,52 +344,140 @@ export default function ProductDetail() {
       case 2:
         return (
           <View style={styles.tabContent}>
-            <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 10 }}>
-              96%가 만족했어요
-            </Text>
-
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{ fontWeight: "700", fontSize: 16, marginBottom: 6 }}
-              >
-                만족해요{" "}
-                <Text style={{ color: "red", fontSize: 13 }}>BEST</Text>
-              </Text>
-              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
-                감튀조아 🌟 Yellow · 2025.05.14
-              </Text>
-
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {[1, 2, 3, 4].map((_, idx) => (
-                  <View
-                    key={idx}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 10, marginBottom: 20 }}
+            >
+              {reviews
+                .flatMap((rev) => reviewImages[rev.id] || [])
+                .slice(0, 6) // 최대 6장까지만
+                .map((imgUrl, i) => (
+                  <Image
+                    key={i}
+                    source={{ uri: imgUrl }}
                     style={{
                       width: 80,
                       height: 80,
-                      backgroundColor: "#ddd",
                       borderRadius: 6,
                       marginRight: 10,
                     }}
                   />
                 ))}
-              </ScrollView>
+            </ScrollView>
 
-              <View style={{ marginTop: 15 }}>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>옵션</Text> ivory · black
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>체형</Text> 164cm · 58kg
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>사이즈</Text> 잘 맞아요
-                </Text>
-              </View>
-
-              <Text style={{ marginTop: 12, fontSize: 14 }}>
-                아직 신어보진 못했는데 신으면 귀여워질 거 같은 느낌입니다
+            {reviews.length === 0 ? (
+              <Text
+                style={{
+                  color: "#666",
+                  textAlign: "center",
+                  marginTop: 20,
+                  marginBottom: 20,
+                }}
+              >
+                아직 등록된 후기가 없습니다.
               </Text>
-            </View>
+            ) : (
+              reviews.map((rev) => (
+                <View
+                  key={rev.id}
+                  style={{
+                    marginBottom: 20,
+                    borderBottomColor: "#eee",
+                    borderBottomWidth: 1,
+                    paddingBottom: 15,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View style={{ flex: 1, marginRight: 10 }}>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Text style={{ fontWeight: "700", marginRight: 8 }}>
+                        {maskName(rev.user_name)}
+                      </Text>
+                      {[...Array(5)].map((_, i) => (
+                        <FontAwesome
+                          key={i}
+                          name={i < rev.rating ? "star" : "star-o"}
+                          size={14}
+                          color="#FFD700"
+                          style={{ marginRight: 2 }}
+                        />
+                      ))}
+                    </View>
+
+                    <Text style={{ marginTop: 8, fontSize: 14, color: "#333" }}>
+                      {rev.content}
+                    </Text>
+                  </View>
+
+                  {reviewImages[rev.id]?.[0] && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedReviewImages(reviewImages[rev.id] || []);
+                        setImageModalVisible(true);
+                      }}
+                    >
+                      <Image
+                        source={{ uri: reviewImages[rev.id][0] }}
+                        style={{ width: 80, height: 80, borderRadius: 6 }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        );
+
+        return (
+          <View style={styles.tabContent}>
+            {reviews.length === 0 ? (
+              <Text
+                style={{
+                  color: "#666",
+                  textAlign: "center",
+                  marginTop: 20,
+                  marginBottom: 20,
+                }}
+              >
+                아직 등록된 후기가 없습니다.
+              </Text>
+            ) : (
+              reviews.map((rev) => (
+                <View
+                  key={rev.id}
+                  style={{
+                    marginBottom: 20,
+                    borderBottomColor: "#eee",
+                    borderBottomWidth: 1,
+                    paddingBottom: 15,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={{ fontWeight: "700", marginRight: 8 }}>
+                      {maskName(rev.user_name)}
+                    </Text>
+                    {[...Array(5)].map((_, i) => (
+                      <FontAwesome
+                        key={i}
+                        name={i < rev.rating ? "star" : "star-o"}
+                        size={14}
+                        color="#FFD700"
+                        style={{ marginRight: 2 }}
+                      />
+                    ))}
+                  </View>
+
+                  {/* 리뷰 본문 */}
+                  <Text style={{ marginTop: 8, fontSize: 14, color: "#333" }}>
+                    {rev.content}
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         );
 
@@ -341,71 +485,93 @@ export default function ProductDetail() {
         return (
           <View style={styles.tabContent}>
             <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 10 }}>
-              상품문의 ({mockQnA.length})
+              상품문의 ({inquiryCount})
             </Text>
 
-            {mockQnA.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  if (!item.secret) {
-                    const updated = [...expandedItems];
-                    updated[index] = !updated[index];
-                    setExpandedItems(updated);
-                  }
-                }}
-                style={{
-                  paddingVertical: 12,
-                  borderBottomColor: "#eee",
-                  borderBottomWidth: 1,
-                }}
+            {inquiries.length === 0 ? (
+              <Text
+                style={{ color: "#666", textAlign: "center", marginTop: 20 }}
               >
-                <Text style={{ color: "#666", fontSize: 12 }}>
-                  {item.category}
-                </Text>
-                <Text style={{ fontWeight: "600", fontSize: 15 }}>
-                  {item.secret ? "🔒 상품 관련 문의입니다." : item.title}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
-                  {item.answered ? "답변완료" : "답변예정"} · {item.user} ·{" "}
-                  {item.date}
-                </Text>
+                아직 등록된 문의가 없습니다.
+              </Text>
+            ) : (
+              inquiries.map((item, index) => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => {
+                    if (item.status !== "secret") {
+                      const updated = [...expandedItems];
+                      updated[index] = !updated[index];
+                      setExpandedItems(updated);
+                    }
+                  }}
+                  style={{
+                    paddingVertical: 12,
+                    borderBottomColor: "#eee",
+                    borderBottomWidth: 1,
+                  }}
+                >
+                  <Text style={{ color: "#666", fontSize: 12 }}>
+                    {item.type}
+                  </Text>
+                  <Text style={{ fontWeight: "600", fontSize: 15 }}>
+                    {item.status === "secret"
+                      ? "🔒 상품 관련 문의입니다."
+                      : item.content}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
+                    {item.answer ? "답변완료" : "답변예정"} ·{" "}
+                    {maskName(item.user_id)} ·{" "}
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </Text>
 
-                {expandedItems[index] && !item.secret && (
-                  <View
-                    style={{
-                      marginTop: 12,
-                      backgroundColor: "#f7f7f7",
-                      padding: 12,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <Text style={{ color: "#444", fontSize: 14 }}>
-                      {item.content}
-                    </Text>
+                  {expandedItems[index] && item.status !== "secret" && (
+                    <View
+                      style={{
+                        marginTop: 12,
+                        backgroundColor: "#f7f7f7",
+                        padding: 12,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <Text style={{ color: "#444", fontSize: 14 }}>
+                        {item.content}
+                      </Text>
 
-                    {item.answer && (
-                      <View style={{ marginTop: 10 }}>
-                        <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                          답변. {item.answerUser}
-                        </Text>
-                        <Text style={{ color: "#444", fontSize: 14 }}>
-                          {item.answer}
-                        </Text>
-                        <Text
-                          style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}
-                        >
-                          {item.answerDate}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                      {item.answer && (
+                        <View style={{ marginTop: 10 }}>
+                          <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                            답변
+                          </Text>
+                          <Text style={{ color: "#444", fontSize: 14 }}>
+                            {item.answer}
+                          </Text>
+                          <Text
+                            style={{
+                              color: "#aaa",
+                              fontSize: 12,
+                              marginTop: 4,
+                            }}
+                          >
+                            {new Date(item.updated_at).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
 
             <TouchableOpacity
-              onPress={() => navigation.navigate("Qna", { id })}
+              onPress={() =>
+                navigation.navigate("Qna", {
+                  id: product.id,
+                  name: product.name,
+                  price: product.price_sell,
+                  image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                })
+              }
               style={{
                 marginTop: 20,
                 borderWidth: 1,
@@ -488,13 +654,20 @@ export default function ProductDetail() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingTop: 10,
+                paddingBottom: 10,
               }}
             >
               <Text style={{ color: "orange", fontSize: 20 }}>★</Text>
-              <Text style={styles.smallText}>4.6</Text>
+              <Text style={styles.smallText}>
+                {reviews.length > 0
+                  ? (
+                      reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+                      reviews.length
+                    ).toFixed(1)
+                  : "0.0"}
+              </Text>
               <Text style={[styles.smallText, { marginLeft: 8 }]}>
-                후기 320개
+                후기 {reviews.length}개
               </Text>
             </View>
             {product.discount_rate > 0 && (
@@ -741,7 +914,7 @@ export default function ProductDetail() {
                     user_id: userId,
                     product_id: product.id,
                     quantity,
-                    ...buildOptionPayload(), // ✅ 옵션 추가
+                    ...buildOptionPayload(),
                   });
 
                   setCartSuccessVisible(true);
@@ -790,6 +963,68 @@ export default function ProductDetail() {
               <Text style={styles.buyText}>구매하기</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+      <Modal
+        isVisible={imageModalVisible}
+        onBackdropPress={() => setImageModalVisible(false)}
+        onBackButtonPress={() => setImageModalVisible(false)}
+        style={{ margin: 0 }}
+      >
+        <View style={{ flex: 1, backgroundColor: "black" }}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={(e) => {
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / Dimensions.get("window").width
+              );
+              setCurrentIndex(index);
+            }}
+            scrollEventThrottle={16}
+            contentContainerStyle={{
+              alignItems: "center",
+              paddingVertical: 40,
+            }}
+          >
+            {selectedReviewImages.map((imgUrl, i) => (
+              <Image
+                key={i}
+                source={{ uri: imgUrl }}
+                style={{
+                  width: Dimensions.get("window").width,
+                  height: Dimensions.get("window").height * 0.6,
+                }}
+                resizeMode="contain"
+              />
+            ))}
+          </ScrollView>
+
+          <View
+            style={{
+              position: "absolute",
+              bottom: 40,
+              alignSelf: "center",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 12,
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 14, fontWeight: "600" }}>
+              {currentIndex + 1} / {selectedReviewImages.length}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setImageModalVisible(false)}
+            style={{ position: "absolute", top: 60, right: 20 }}
+          >
+            <Text style={{ fontFamily: "P-600", color: "white", fontSize: 30 }}>
+              ✕
+            </Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
