@@ -10,6 +10,7 @@ import ProductListScreen from "../screens/ProductListScreen";
 import SearchModal from "../screens/SearchModal";
 import SearchScreen from "../screens/SearchScreen";
 import PurchaseScreen from "../screens/PurchaseScreen";
+import CouponListScreen from "../screens/CouponListScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
 
@@ -49,6 +50,7 @@ export type RootStackParamList = {
       image: string;
     }[];
   };
+  CouponList: undefined;
   ProductList: { category: string; brand: string };
   Search: undefined;
   PaymentWebview: { params: PortOnePaymentRequest };
@@ -85,6 +87,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Purchase" component={PurchaseScreen} />
       <Stack.Screen name="PaymentWebview" component={PaymentWebviewScreen} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+      <Stack.Screen name="CouponList" component={CouponListScreen} />
     </Stack.Navigator>
   );
 }

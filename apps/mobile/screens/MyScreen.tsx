@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -12,6 +12,7 @@ export default function MyScreen() {
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
   const [cartCount, setCartCount] = useState(0);
+  const [couponCount, setCouponCount] = useState(0);
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const userId = useUserIdStore((s) => s.id);
   const name = useUserIdStore((s) => s.name);
@@ -31,7 +32,19 @@ export default function MyScreen() {
         }
       };
 
+      const fetchCouponCount = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/coupons/wallet`, {
+            params: { page: 1, items_per_page: 10, user_id: userId },
+          });
+          setCouponCount(res.data.total_count ?? 0);
+        } catch (err) {
+          console.error("쿠폰 개수 불러오기 실패:", err);
+        }
+      };
+
       fetchCartCount();
+      fetchCouponCount();
     }, [userId])
   );
 
@@ -54,12 +67,18 @@ export default function MyScreen() {
         <View style={styles.iconRow}>
           {[
             { label: "포인트", value: "728P" },
-            { label: "쿠폰", value: "0" },
+            { label: "쿠폰", value: `${couponCount}장`, route: "CouponList" },
           ].map((item, idx) => (
-            <View style={styles.iconItem} key={idx}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.iconItem}
+              onPress={() => {
+                if (item.route) navigation.navigate(item.route as never);
+              }}
+            >
               <Text style={styles.iconValue}>{item.value}</Text>
               <Text style={styles.iconLabel}>{item.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 

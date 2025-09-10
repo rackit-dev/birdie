@@ -59,7 +59,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (userId) {
-        fetchCount(userId);
+        fetchCount();
         fetchLikedItems();
       }
     }, [fetchCount, fetchLikedItems, userId])
