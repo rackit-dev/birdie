@@ -150,14 +150,14 @@ def get_coupon_wallet(
     return coupon_wallet
 
 
-@router.get("/wallet/by_user", response_model=List[CouponWalletResponse])
+@router.get("/wallet/by_user", response_model=GetCouponWalletsResponse)
 @inject
 def get_coupon_wallets_by_user(
     user_id: str,
     order_service: OrderService = Depends(Provide[Container.order_service]),
 ):
-    coupon_wallets = order_service.get_coupon_wallets_by_user(user_id)
-    return coupon_wallets
+    total_count, coupon_wallets = order_service.get_coupon_wallets_by_user(user_id)
+    return {"total_count": total_count, "coupon_wallets": coupon_wallets}
 
 
 @router.put("/wallet/use", response_model=CouponWalletResponse)

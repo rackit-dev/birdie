@@ -220,10 +220,15 @@ class OrderRepository(IOrderRepository):
             coupon_wallets = query.limit(items_per_page).offset(offset).all()
             return total_count, [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
 
-    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWalletVO]:
+    def get_coupon_wallets_by_user(self, user_id: str) -> tuple[int, List[CouponWalletVO]]:
         with SessionLocal() as db:
-            coupon_wallets = db.query(CouponWallet).filter(CouponWallet.user_id == user_id).all()
-            return [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
+            query = db.query(CouponWallet).filter(
+                CouponWallet.user_id == user_id,
+                CouponWallet.is_used == False
+            )
+            total_count = query.count()
+            coupon_wallets = query.all()
+            return total_count, [CouponWalletVO(**row_to_dict(cw)) for cw in coupon_wallets]
         
     def save_payment(self, payment: PaymentVO):
         new_payment = Payment(

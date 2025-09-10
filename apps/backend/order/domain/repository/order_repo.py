@@ -118,7 +118,7 @@ class IOrderRepository(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_coupon_wallets_by_user(self, user_id: str) -> List[CouponWallet]:
+    def get_coupon_wallets_by_user(self, user_id: str) -> tuple[int, List[CouponWallet]]:
         """
         Get all coupon wallets for a specific user.
         """
