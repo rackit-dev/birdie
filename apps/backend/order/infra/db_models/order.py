@@ -102,7 +102,7 @@ class Payment(Base):
 
     id = mapped_column(String(36), primary_key=True)
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False, unique=True)
-    merchant_id = mapped_column(String(36), nullable=False)
+    merchant_id = mapped_column(String(128), nullable=False)
 
     status = mapped_column(Enum("대기중", "성공", "실패", name="status"), default="대기중")
     method = mapped_column(String(16), nullable=False)
