@@ -81,6 +81,14 @@ export default function ProductDetail() {
     console.log("product_id:", product.id);
   }, [product, userId]); */
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const yy = String(d.getFullYear()).slice(2);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yy}.${mm}.${dd}`;
+  };
+
   const buildOptionPayload = () => {
     const payload: any = {};
     optionTypes.forEach((t, idx) => {
@@ -126,13 +134,11 @@ export default function ProductDetail() {
           for (let idx = 1; idx <= 5; idx++) {
             const url = `${IMAGE_URL}/reviews/${rev.id}/img_${idx}.png`;
             try {
-              console.log("HEAD 요청:", url);
               const head = await axios.head(url);
 
               if (head.status === 200) {
                 imgs.push(url);
               } else {
-                console.log("이미지 없음 (status !== 200):", url);
                 break;
               }
             } catch (err: any) {
@@ -163,7 +169,35 @@ export default function ProductDetail() {
         const res = await axios.get(`${API_URL}/users/inquiry/by_product`, {
           params: { product_id: id },
         });
-        setInquiries(res.data.inquiries || []);
+        const list = res.data.inquiries || [];
+
+        // 이미지 존재 여부 확인 후 배열 붙이기
+        const imagesMap: Record<string, string[]> = {};
+        for (const inq of list) {
+          const imgs: string[] = [];
+          for (let idx = 1; idx <= 5; idx++) {
+            const url = `${IMAGE_URL}/inquiries/${inq.id}/img_${idx}.png`;
+            try {
+              const head = await axios.head(url);
+              if (head.status === 200) {
+                imgs.push(url);
+              } else {
+                break;
+              }
+            } catch {
+              break;
+            }
+          }
+          imagesMap[inq.id] = imgs;
+        }
+
+        // inquiries에 images 붙이기
+        const withImages = list.map((inq: any) => ({
+          ...inq,
+          images: imagesMap[inq.id] || [],
+        }));
+
+        setInquiries(withImages);
         setInquiryCount(res.data.total_count || 0);
       } catch (err) {
         console.error("문의 불러오기 실패:", err);
@@ -182,7 +216,6 @@ export default function ProductDetail() {
           params: { product_id: id },
         });
         const types = res.data.product_option_types;
-        console.log("받아온 optionTypes:", types);
         setOptionTypes(types);
 
         const optionValues: Record<string, string[]> = {};
@@ -432,61 +465,41 @@ export default function ProductDetail() {
           </View>
         );
 
-        return (
-          <View style={styles.tabContent}>
-            {reviews.length === 0 ? (
-              <Text
-                style={{
-                  color: "#666",
-                  textAlign: "center",
-                  marginTop: 20,
-                  marginBottom: 20,
-                }}
-              >
-                아직 등록된 후기가 없습니다.
-              </Text>
-            ) : (
-              reviews.map((rev) => (
-                <View
-                  key={rev.id}
-                  style={{
-                    marginBottom: 20,
-                    borderBottomColor: "#eee",
-                    borderBottomWidth: 1,
-                    paddingBottom: 15,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Text style={{ fontWeight: "700", marginRight: 8 }}>
-                      {maskName(rev.user_name)}
-                    </Text>
-                    {[...Array(5)].map((_, i) => (
-                      <FontAwesome
-                        key={i}
-                        name={i < rev.rating ? "star" : "star-o"}
-                        size={14}
-                        color="#FFD700"
-                        style={{ marginRight: 2 }}
-                      />
-                    ))}
-                  </View>
-
-                  {/* 리뷰 본문 */}
-                  <Text style={{ marginTop: 8, fontSize: 14, color: "#333" }}>
-                    {rev.content}
-                  </Text>
-                </View>
-              ))
-            )}
-          </View>
-        );
-
       case 3:
         return (
           <View style={styles.tabContent}>
-            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 10 }}>
-              상품문의 ({inquiryCount})
-            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: "600" }}>
+                상품문의 ({inquiryCount})
+              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("QnaList", {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price_sell,
+                    image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                  })
+                }
+              >
+                <Text
+                  style={{
+                    fontFamily: "P-400",
+                    fontSize: 14,
+                    color: "#666",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  더보기
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {inquiries.length === 0 ? (
               <Text
@@ -495,37 +508,68 @@ export default function ProductDetail() {
                 아직 등록된 문의가 없습니다.
               </Text>
             ) : (
-              inquiries.map((item, index) => (
+              inquiries.slice(0, 3).map((item, index) => (
                 <TouchableOpacity
                   key={item.id}
                   onPress={() => {
-                    if (item.status !== "secret") {
-                      const updated = [...expandedItems];
-                      updated[index] = !updated[index];
-                      setExpandedItems(updated);
-                    }
+                    const updated = [...expandedItems];
+                    updated[index] = !updated[index];
+                    setExpandedItems(updated);
                   }}
-                  style={{
-                    paddingVertical: 12,
-                    borderBottomColor: "#eee",
-                    borderBottomWidth: 1,
-                  }}
+                  style={styles.inquiryItem}
                 >
-                  <Text style={{ color: "#666", fontSize: 12 }}>
-                    {item.type}
-                  </Text>
-                  <Text style={{ fontWeight: "600", fontSize: 15 }}>
-                    {item.status === "secret"
-                      ? "🔒 상품 관련 문의입니다."
-                      : item.content}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
-                    {item.answer ? "답변완료" : "답변예정"} ·{" "}
-                    {maskName(item.user_id)} ·{" "}
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                      <Text
+                        style={{
+                          fontFamily: "P-500",
+                          color: "#666",
+                          fontSize: 13,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {item.type}
+                      </Text>
+                      <Text
+                        style={{ fontFamily: "P-600", fontSize: 16 }}
+                        numberOfLines={1}
+                      >
+                        {item.content}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "P-500",
+                          fontSize: 13,
+                          color: "#999",
+                          marginTop: 4,
+                        }}
+                      >
+                        {item.status === "PENDING" ? "답변 대기" : "답변 완료"}{" "}
+                        · {formatDate(item.created_at)}
+                      </Text>
+                    </View>
 
-                  {expandedItems[index] && item.status !== "secret" && (
+                    {item.images && item.images.length > 0 && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedReviewImages(item.images); // 전체 배열 넣어줌
+                          setImageModalVisible(true);
+                        }}
+                      >
+                        <Image
+                          source={{ uri: item.images[0] }}
+                          style={{ width: 80, height: 80, borderRadius: 6 }}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {expandedItems[index] && (
                     <View
                       style={{
                         marginTop: 12,
@@ -534,28 +578,58 @@ export default function ProductDetail() {
                         borderRadius: 6,
                       }}
                     >
-                      <Text style={{ color: "#444", fontSize: 14 }}>
+                      <Text
+                        style={{
+                          fontFamily: "P-400",
+                          color: "#333",
+                          fontSize: 16,
+                          marginTop: 8,
+                          marginBottom: 8,
+                        }}
+                      >
                         {item.content}
                       </Text>
 
                       {item.answer && (
-                        <View style={{ marginTop: 10 }}>
-                          <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                            답변
-                          </Text>
-                          <Text style={{ color: "#444", fontSize: 14 }}>
-                            {item.answer}
-                          </Text>
-                          <Text
+                        <>
+                          <View
                             style={{
-                              color: "#aaa",
-                              fontSize: 12,
-                              marginTop: 4,
+                              height: 1,
+                              backgroundColor: "#eee",
+                              marginVertical: 10,
                             }}
-                          >
-                            {new Date(item.updated_at).toLocaleDateString()}
-                          </Text>
-                        </View>
+                          />
+                          <View>
+                            <Text
+                              style={{
+                                fontFamily: "P-600",
+                                fontSize: 16,
+                                marginTop: 8,
+                                marginBottom: 4,
+                              }}
+                            >
+                              답변
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: "P-400",
+                                color: "#444",
+                                fontSize: 16,
+                              }}
+                            >
+                              {item.answer}
+                            </Text>
+                            <Text
+                              style={{
+                                color: "#aaa",
+                                fontSize: 12,
+                                marginTop: 4,
+                              }}
+                            >
+                              {formatDate(item.updated_at)}
+                            </Text>
+                          </View>
+                        </>
                       )}
                     </View>
                   )}
@@ -1298,5 +1372,10 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     alignItems: "center",
     justifyContent: "center",
+  },
+  inquiryItem: {
+    paddingVertical: 12,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
   },
 });

@@ -13,6 +13,7 @@ import PurchaseScreen from "../screens/PurchaseScreen";
 import CouponListScreen from "../screens/CouponListScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+import QnaListScreen from "../screens/QnaListScreen";
 
 type PortOnePaymentRequest = {
   storeId: string;
@@ -88,6 +89,7 @@ export default function RootNavigator() {
       <Stack.Screen name="PaymentWebview" component={PaymentWebviewScreen} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
       <Stack.Screen name="CouponList" component={CouponListScreen} />
+      <Stack.Screen name="QnaList" component={QnaListScreen} />
     </Stack.Navigator>
   );
 }

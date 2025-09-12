@@ -10,7 +10,6 @@ import {
   Keyboard,
   Alert,
   FlatList,
-  Platform,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -47,8 +46,8 @@ export default function QnaPage() {
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const handleSubmit = async () => {
-    if (!inquiryType || !title || !content) {
-      Alert.alert("알림", "문의 유형, 제목, 내용을 모두 입력해주세요.");
+    if (!inquiryType || !content) {
+      Alert.alert("알림", "문의 유형, 내용을 모두 입력해주세요.");
       return;
     }
 
@@ -132,7 +131,7 @@ export default function QnaPage() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={{ flex: 1 }}>
         <CustomHeader
-          title="상품 문의"
+          title="문의 하기"
           showBackButton
           onPressBack={() => navigation.goBack()}
         />
