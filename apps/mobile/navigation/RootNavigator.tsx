@@ -71,7 +71,13 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Loading" component={LoadingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen
+        name="Main"
+        component={TabNavigator}
+        options={{
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen
         name="ProductList"
         component={ProductListScreen}
