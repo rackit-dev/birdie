@@ -85,12 +85,12 @@ export default function QnaPage() {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log("✅ 문의 등록 성공:", res.data);
+      console.log("문의 등록 성공:", res.data);
       Alert.alert("알림", "문의가 등록되었습니다.", [
         { text: "확인", onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      console.error("❌ 문의 등록 실패:", err);
+      console.error("문의 등록 실패:", err);
       Alert.alert("오류", "등록 중 문제가 발생했습니다.");
     }
   };

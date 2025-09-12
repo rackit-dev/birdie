@@ -8,7 +8,6 @@ import {
   ScrollView,
   Modal,
   SafeAreaView,
-  Alert,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import DaumPostcode from "react-native-daum-postcode";
@@ -30,7 +29,7 @@ type Address = {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSaved: () => void; // 저장 후 목록 새로고침
+  onSaved: () => void;
   address: Address | null;
 };
 
@@ -48,6 +47,10 @@ export default function AddressEditModal({
   const [orderMemo, setOrderMemo] = useState("");
   const [showPostcode, setShowPostcode] = useState(false);
 
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -61,9 +64,15 @@ export default function AddressEditModal({
     }
   }, [address]);
 
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   const handleSave = async () => {
     if (!zipcode || !line1 || !name || !phone) {
-      Alert.alert("필수 입력", "우편번호, 주소, 수령인, 휴대폰은 필수입니다.");
+      showAlert("필수 입력", "우편번호, 주소, 수령인, 휴대폰은 필수입니다.");
       return;
     }
     try {
@@ -97,7 +106,7 @@ export default function AddressEditModal({
       onClose();
     } catch (err) {
       console.error("주소 수정 실패:", err);
-      Alert.alert("오류", "주소 수정 중 문제가 발생했습니다.");
+      showAlert("오류", "주소 수정 중 문제가 발생했습니다.");
     }
   };
 
@@ -205,6 +214,23 @@ export default function AddressEditModal({
             />
           </SafeAreaView>
         </Modal>
+
+        <Modal visible={alertVisible} transparent animationType="fade">
+          <View style={styles.alertOverlay}>
+            <View style={styles.alertBox}>
+              {alertTitle ? (
+                <Text style={styles.alertTitle}>{alertTitle}</Text>
+              ) : null}
+              <Text style={styles.alertMessage}>{alertMessage}</Text>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setAlertVisible(false)}
+              >
+                <Text style={styles.alertButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -265,5 +291,39 @@ const styles = StyleSheet.create({
   headerClose: {
     fontSize: 25,
     fontFamily: "P-600",
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertBox: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    width: "75%",
+    alignItems: "center",
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
+  alertMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  alertButton: {
+    backgroundColor: "black",
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+  },
+  alertButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
