@@ -225,8 +225,9 @@ class UserRepository(IUserRepository):
 
             if not inquiry:
                 raise HTTPException(status_code=422, detail="Inquiry not found")
-
+            
             inquiry.answer = inquiry_vo.answer
+            inquiry.status = inquiry_vo.status
             inquiry.updated_at = inquiry_vo.updated_at
 
             db.add(inquiry)

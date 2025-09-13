@@ -235,6 +235,7 @@ class UserService:
         inquiry = self.user_repo.find_inquiry_by_id(inquiry_id)
         
         inquiry.answer = answer
+        inquiry.status = "ANSWERED"
         inquiry.updated_at = datetime.now(timezone.utc)
 
         self.user_repo.create_inquiry_answer(inquiry)
