@@ -109,6 +109,18 @@ class ProductService:
         self.product_repo.update(product, image_thumbnail, image_detail)
 
         return product
+    
+    def inactive_product(self, product_id: str) -> Product:
+        product = self.product_repo.find_by_id(product_id)
+
+        if product.is_active is False:
+            raise HTTPException(status_code=422, detail="Product is already inactive.")
+        product.is_active = False
+        product.updated_at = datetime.now(timezone.utc)
+
+        product = self.product_repo.update(product, None, None)
+
+        return product
 
     def delete_product(self, product_id: str):
         self.product_repo.delete(product_id)

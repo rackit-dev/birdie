@@ -116,12 +116,12 @@ class ProductRepository(IProductRepository):
 
         return total_count, [ProductVO(**row_to_dict(product)) for product in products]
 
-    def update(self, product_vo: ProductVO, image_thumbnail: UploadFile, image_detail: List[UploadFile]) -> ProductVO:
+    def update(self, product_vo: ProductVO, image_thumbnail: UploadFile | None, image_detail: List[UploadFile] | None) -> ProductVO:
         with SessionLocal() as db:
             product = db.query(Product).filter(Product.id == product_vo.id).first()
         
         if not product:
-            raise HTTPException(status_code=422)
+            raise HTTPException(status_code=422, detail="Product Not Found")
         
         product.name = product_vo.name
         product.price_whole = product_vo.price_whole
@@ -134,13 +134,15 @@ class ProductRepository(IProductRepository):
 
         try:
             db.add(product)
-            # TODO S3 IMAGE MODIFY LOGIC TODO
+            if image_thumbnail or image_detail:
+                # TODO S3 IMAGE MODIFY LOGIC
+                pass
             db.commit()
         except Exception as e:
             raise HTTPException(status_code=500, detail="Failed to Update product.")
-        
-        return product
-    
+
+        return ProductVO(**row_to_dict(product))
+
     def find_by_id(self, id) -> ProductVO:
         with SessionLocal() as db:
             product = db.query(Product).filter(Product.id == id).first()

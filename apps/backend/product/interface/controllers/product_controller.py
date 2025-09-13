@@ -143,6 +143,18 @@ def update_product(
     return product
 
 
+@router.put("/inactive", response_model=ProductResponse)
+@inject
+def inactive_product(
+    product_id: str,
+    #NEED ADMIN TOKEN
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    product = product_service.inactive_product(product_id)
+    
+    return product
+
+
 @router.delete("", status_code=204)
 @inject
 def delete_product(
