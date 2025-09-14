@@ -11,7 +11,7 @@ from order.interface.controllers.order_controller import router as order_routers
 from order.interface.controllers.coupon_controller import router as coupon_routers
 from cartitem.interface.controllers.cartitem_controller import router as cartitem_routers
 
-app = FastAPI()
+app = FastAPI(docs_url="/api/docs", redoc_url="/api/redoc")
 app.container = Container()
 
 app.include_router(user_routers, prefix="/api")
