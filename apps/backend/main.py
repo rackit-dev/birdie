@@ -14,11 +14,11 @@ from cartitem.interface.controllers.cartitem_controller import router as cartite
 app = FastAPI()
 app.container = Container()
 
-app.include_router(user_routers)
-app.include_router(product_routers)
-app.include_router(order_routers)
-app.include_router(cartitem_routers)
-app.include_router(coupon_routers)
+app.include_router(user_routers, prefix="/api")
+app.include_router(product_routers, prefix="/api")
+app.include_router(order_routers, prefix="/api")
+app.include_router(cartitem_routers, prefix="/api")
+app.include_router(coupon_routers, prefix="/api")
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
@@ -40,6 +40,6 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.get("/api")
 def hello():
     return {"Hello": "FastAPI"}
