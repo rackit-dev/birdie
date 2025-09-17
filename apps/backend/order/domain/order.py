@@ -95,3 +95,16 @@ class PointTransaction:
     balance_after: int
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class Refund:
+    id: str
+    order_id: str
+    payment_id: str
+    status: str
+    amount: int
+    restore_point_amount: int
+    created_at: datetime
+    updated_at: datetime
+    memo: str | None
