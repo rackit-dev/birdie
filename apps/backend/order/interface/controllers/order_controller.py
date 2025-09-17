@@ -91,6 +91,14 @@ class CreateOrderRequest(BaseModel):
     items: List[CreateOrderItemRequest]
 
 
+class CreateRefundRequest(BaseModel):
+    order_id: str
+    payment_id: str
+    merchant_id: str
+    amount: int
+    memo: str | None
+
+
 @router.post("", response_model=OrderResponse)
 @inject
 def create_order(
@@ -153,6 +161,21 @@ async def payment_webhook(
 ):
     webhook = await order_service.handle_webhook(request, is_test=False)
     return webhook
+
+@router.post("/payment/refund/whole")
+@inject
+def payment_refund_whole(
+    request: CreateRefundRequest,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    refund = order_service.refund_payment(
+        order_id=request.order_id,
+        payment_id=request.payment_id,
+        merchant_id=request.merchant_id,
+        amount=request.amount,
+        memo=request.memo,
+    )
+    return refund
 
 
 """
