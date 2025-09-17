@@ -9,15 +9,6 @@ class ICartItemRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def find_by_ids(
-        self,
-        user_id: str,
-        product_id: str,
-        product_option_id: str
-    ) -> CartItem:
-        raise NotImplementedError
-    
-    @abstractmethod
     def find_by_id(self, cartitem_id: str) -> CartItem:
         raise NotImplementedError
     

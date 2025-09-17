@@ -437,3 +437,13 @@ class ProductRepository(IProductRepository):
             except:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to Delete product review.")
+    
+    def get_option_info(self, option_type_id: str, option_id: str) -> tuple[str, str, bool]:
+        with SessionLocal() as db:
+            option_type = db.query(ProductOptionType).filter(ProductOptionType.id == option_type_id).first()
+            option = db.query(ProductOption).filter(ProductOption.id == option_id).first()
+
+        if not option_type or not option:
+            raise HTTPException(status_code=422, detail="Invalid option type ID or option ID.")
+
+        return option_type.option_type, option.option, option.is_active

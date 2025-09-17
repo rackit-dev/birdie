@@ -15,14 +15,14 @@ class CreateCartItemBody(BaseModel):
     user_id: str = Field(min_length=1, max_length=32)
     product_id: str = Field(min_length=1, max_length=32)
     quantity: int = Field(ge=1, le=99)
-    option_type_1: str | None = None
-    option_1: str | None = None
+    option_type_1_id: str | None = None
+    option_1_id: str | None = None
     is_option_1_active: bool | None = None
-    option_type_2: str | None = None
-    option_2: str | None = None
+    option_type_2_id: str | None = None
+    option_2_id: str | None = None
     is_option_2_active: bool | None = None
-    option_type_3: str | None = None
-    option_3: str | None = None
+    option_type_3_id: str | None = None
+    option_3_id: str | None = None
     is_option_3_active: bool | None = None
 
 
@@ -55,14 +55,14 @@ def create_cartitem(
         user_id=cartitem.user_id,
         product_id=cartitem.product_id,
         quantity=cartitem.quantity,
-        option_type_1=cartitem.option_type_1,
-        option_1=cartitem.option_1,
+        option_type_1_id=cartitem.option_type_1_id,
+        option_1_id=cartitem.option_1_id,
         is_option_1_active=cartitem.is_option_1_active,
-        option_type_2=cartitem.option_type_2,
-        option_2=cartitem.option_2,
+        option_type_2_id=cartitem.option_type_2_id,
+        option_2_id=cartitem.option_2_id,
         is_option_2_active=cartitem.is_option_2_active,
-        option_type_3=cartitem.option_type_3,
-        option_3=cartitem.option_3,
+        option_type_3_id=cartitem.option_type_3_id,
+        option_3_id=cartitem.option_3_id,
         is_option_3_active=cartitem.is_option_3_active,
     )
 
@@ -93,14 +93,14 @@ class UpdateCartItemBody(BaseModel):
     user_id: str = Field(min_length=1, max_length=32)
     product_id: str = Field(min_length=1, max_length=32)
     quantity: int = Field(ge=1, le=99)
-    option_type_1: str | None = None
-    option_1: str | None = None
+    option_type_1_id: str | None = None
+    option_1_id: str | None = None
     is_option_1_active: bool | None = None
-    option_type_2: str | None = None
-    option_2: str | None = None
+    option_type_2_id: str | None = None
+    option_2_id: str | None = None
     is_option_2_active: bool | None = None
-    option_type_3: str | None = None
-    option_3: str | None = None
+    option_type_3_id: str | None = None
+    option_3_id: str | None = None
     is_option_3_active: bool | None = None
 
 
@@ -115,14 +115,14 @@ def update_cartitem(
         user_id=body.user_id,
         product_id=body.product_id,
         quantity=body.quantity,
-        option_type_1=body.option_type_1,
-        option_1=body.option_1,
+        option_type_1=body.option_type_1_id,
+        option_1=body.option_1_id,
         is_option_1_active=body.is_option_1_active,
-        option_type_2=body.option_type_2,
-        option_2=body.option_2,
+        option_type_2=body.option_type_2_id,
+        option_2=body.option_2_id,
         is_option_2_active=body.is_option_2_active,
-        option_type_3=body.option_type_3,
-        option_3=body.option_3,
+        option_type_3=body.option_type_3_id,
+        option_3=body.option_3_id,
         is_option_3_active=body.is_option_3_active,
     )
 

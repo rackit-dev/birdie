@@ -20,53 +20,36 @@ class CartItemService:
         user_id: str,
         product_id: str,
         quantity: int,
-        option_type_1: str | None = None,
-        option_1: str | None = None,
+        option_type_1_id: str | None = None,
+        option_1_id: str | None = None,
         is_option_1_active: bool | None = None,
-        option_type_2: str | None = None,
-        option_2: str | None = None,
+        option_type_2_id: str | None = None,
+        option_2_id: str | None = None,
         is_option_2_active: bool | None = None,
-        option_type_3: str | None = None,
-        option_3: str | None = None,
+        option_type_3_id: str | None = None,
+        option_3_id: str | None = None,
         is_option_3_active: bool | None = None,
     ) -> CartItem:
-        _cartitem = None
-
-        try:
-            _cartitem = self.cartitem_repo.find_by_ids(
-                user_id, product_id,
-                option_type_1, option_1, is_option_1_active,
-                option_type_2, option_2, is_option_2_active,
-                option_type_3, option_3, is_option_3_active,
-            )
-        except HTTPException as e:
-            if e.status_code != 422:
-                raise e
-
-        if _cartitem:
-            raise HTTPException(status_code=422, detail="Item Already Exsists.")
-
         now = datetime.now(timezone.utc)
         cartitem: CartItem = CartItem(
             id=self.ulid.generate(),
             user_id=user_id,
             product_id=product_id,
             is_active=True,
-            option_type_1=option_type_1,
-            option_1=option_1,
+            option_type_1_id=option_type_1_id,
+            option_1_id=option_1_id,
             is_option_1_active=is_option_1_active,
-            option_type_2=option_type_2,
-            option_2=option_2,
+            option_type_2=option_type_2_id,
+            option_2=option_2_id,
             is_option_2_active=is_option_2_active,
-            option_type_3=option_type_3,
-            option_3=option_3,
+            option_type_3=option_type_3_id,
+            option_3=option_3_id,
             is_option_3_active=is_option_3_active,
             quantity=quantity,
             created_at=now,
             updated_at=now,
         )
         self.cartitem_repo.save(cartitem)
-
         return cartitem
 
     def get_cartitems(self, user_id: str) -> tuple[int, list[CartItem]]:
@@ -79,47 +62,44 @@ class CartItemService:
         user_id: str,
         product_id: str,
         quantity: int,
-        option_type_1: str | None = None,
-        option_1: str | None = None,
+        option_type_1_id: str | None = None,
+        option_1_id: str | None = None,
         is_option_1_active: bool | None = None,
-        option_type_2: str | None = None,
-        option_2: str | None = None,
+        option_type_2_id: str | None = None,
+        option_2_id: str | None = None,
         is_option_2_active: bool | None = None,
-        option_type_3: str | None = None,
-        option_3: str | None = None,
+        option_type_3_id: str | None = None,
+        option_3_id: str | None = None,
         is_option_3_active: bool | None = None,
     ) -> CartItem:
-        _cartitem = None
+        cartitem = None
 
         try:
-            _cartitem = self.cartitem_repo.find_by_ids(
-                user_id, product_id,
-                option_type_1, option_1, is_option_1_active,
-                option_type_2, option_2, is_option_2_active,
-                option_type_3, option_3, is_option_3_active,
-            )
-        except HTTPException as e:
-            if e.status_code != 422:
-                raise e
-
-        if _cartitem and cartitem_id != _cartitem.id:
-            raise HTTPException(status_code=422, detail="Item Already Exsists.")
-
-        cartitem = self.cartitem_repo.find_by_id(cartitem_id)
-
-        cartitem.option_type_1 = option_type_1
-        cartitem.option_1 = option_1
-        cartitem.is_option_1_active = is_option_1_active
-        cartitem.option_type_2 = option_type_2
-        cartitem.option_2 = option_2
-        cartitem.is_option_2_active = is_option_2_active
-        cartitem.option_type_3 = option_type_3
-        cartitem.option_3 = option_3
-        cartitem.is_option_3_active = is_option_3_active
-        cartitem.quantity = quantity
-        cartitem.updated_at = datetime.now(timezone.utc)
-
+            cartitem = self.cartitem_repo.find_by_id(cartitem_id)
+        except HTTPException:
+            raise HTTPException(status_code=422, detail="CartItem Does Not Exist.")
+        
+        now = datetime.now(timezone.utc)
+        cartitem = CartItem(
+            id=cartitem_id,
+            user_id=user_id,
+            product_id=product_id,
+            is_active=True,
+            option_type_1_id=option_type_1_id,
+            option_1_id=option_1_id,
+            is_option_1_active=is_option_1_active,
+            option_type_2_id=option_type_2_id,
+            option_2_id=option_2_id,
+            is_option_2_active=is_option_2_active,
+            option_type_3_id=option_type_3_id,
+            option_3_id=option_3_id,
+            is_option_3_active=is_option_3_active,
+            quantity=quantity,
+            created_at=cartitem.created_at,
+            updated_at=now,
+        )
         self.cartitem_repo.update(cartitem)
+
 
         return cartitem
 

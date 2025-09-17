@@ -255,3 +255,7 @@ class ProductService:
     
     def delete_product_review(self, product_review_id: str):
         self.product_repo.delete_review(product_review_id)
+
+    def get_option_info(self, option_type_id: str, option_id: str) -> tuple[str, str, bool]:
+        option_type_value, option_value, is_active = self.product_repo.get_option_info(option_type_id, option_id)
+        return option_type_value, option_value, is_active
