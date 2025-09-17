@@ -117,18 +117,19 @@ def update_cartitem(
         user_id=body.user_id,
         product_id=body.product_id,
         quantity=body.quantity,
-        option_type_1=body.option_type_1_id,
-        option_1=body.option_1_id,
+        option_type_1_id=body.option_type_1_id,
+        option_1_id=body.option_1_id,
         is_option_1_active=body.is_option_1_active,
-        option_type_2=body.option_type_2_id,
-        option_2=body.option_2_id,
+        option_type_2_id=body.option_type_2_id,
+        option_2_id=body.option_2_id,
         is_option_2_active=body.is_option_2_active,
-        option_type_3=body.option_type_3_id,
-        option_3=body.option_3_id,
+        option_type_3_id=body.option_type_3_id,
+        option_3_id=body.option_3_id,
         is_option_3_active=body.is_option_3_active,
     )
+    cartitem_with_values = cartitem_service.get_cartitem_values_by_id(cartitem)
 
-    return cartitem
+    return cartitem_with_values
 
 
 @router.delete("", status_code=204)
