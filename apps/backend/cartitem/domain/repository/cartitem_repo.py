@@ -23,3 +23,7 @@ class ICartItemRepository(metaclass=ABCMeta):
     @abstractmethod
     def delete(self, cartitem_id: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def fetch_option(self, option_id: str) -> tuple[str, str, bool]:
+        raise NotImplementedError

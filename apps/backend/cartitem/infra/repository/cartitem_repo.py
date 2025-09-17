@@ -90,4 +90,14 @@ class CartItemRepository(ICartItemRepository):
             db.delete(cartitem)
             db.commit()
 
-    #def 
+    def fetch_option(self, option_type_id: str, option_id: str) -> tuple[str, str, bool]:
+        if not option_type_id or not option_id:
+            raise HTTPException(status_code=422, detail="Option Type ID or Option ID is missing.")
+
+        try:
+            response = requests.get(f"http://127.0.0.1:8080/api/products/option_info?option_type_id={option_type_id}&option_id={option_id}")
+            response.raise_for_status()
+            option_data = response.json()
+            return option_data["option_type_value"], option_data["option_value"], option_data["is_active"]
+        except requests.RequestException:
+            return None, None, True

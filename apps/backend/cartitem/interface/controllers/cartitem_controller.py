@@ -65,8 +65,8 @@ def create_cartitem(
         option_3_id=cartitem.option_3_id,
         is_option_3_active=cartitem.is_option_3_active,
     )
-
-    return created_cartitem
+    cartitem_with_values = cartitem_service.get_cartitem_values_by_id(created_cartitem)
+    return cartitem_with_values
 
 
 class GetCartItemsResponse(BaseModel):
@@ -81,10 +81,12 @@ def get_cartitems(
     cartitem_service: CartItemService = Depends(Provide[Container.cartitem_service]),
 ):
     total_count, cartitems = cartitem_service.get_cartitems(user_id)
-    
+    cartitems_with_values = [
+        cartitem_service.get_cartitem_values_by_id(cartitem) for cartitem in cartitems
+    ]
     return {
         "total_count": total_count,
-        "cartitems": cartitems,
+        "cartitems": cartitems_with_values,
     }
 
 
