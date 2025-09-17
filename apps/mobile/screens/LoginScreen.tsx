@@ -40,6 +40,16 @@ export default function LoginScreen() {
       data = raw ? JSON.parse(raw) : {};
     } catch {}
 
+    if (r.status === 422) {
+      let message =
+        "탈퇴한 회원은 탈퇴일로부터 30일 이후에만 재가입할 수 있습니다.";
+
+      if (data?.detail) {
+        console.log("서버 응답 detail:", data.detail);
+      }
+      throw new Error(message);
+    }
+
     const sessionToken = data.sessionToken || data.token || data.access_token;
 
     if (!r.ok || !sessionToken) {

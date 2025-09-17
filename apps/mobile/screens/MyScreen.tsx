@@ -52,7 +52,7 @@ export default function MyScreen() {
 
   const handleLogout = async () => {
     try {
-      await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("session_token");
 
       clearUser();
 
@@ -62,6 +62,33 @@ export default function MyScreen() {
       });
     } catch (err) {
       console.error("로그아웃 실패:", err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("session_token");
+      if (!token) {
+        console.error("토큰 없음");
+        return;
+      }
+
+      await axios.delete(`${API_URL}/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // 요청 성공 후 토큰 삭제
+      await SecureStore.deleteItemAsync("session_token");
+      clearUser();
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" as never }],
+      });
+    } catch (err) {
+      console.error("탈퇴 실패:", err);
     }
   };
 
@@ -136,9 +163,19 @@ export default function MyScreen() {
           ))}
         </View>
 
-        <View style={{ padding: 16 }}>
-          <TouchableOpacity style={styles.menuRow} onPress={handleLogout}>
+        <View
+          style={{
+            padding: 16,
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <TouchableOpacity onPress={handleLogout}>
             <Text style={styles.menuText}>로그아웃</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleDeleteAccount}>
+            <Text style={[styles.menuText, { color: "red" }]}>회원 탈퇴</Text>
           </TouchableOpacity>
         </View>
 
