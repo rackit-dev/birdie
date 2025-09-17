@@ -134,6 +134,7 @@ class Refund(Base):
     id = mapped_column(String(36), primary_key=True)
     order_id = mapped_column(String(36), nullable=False)
     payment_id = mapped_column(ForeignKey("Payment.id"), nullable=False)
+    merchant_id = mapped_column(String(128), nullable=False)
     status = mapped_column(Enum("요청", "완료", "거부", name="status"), default="요청", nullable=False)
     amount = mapped_column(Numeric(10, 0), nullable=False)
     restore_point_amount = mapped_column(Numeric(10, 0), nullable=False)

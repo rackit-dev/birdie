@@ -307,8 +307,14 @@ class OrderService:
         order = self.order_repo.find_by_id(order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
+
+        payment = self.order_repo.find_payment_by_id(payment_id)
+        if not payment or payment.status != "성공":
+            raise HTTPException(status_code=404, detail="Payment not found")
         
-        
+        if amount <= 0 or amount > payment.amount:
+            raise HTTPException(status_code=400, detail="Invalid refund amount")
+
         try:
             response = self.portone_client.cancel_payment(
                 payment_id=merchant_id,
@@ -316,6 +322,7 @@ class OrderService:
                 reason=memo,
             )
             if isinstance(response.cancellation, portone.payment.SucceededPaymentCancellation): # 취소 성공
+                #TODO 쿠폰 환급, Order, OrderItem 상태 변경
                 pass
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))

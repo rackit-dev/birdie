@@ -1,7 +1,7 @@
 from typing import List
 from abc import ABCMeta, abstractmethod
 
-from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment
+from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment, Refund
 
 
 class IOrderRepository(metaclass=ABCMeta):
@@ -142,6 +142,13 @@ class IOrderRepository(metaclass=ABCMeta):
     def save_payment(self, payment: Payment):
         """
         Save a new payment.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def find_payment_by_id(self, payment_id: str) -> Payment:
+        """
+        Find a payment by its ID.
         """
         raise NotImplementedError
     

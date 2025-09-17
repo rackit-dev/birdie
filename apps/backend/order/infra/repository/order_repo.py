@@ -10,7 +10,7 @@ from order.domain.order import Coupon as CouponVO
 from order.domain.order import CouponWallet as CouponWalletVO
 from order.domain.order import OrderItem as OrderItemVO
 from order.domain.order import Payment as PaymentVO
-from order.infra.db_models.order import Order, Coupon, CouponWallet, OrderItem, Payment
+from order.infra.db_models.order import Order, Coupon, CouponWallet, OrderItem, Payment, Refund
 
 
 class OrderRepository(IOrderRepository):
@@ -266,6 +266,13 @@ class OrderRepository(IOrderRepository):
             except Exception as e:
                 db.rollback()
                 raise e
+    
+    def find_payment_by_id(self, payment_id: str) -> PaymentVO:
+        with SessionLocal() as db:
+            payment = db.query(Payment).filter(Payment.id == payment_id).first()
+            if not payment:
+                raise HTTPException(status_code=404, detail="Payment not found")
+            return PaymentVO(**row_to_dict(payment))
             
     def find_payment_by_merchant_id(self, merchant_id: str) -> PaymentVO:
         with SessionLocal() as db:

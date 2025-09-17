@@ -102,6 +102,7 @@ class Refund:
     id: str
     order_id: str
     payment_id: str
+    merchant_id: str
     status: str
     amount: int
     restore_point_amount: int
