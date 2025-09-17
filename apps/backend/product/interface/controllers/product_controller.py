@@ -461,3 +461,28 @@ def delete_review(
     product_service: ProductService = Depends(Provide[Container.product_service]),
 ):
     product_service.delete_product_review(product_review_id)
+
+
+class OptionInfoResponse(BaseModel):
+    option_type_value: str
+    option_value: str
+    is_active: bool
+
+
+@router.get("/option_info", response_model=OptionInfoResponse)
+@inject
+def get_option_info(
+    option_type_id: str,
+    option_id: str,
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    option_type_value, option_value, is_active = product_service.get_option_info(
+        option_type_id=option_type_id,
+        option_id=option_id,
+    )
+
+    return {
+        "option_type_value": option_type_value,
+        "option_value": option_value,
+        "is_active": is_active,
+    }

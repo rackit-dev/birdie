@@ -14,15 +14,32 @@ router = APIRouter(prefix="/cartitems")
 class CreateCartItemBody(BaseModel):
     user_id: str = Field(min_length=1, max_length=32)
     product_id: str = Field(min_length=1, max_length=32)
-    product_option_id: str = Field(min_length=1, max_length=32)
     quantity: int = Field(ge=1, le=99)
+    option_type_1_id: str | None = None
+    option_1_id: str | None = None
+    is_option_1_active: bool | None = None
+    option_type_2_id: str | None = None
+    option_2_id: str | None = None
+    is_option_2_active: bool | None = None
+    option_type_3_id: str | None = None
+    option_3_id: str | None = None
+    is_option_3_active: bool | None = None
 
 
 class CartItemResponse(BaseModel):
     id: str
     user_id: str
     product_id: str
-    product_option_id: str
+    is_active: bool
+    option_type_1: str | None
+    option_1: str | None
+    is_option_1_active: bool | None
+    option_type_2: str | None
+    option_2: str | None
+    is_option_2_active: bool | None
+    option_type_3: str | None
+    option_3: str | None
+    is_option_3_active: bool | None
     quantity: int
     created_at: datetime
     updated_at: datetime
@@ -37,11 +54,19 @@ def create_cartitem(
     created_cartitem = cartitem_service.create_cartitem(
         user_id=cartitem.user_id,
         product_id=cartitem.product_id,
-        product_option_id=cartitem.product_option_id,
         quantity=cartitem.quantity,
+        option_type_1_id=cartitem.option_type_1_id,
+        option_1_id=cartitem.option_1_id,
+        is_option_1_active=cartitem.is_option_1_active,
+        option_type_2_id=cartitem.option_type_2_id,
+        option_2_id=cartitem.option_2_id,
+        is_option_2_active=cartitem.is_option_2_active,
+        option_type_3_id=cartitem.option_type_3_id,
+        option_3_id=cartitem.option_3_id,
+        is_option_3_active=cartitem.is_option_3_active,
     )
-
-    return created_cartitem
+    cartitem_with_values = cartitem_service.get_cartitem_values_by_id(created_cartitem)
+    return cartitem_with_values
 
 
 class GetCartItemsResponse(BaseModel):
@@ -56,10 +81,12 @@ def get_cartitems(
     cartitem_service: CartItemService = Depends(Provide[Container.cartitem_service]),
 ):
     total_count, cartitems = cartitem_service.get_cartitems(user_id)
-    
+    cartitems_with_values = [
+        cartitem_service.get_cartitem_values_by_id(cartitem) for cartitem in cartitems
+    ]
     return {
         "total_count": total_count,
-        "cartitems": cartitems,
+        "cartitems": cartitems_with_values,
     }
 
 
@@ -67,8 +94,16 @@ class UpdateCartItemBody(BaseModel):
     cartitem_id: str = Field(min_length=1, max_length=32)
     user_id: str = Field(min_length=1, max_length=32)
     product_id: str = Field(min_length=1, max_length=32)
-    product_option_id: str = Field(min_length=1, max_length=32)
     quantity: int = Field(ge=1, le=99)
+    option_type_1_id: str | None = None
+    option_1_id: str | None = None
+    is_option_1_active: bool | None = None
+    option_type_2_id: str | None = None
+    option_2_id: str | None = None
+    is_option_2_active: bool | None = None
+    option_type_3_id: str | None = None
+    option_3_id: str | None = None
+    is_option_3_active: bool | None = None
 
 
 @router.put("", response_model=CartItemResponse)
@@ -81,11 +116,20 @@ def update_cartitem(
         cartitem_id=body.cartitem_id,
         user_id=body.user_id,
         product_id=body.product_id,
-        product_option_id=body.product_option_id,
         quantity=body.quantity,
+        option_type_1_id=body.option_type_1_id,
+        option_1_id=body.option_1_id,
+        is_option_1_active=body.is_option_1_active,
+        option_type_2_id=body.option_type_2_id,
+        option_2_id=body.option_2_id,
+        is_option_2_active=body.is_option_2_active,
+        option_type_3_id=body.option_type_3_id,
+        option_3_id=body.option_3_id,
+        is_option_3_active=body.is_option_3_active,
     )
+    cartitem_with_values = cartitem_service.get_cartitem_values_by_id(cartitem)
 
-    return cartitem
+    return cartitem_with_values
 
 
 @router.delete("", status_code=204)

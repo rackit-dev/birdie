@@ -138,3 +138,7 @@ class IProductRepository(metaclass=ABCMeta):
     @abstractmethod
     def delete_review(self, prouct_review_id: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_option_info(self, option_type_id: str, option_id: str) -> tuple[str, str, bool]:
+        raise NotImplementedError

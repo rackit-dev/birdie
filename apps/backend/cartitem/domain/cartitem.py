@@ -7,7 +7,16 @@ class CartItem:
     id: str
     user_id: str
     product_id: str
-    product_option_id: str | None
+    is_active: bool
+    option_type_1_id: str | None
+    option_1_id: str | None
+    is_option_1_active: bool | None
+    option_type_2_id: str | None
+    option_2_id: str | None
+    is_option_2_active: bool | None
+    option_type_3_id: str | None
+    option_3_id: str | None
+    is_option_3_active: bool | None
     quantity: int
     created_at: datetime
     updated_at: datetime
