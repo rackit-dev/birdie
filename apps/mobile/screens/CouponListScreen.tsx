@@ -5,6 +5,8 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  TextInput,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import CustomHeader from "../components/CustomHeader";
@@ -34,6 +36,8 @@ type CouponWallet = {
 
 export default function CouponListScreen() {
   const [coupons, setCoupons] = useState<CouponWallet[]>([]);
+  const [showInput, setShowInput] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
   const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   const userId = useUserIdStore((s) => s.id);
   const navigation = useNavigation();
@@ -41,13 +45,14 @@ export default function CouponListScreen() {
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
-        // 1) 지갑 목록 불러오기
         const res = await axios.get(`${API_URL}/coupons/wallet/by_user`, {
           params: { user_id: userId },
         });
-        const walletList: Omit<CouponWallet, "coupon">[] = res.data;
+        console.log("쿠폰 지갑 응답:", res.data);
 
-        // 2) 각 coupon_id로 상세 불러오기
+        const walletList: Omit<CouponWallet, "coupon">[] =
+          res.data.coupon_wallets ?? [];
+
         const merged = await Promise.all(
           walletList.map(async (w) => {
             try {
@@ -62,7 +67,6 @@ export default function CouponListScreen() {
           })
         );
 
-        // 3) 사용가능한 쿠폰만 필터링 (예: 미사용 + 유효기간 안 지난 것)
         const available = merged.filter(
           (c) =>
             !c.is_used &&
@@ -136,11 +140,64 @@ export default function CouponListScreen() {
       <View style={styles.topRow}>
         <Text style={styles.totalText}>전체 쿠폰 {coupons.length}개</Text>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <TouchableOpacity style={styles.whiteBtn}>
+          <TouchableOpacity
+            style={styles.whiteBtn}
+            onPress={() => setShowInput((prev) => !prev)}
+          >
             <Text>쿠폰등록</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {showInput && (
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="쿠폰코드를 입력해주세요"
+            placeholderTextColor={"#999"}
+            value={couponCode}
+            onChangeText={setCouponCode}
+          />
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={async () => {
+              try {
+                const res = await axios.post(
+                  `${API_URL}/coupons/wallet/by_code`,
+                  null,
+                  {
+                    params: {
+                      user_id: userId,
+                      coupon_code: couponCode,
+                    },
+                  }
+                );
+                console.log("쿠폰 등록 성공:", res.data);
+
+                setCouponCode("");
+                setShowInput(false);
+
+                const refreshed = await axios.get(
+                  `${API_URL}/coupons/wallet/by_user`,
+                  {
+                    params: { user_id: userId },
+                  }
+                );
+                const walletList = refreshed.data.coupon_wallets ?? [];
+              } catch (err: any) {
+                console.error("쿠폰 등록 실패:", err);
+                Alert.alert(
+                  "쿠폰 등록 실패",
+                  "쿠폰 코드가 올바르지 않거나 이미 등록된 쿠폰입니다."
+                );
+              }
+            }}
+          >
+            <Text style={{ color: "#fff", padding: 3 }}>등록</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <FlatList
         data={coupons}
         renderItem={renderCoupon}
@@ -180,16 +237,38 @@ const styles = StyleSheet.create({
   },
   cutoutLeft: {
     position: "absolute",
-    left: -12, // 카드 밖으로 반쯤
-    top: "50%", // 부모의 세로 중앙
-    transform: [{ translateY: -12 }], // 자기 높이의 절반만큼 올려서 완전 중앙
+    left: -12,
+    top: "50%",
+    transform: [{ translateY: -12 }],
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#fff", // 부모 배경색
+    backgroundColor: "#fff",
   },
   discountText: { fontSize: 18, fontWeight: "700", color: "#FF2D55" },
   titleText: { fontSize: 16, fontWeight: "600", marginTop: 6 },
   subText: { fontSize: 13, color: "#666", marginTop: 4 },
   linkText: { fontSize: 13, color: "#555" },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    height: 40,
+    marginRight: 8,
+  },
+  registerBtn: {
+    backgroundColor: "#000",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 4,
+  },
 });
