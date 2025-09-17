@@ -144,3 +144,10 @@ class IOrderRepository(metaclass=ABCMeta):
         Save a new payment.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def find_payment_by_merchant_id(self, merchant_id: str) -> Payment:
+        """
+        Find a payment by its merchant ID.
+        """
+        raise NotImplementedError

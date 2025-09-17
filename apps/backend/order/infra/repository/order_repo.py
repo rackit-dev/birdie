@@ -266,3 +266,10 @@ class OrderRepository(IOrderRepository):
             except Exception as e:
                 db.rollback()
                 raise e
+            
+    def find_payment_by_merchant_id(self, merchant_id: str) -> PaymentVO:
+        with SessionLocal() as db:
+            payment = db.query(Payment).filter(Payment.merchant_id == merchant_id).first()
+            if not payment:
+                raise HTTPException(status_code=404, detail="Payment not found")
+            return PaymentVO(**row_to_dict(payment))

@@ -301,6 +301,26 @@ class OrderService:
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e))
         elif isinstance(webhook, portone.webhook.WebhookTransactionCancelled): # 결제 취소
-            pass
+            try:
+                iamport_payment_response = await self.portone_client.get_payment_async(payment_id=webhook.data.payment_id)
+                if not iamport_payment_response:
+                    raise ValueError
+                
+                order_id = iamport_payment_response.custom_data[1:-1]
+                order = self.order_repo.find_by_id(order_id)
+                if not order:
+                    raise ValueError
+
+                payment = self.order_repo.find_payment_by_merchant_id(webhook.data.payment_id)
+                if not payment:
+                    raise ValueError
+                if payment.order_id != order_id or payment.status != "성공": # 주문 - 오더 불일치
+                    raise ValueError
+                
+                now = datetime.now(timezone.utc)
+                payment.status = "취소"
+
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=str(e))
         else:
             return {"status": "ignored", "message": "Unhandled webhook type"}
