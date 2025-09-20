@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: -18,
   },
-  totalText: { fontSize: 16, fontWeight: "600" },
+  totalText: { fontSize: 16, fontFamily: "P-500" },
   whiteBtn: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -247,10 +247,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fff",
   },
-  discountText: { fontSize: 18, fontWeight: "700", color: "#FF2D55" },
-  titleText: { fontSize: 16, fontWeight: "600", marginTop: 6 },
-  subText: { fontSize: 13, color: "#666", marginTop: 4 },
-  linkText: { fontSize: 13, color: "#555" },
+  discountText: { fontSize: 18, fontFamily: "P-600", color: "#FF2D55" },
+  titleText: { fontSize: 16, fontFamily: "P-600", marginTop: 6 },
+  subText: { fontSize: 13, fontFamily: "P-500", color: "#666", marginTop: 4 },
+  linkText: { fontSize: 13, fontFamily: "P-500", color: "#555" },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",

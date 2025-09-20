@@ -75,7 +75,7 @@ export default function ItemCard({
                 style={{
                   color: "white",
                   fontSize: 12,
-                  fontWeight: "600",
+                  fontFamily: "P-500",
                 }}
               >
                 품절
@@ -146,25 +146,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   brandText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
-    color: "#333",
     marginVertical: 3,
   },
-  nameText: {
-    fontFamily: "P-Medium",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  priceText: {
-    fontFamily: "P-Black",
-    fontSize: 14,
-  },
-  discountText: {
-    fontFamily: "P-Bold",
-    fontSize: 14,
-    color: "#FF2D55",
-  },
+  nameText: { fontFamily: "P-500", fontSize: 14, marginBottom: 4 },
+  priceText: { fontFamily: "P-600", fontSize: 14 },
+  discountText: { fontFamily: "P-600", fontSize: 14, color: "#FF2D55" },
   heartWrapper: {
     position: "absolute",
     bottom: 7,

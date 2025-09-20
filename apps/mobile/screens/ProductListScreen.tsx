@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   headerText: {
     fontSize: 20,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -162,11 +162,11 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 14,
-    fontFamily: "P-Medium",
+    fontFamily: "P-500",
     marginBottom: 4,
   },
   priceText: {
     fontSize: 14,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
   },
 });

@@ -263,11 +263,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontFamily: "P-500",
     marginBottom: 6,
   },
   emptySub: {
     fontSize: 16,
+    fontFamily: "P-400",
     color: "#888",
     marginBottom: 20,
   },
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addBtnText: {
-    fontFamily: "P-Medium",
+    fontFamily: "P-500",
     color: "#fff",
     fontSize: 16,
   },
@@ -346,11 +347,12 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-500",
     marginBottom: 10,
   },
   alertMessage: {
     fontSize: 16,
+    fontFamily: "P-500",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -367,7 +369,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
 });

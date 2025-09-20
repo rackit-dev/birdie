@@ -822,11 +822,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "#fff",
   },
-  name: {
-    fontWeight: "600",
-    fontSize: 15,
-    marginBottom: 6,
-  },
+  name: { fontFamily: "P-600", fontSize: 15, marginBottom: 6 },
   badge: {
     backgroundColor: "#eee",
     paddingHorizontal: 6,
@@ -834,6 +830,7 @@ const styles = StyleSheet.create({
   },
   text: {
     marginVertical: 2,
+    fontFamily: "P-400",
     fontSize: 14,
   },
   changeBtn: {
@@ -855,16 +852,14 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
   },
-  productName: {
-    fontWeight: "500",
-  },
+  productName: { fontFamily: "P-500" },
   option: {
     fontSize: 13,
     color: "#888",
   },
   price: {
     fontSize: 15,
-    fontWeight: "bold",
+    fontFamily: "P-500",
     marginTop: 4,
   },
   couponBtn: {
@@ -889,10 +884,11 @@ const styles = StyleSheet.create({
   },
   couponText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontFamily: "P-500",
   },
   couponSubText: {
     fontSize: 13,
+    fontFamily: "P-500",
     color: "#555",
   },
   row: {
@@ -911,6 +907,7 @@ const styles = StyleSheet.create({
   },
   subText: {
     fontSize: 12,
+    fontFamily: "P-400",
     color: "#888",
     marginTop: 4,
   },
@@ -927,7 +924,8 @@ const styles = StyleSheet.create({
   },
   free: {
     color: "#f90",
-    fontWeight: "bold",
+    fontFamily: "P-500",
+    fontSize: 15,
   },
   totalBox: {
     flexDirection: "row",
@@ -936,11 +934,11 @@ const styles = StyleSheet.create({
   },
   totalText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "P-600",
   },
   totalPrice: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "P-600",
     color: "#000",
   },
   paymentBtn: {
@@ -952,7 +950,7 @@ const styles = StyleSheet.create({
   },
   paymentBtnText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontFamily: "P-500",
     fontSize: 16,
   },
   badgeNew: {
@@ -965,7 +963,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#ff3b30",
     fontSize: 10,
-    fontWeight: "bold",
+    fontFamily: "P-500",
   },
   tossIcon: {
     width: 45,
@@ -1017,16 +1015,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
   },
-  headerTitle: {
-    fontFamily: "P-Medium",
-    fontSize: 20,
-  },
-  headerClose: {
-    fontSize: 25,
-  },
   discountedPrice: {
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: "P-500",
     color: "#FF2D55",
     marginTop: 4,
   },

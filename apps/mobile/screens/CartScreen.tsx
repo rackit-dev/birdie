@@ -1162,7 +1162,7 @@ const styles = StyleSheet.create({
     fontFamily: "P-500",
   },
   optionScrollContainer: {
-    maxHeight: 200, // 🔥 리스트 높이 제한
+    maxHeight: 200,
     borderWidth: 1,
     borderColor: "#eee",
     borderTopWidth: 0,

@@ -203,7 +203,7 @@ export default function QnaListScreen() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: "white", fontSize: 14, fontWeight: "600" }}>
+            <Text style={{ color: "white", fontSize: 14, fontFamily: "P-500" }}>
               {currentIndex + 1} / {selectedImages.length}
             </Text>
           </View>
@@ -212,7 +212,9 @@ export default function QnaListScreen() {
             onPress={() => setImageModalVisible(false)}
             style={{ position: "absolute", top: 60, right: 20 }}
           >
-            <Text style={{ fontSize: 30, color: "white" }}>✕</Text>
+            <Text style={{ fontSize: 30, fontFamily: "P-500", color: "white" }}>
+              ✕
+            </Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -223,7 +225,7 @@ export default function QnaListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   scroll: { flex: 1, padding: 16 },
-  totalText: { fontSize: 18, fontWeight: "600", marginBottom: 16 },
+  totalText: { fontSize: 18, fontFamily: "P-600", marginBottom: 16 },
   inquiryItem: {
     paddingVertical: 12,
     borderBottomColor: "#eee",
@@ -285,8 +287,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  askButtonText: {
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  askButtonText: { fontFamily: "P-600", fontSize: 16 },
 });

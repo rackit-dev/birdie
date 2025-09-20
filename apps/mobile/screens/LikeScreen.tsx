@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    fontFamily: "P-500",
     color: "#888",
     textAlign: "center",
     marginTop: 20,

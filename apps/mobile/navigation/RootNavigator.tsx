@@ -14,6 +14,7 @@ import CouponListScreen from "../screens/CouponListScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
 import QnaListScreen from "../screens/QnaListScreen";
+import OrderListScreen from "../screens/OrderListScreen";
 
 type PortOnePaymentRequest = {
   storeId: string;
@@ -21,8 +22,8 @@ type PortOnePaymentRequest = {
   paymentId: string; // 가맹점 주문번호(고유)
   orderName: string;
   totalAmount: number;
-  currency: "CURRENCY_KRW" | "CURRENCY_USD" | string;
-  payMethod?: "CARD" | "MOBILE" | "VBANK";
+  currency: "KRW" | "USD" | string;
+  payMethod?: "CARD" | "MOBILE";
   customer?: {
     fullName?: string;
     phoneNumber?: string;
@@ -68,6 +69,8 @@ export type RootStackParamList = {
     code?: string;
     message?: string;
   };
+  OrderList: undefined;
+  OrderDetail: { orderId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -102,6 +105,7 @@ export default function RootNavigator() {
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
       <Stack.Screen name="CouponList" component={CouponListScreen} />
       <Stack.Screen name="QnaList" component={QnaListScreen} />
+      <Stack.Screen name="OrderList" component={OrderListScreen} />
     </Stack.Navigator>
   );
 }

@@ -520,7 +520,7 @@ export default function ProductDetail() {
                     <View
                       style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      <Text style={{ fontWeight: "700", marginRight: 8 }}>
+                      <Text style={{ fontFamily: "P-600", marginRight: 8 }}>
                         {maskName(rev.user_name)}
                       </Text>
                       {[...Array(5)].map((_, i) => (
@@ -534,7 +534,14 @@ export default function ProductDetail() {
                       ))}
                     </View>
 
-                    <Text style={{ marginTop: 8, fontSize: 14, color: "#333" }}>
+                    <Text
+                      style={{
+                        marginTop: 8,
+                        fontFamily: "P-500",
+                        fontSize: 14,
+                        color: "#333",
+                      }}
+                    >
                       {rev.content}
                     </Text>
                   </View>
@@ -568,7 +575,7 @@ export default function ProductDetail() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: "600" }}>
+              <Text style={{ fontSize: 18, fontFamily: "P-600" }}>
                 상품문의 ({inquiryCount})
               </Text>
               <TouchableOpacity
@@ -629,7 +636,7 @@ export default function ProductDetail() {
                         {item.type}
                       </Text>
                       <Text
-                        style={{ fontFamily: "P-600", fontSize: 16 }}
+                        style={{ fontFamily: "P-500", fontSize: 16 }}
                         numberOfLines={1}
                       >
                         {item.content}
@@ -748,7 +755,7 @@ export default function ProductDetail() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontWeight: "600", fontSize: 16 }}>
+              <Text style={{ fontFamily: "P-600", fontSize: 16 }}>
                 판매자에게 문의하기
               </Text>
             </TouchableOpacity>
@@ -776,14 +783,14 @@ export default function ProductDetail() {
             alignItems: "center",
           }}
         >
-          <Text style={{ color: "white", fontSize: 14, fontWeight: "500" }}>
+          <Text style={{ color: "white", fontSize: 14, fontFamily: "P-500" }}>
             장바구니에 담겼습니다.
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
             <Text
               style={{
                 color: "white",
-                fontWeight: "700",
+                fontFamily: "P-600",
                 fontSize: 14,
                 textDecorationLine: "underline",
               }}
@@ -824,7 +831,11 @@ export default function ProductDetail() {
                 paddingBottom: 10,
               }}
             >
-              <Text style={{ color: "orange", fontSize: 20 }}>★</Text>
+              <Text
+                style={{ color: "orange", fontFamily: "P-500", fontSize: 20 }}
+              >
+                ★
+              </Text>
               <Text style={styles.smallText}>
                 {reviews.length > 0
                   ? (
@@ -945,11 +956,10 @@ export default function ProductDetail() {
       >
         <View style={styles.modalContent}>
           <View style={styles.dragHandle} />
-          <Text style={styles.sectionTitle}>옵션 선택</Text>
 
           <View>
             {optionTypes.map((t) => (
-              <View key={t.id} style={{ marginBottom: 15 }}>
+              <View key={t.id}>
                 <TouchableOpacity
                   style={styles.dropdownBox}
                   onPress={() =>
@@ -967,8 +977,7 @@ export default function ProductDetail() {
                     }}
                   >
                     <Text style={styles.dropdownText}>
-                      {selected[t.option_type]?.value ||
-                        `${t.option_type}를 선택하세요`}
+                      {selected[t.option_type]?.value || "옵션 선택"}
                     </Text>
 
                     <Ionicons
@@ -1028,7 +1037,11 @@ export default function ProductDetail() {
                               </Text>
                               {disabled && (
                                 <Text
-                                  style={{ color: "#878787ff", fontSize: 12 }}
+                                  style={{
+                                    color: "#878787ff",
+                                    fontSize: 12,
+                                    fontFamily: "P-500",
+                                  }}
                                 >
                                   품절
                                 </Text>
@@ -1047,7 +1060,9 @@ export default function ProductDetail() {
           <View style={{ marginTop: 20 }}>
             {selectedOptions.map((opt) => (
               <View key={opt.key} style={styles.selectedRow}>
-                <Text style={{ fontSize: 16, flex: 1 }}>{opt.label}</Text>
+                <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
+                  {opt.label}
+                </Text>
 
                 <View style={styles.qtyRow}>
                   <TouchableOpacity
@@ -1065,14 +1080,20 @@ export default function ProductDetail() {
                   </TouchableOpacity>
                 </View>
 
-                {/* 가격 */}
                 <Text style={{ width: 80, textAlign: "right" }}>
                   {(opt.price * opt.quantity).toLocaleString()}원
                 </Text>
 
-                {/* X 버튼 */}
                 <TouchableOpacity onPress={() => removeOption(opt.key)}>
-                  <Text style={{ fontSize: 18, marginLeft: 10 }}>✕</Text>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontFamily: "P-500",
+                      marginLeft: 10,
+                    }}
+                  >
+                    ✕
+                  </Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -1227,7 +1248,7 @@ export default function ProductDetail() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: "white", fontSize: 14, fontWeight: "600" }}>
+            <Text style={{ color: "white", fontSize: 14, fontFamily: "P-500" }}>
               {currentIndex + 1} / {selectedReviewImages.length}
             </Text>
           </View>
@@ -1269,10 +1290,11 @@ const styles = StyleSheet.create({
   productImage: { width: "100%", height: 450 },
   brandText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-600",
   },
   smallText: {
     fontSize: 14,
+    fontFamily: "P-500",
   },
   productInfo: {
     paddingHorizontal: 16,
@@ -1281,17 +1303,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "600",
+    fontFamily: "P-600",
     marginVertical: 5,
   },
   priceOriginal: {
     fontSize: 16,
+    fontFamily: "P-500",
     color: "#999",
     textDecorationLine: "line-through",
   },
   priceDiscount: {
     fontSize: 20,
-    fontWeight: "700",
+    fontFamily: "P-600",
     paddingTop: 3,
     paddingBottom: 15,
   },
@@ -1303,7 +1326,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-600",
     marginBottom: 8,
   },
   tabBar: {
@@ -1322,11 +1345,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 15,
+    fontFamily: "P-500",
     color: "#999",
   },
   tabTextActive: {
     color: "#000",
-    fontWeight: "700",
+    fontFamily: "P-600",
   },
   tabContent: {
     padding: 20,
@@ -1353,7 +1377,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginRight: 4,
     fontSize: 16,
-    fontWeight: "500",
+    fontFamily: "P-500",
   },
   buttonRow: {
     flexDirection: "row",
@@ -1381,7 +1405,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
   },
   banner: {
     backgroundColor: "#eee",
@@ -1435,9 +1459,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     backgroundColor: "#fff",
   },
-  dropdownText: {
-    fontSize: 16,
-  },
+  dropdownText: { fontFamily: "P-400", fontSize: 16, color: "#888" },
   optionScrollContainer: {
     maxHeight: 250,
     marginBottom: 20,
@@ -1448,9 +1470,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "#fff",
   },
-  optionText: {
-    fontSize: 16,
-  },
+  optionText: { fontFamily: "P-500", fontSize: 16 },
   dropdownBoxExpanded: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
@@ -1469,13 +1489,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "#fafafa",
   },
-
   qtyRow: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 10,
   },
-
   qtyButton: {
     width: 28,
     height: 28,
@@ -1484,7 +1502,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   buttonRowFixed: {
     position: "absolute",
     bottom: 20,
@@ -1507,20 +1524,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  lastOneText: {
-    fontSize: 12,
-    color: "red",
-  },
   alertModalContent: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
     alignItems: "center",
   },
-  alertText: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
+  alertText: { fontFamily: "P-500", fontSize: 16, marginBottom: 20 },
   alertButton: {
     backgroundColor: "black",
     paddingVertical: 12,
@@ -1529,7 +1539,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
   inquiryItem: {

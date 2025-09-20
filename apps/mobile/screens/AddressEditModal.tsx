@@ -139,7 +139,12 @@ export default function AddressEditModal({
               style={styles.zipBtn}
               onPress={() => setShowPostcode(true)}
             >
-              <Text style={{ fontFamily: "P-Medium", color: "#fff" }}>
+              <Text
+                style={{
+                  fontFamily: "P-500",
+                  color: "#fff",
+                }}
+              >
                 우편번호 찾기
               </Text>
             </TouchableOpacity>
@@ -275,7 +280,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "P-500",
   },
   postcodeHeader: {
     height: 40,
@@ -307,11 +312,12 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-500",
     marginBottom: 10,
   },
   alertMessage: {
     fontSize: 16,
+    fontFamily: "P-500",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -323,7 +329,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
 });

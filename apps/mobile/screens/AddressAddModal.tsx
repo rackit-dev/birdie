@@ -107,7 +107,7 @@ export default function AddressAddModal({ visible, onClose, onSaved }: Props) {
               style={styles.zipBtn}
               onPress={() => setShowPostcode(true)}
             >
-              <Text style={{ fontFamily: "P-Medium", color: "#fff" }}>
+              <Text style={{ fontFamily: "P-500", color: "#fff" }}>
                 우편번호 찾기
               </Text>
             </TouchableOpacity>
@@ -162,7 +162,8 @@ export default function AddressAddModal({ visible, onClose, onSaved }: Props) {
             <Text style={styles.label}>배송 메모</Text>
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="예: 부재 시 문 앞에 두세요"
+              placeholder="예) 부재 시 문 앞에 두세요"
+              placeholderTextColor="#999"
               value={orderMemo}
               onChangeText={setOrderMemo}
             />
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "P-500",
   },
   postcodeHeader: {
     height: 40,
@@ -268,7 +269,6 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontFamily: "P-600",
   },
-  // 커스텀 경고창 스타일
   alertOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -284,11 +284,12 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-500",
     marginBottom: 10,
   },
   alertMessage: {
     fontSize: 16,
+    fontFamily: "P-500",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
 });

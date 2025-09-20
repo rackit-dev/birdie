@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
+    fontFamily: "P-500",
     color: "#000",
   },
   searchIcon: {
@@ -104,9 +105,5 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginLeft: 20,
   },
-  font: {
-    fontFamily: "P-Bold",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  font: { fontFamily: "P-600", fontSize: 18 },
 });

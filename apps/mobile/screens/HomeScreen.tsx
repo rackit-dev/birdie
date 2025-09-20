@@ -228,7 +228,7 @@ export default function HomeScreen() {
                           style={{
                             color: "white",
                             fontSize: 12,
-                            fontWeight: "600",
+                            fontFamily: "P-500",
                           }}
                         >
                           품절
@@ -406,13 +406,13 @@ export default function HomeScreen() {
               marginTop: 10,
             }}
           >
-            <Text style={{ marginTop: 10, fontFamily: "P-Bold", fontSize: 16 }}>
+            <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
               고객센터 1588-1588
             </Text>
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "#B0B0B0",
               }}
@@ -421,7 +421,7 @@ export default function HomeScreen() {
             </Text>
             <Text
               style={{
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "#B0B0B0",
               }}
@@ -431,7 +431,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -440,7 +440,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -458,7 +458,7 @@ export default function HomeScreen() {
             />
             <Text
               style={{
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -468,7 +468,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 25,
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -487,7 +487,7 @@ export default function HomeScreen() {
             />
             <Text
               style={{
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -497,7 +497,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 20,
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -507,7 +507,7 @@ export default function HomeScreen() {
               style={{
                 marginTop: 20,
                 marginRight: 20,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -566,8 +566,8 @@ const styles = StyleSheet.create({
     pointerEvents: "none",
   },
   sloganText: {
-    fontFamily: "P-Bold",
-    fontSize: 28,
+    fontFamily: "P-600",
+    fontSize: 30,
     color: "#fff",
     textAlign: "left",
     textShadowColor: "rgba(45, 45, 45, 0.6)",
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   font: {
-    fontFamily: "P-Extra-Bold",
+    fontFamily: "P-700",
     fontSize: 24,
     marginBottom: 10,
   },
@@ -604,22 +604,21 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   brandText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
-    color: "#333",
     marginVertical: 3,
   },
   nameText: {
-    fontFamily: "P-regular",
+    fontFamily: "P-500",
     fontSize: 14,
     marginBottom: 4,
   },
   priceText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
   },
   discountText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-700",
     fontSize: 14,
     color: "#FF2D55",
   },

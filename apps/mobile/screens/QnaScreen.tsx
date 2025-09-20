@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -179,11 +179,11 @@ export default function QnaPage() {
             >
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  <Text style={{ fontSize: 18, fontWeight: "600" }}>
+                  <Text style={{ fontSize: 20, fontFamily: "P-600" }}>
                     문의 유형
                   </Text>
                   <TouchableOpacity onPress={() => setTypeModalVisible(false)}>
-                    <Text style={{ fontSize: 22 }}>✕</Text>
+                    <Text style={{ fontSize: 22, fontFamily: "P-500" }}>✕</Text>
                   </TouchableOpacity>
                 </View>
                 <FlatList
@@ -197,7 +197,13 @@ export default function QnaPage() {
                         setTypeModalVisible(false);
                       }}
                     >
-                      <Text style={{ fontSize: 16, color: "#333" }}>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontFamily: "P-400",
+                          color: "#333",
+                        }}
+                      >
                         {item}
                       </Text>
                     </TouchableOpacity>
@@ -227,7 +233,7 @@ export default function QnaPage() {
                       onPress={() => removeImage(index)}
                       style={styles.removeButton}
                     >
-                      <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      <Text style={{ color: "#fff", fontFamily: "P-500" }}>
                         ✕
                       </Text>
                     </TouchableOpacity>
@@ -239,7 +245,15 @@ export default function QnaPage() {
                     style={styles.uploadBox}
                     onPress={pickImage}
                   >
-                    <Text style={{ color: "#8f8f8fff", fontSize: 24 }}>+</Text>
+                    <Text
+                      style={{
+                        color: "#8f8f8fff",
+                        fontSize: 24,
+                        fontFamily: "P-400",
+                      }}
+                    >
+                      +
+                    </Text>
                     <Text style={{ color: "#6f6f6fff" }}>
                       {images.length}/5
                     </Text>
@@ -299,8 +313,8 @@ const styles = StyleSheet.create({
     padding: 18,
     paddingTop: 5,
   },
-  title: { fontSize: 20, fontWeight: "bold" },
-  close: { fontSize: 20 },
+  title: { fontSize: 20, fontFamily: "P-500" },
+  close: { fontSize: 20, fontFamily: "P-500" },
   productBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -310,28 +324,34 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   productImage: { width: 70, height: 70, borderRadius: 8 },
-  productTitle: { fontSize: 16, fontWeight: "bold", flexWrap: "wrap" },
-  productPrice: { marginTop: 4, fontSize: 15, color: "#555" },
+  productTitle: { fontSize: 16, fontFamily: "P-500", flexWrap: "wrap" },
+  productPrice: {
+    marginTop: 4,
+    fontSize: 15,
+    fontFamily: "P-500",
+    color: "#555",
+  },
   formSection: { marginBottom: 30 },
   formSectionRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },
-  label: { fontSize: 15, marginBottom: 6, fontWeight: "600" },
+  label: { fontSize: 15, marginBottom: 6, fontFamily: "P-500" },
   selectBox: {
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 12,
     borderRadius: 6,
   },
-  selectText: { color: "#999", fontSize: 15 },
-  note: { color: "#999", fontSize: 13, marginTop: 6 },
+  selectText: { color: "#999", fontFamily: "P-500", fontSize: 15 },
+  note: { color: "#999", fontSize: 13, fontFamily: "P-500", marginTop: 6 },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 12,
     borderRadius: 6,
+    fontFamily: "P-500",
     fontSize: 15,
     lineHeight: 18,
     includeFontPadding: false,
@@ -345,6 +365,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     textAlignVertical: "top",
     fontSize: 15,
+    fontFamily: "P-500",
   },
   checkbox: {
     width: 18,
@@ -369,7 +390,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     alignItems: "center",
   },
-  cancelText: { fontSize: 16, fontWeight: "600", color: "#333" },
+  cancelText: { fontSize: 16, fontFamily: "P-500", color: "#333" },
   submitButton: {
     flex: 1,
     marginLeft: 8,
@@ -378,7 +399,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     alignItems: "center",
   },
-  submitText: { fontSize: 16, fontWeight: "600", color: "#fff" },
+  submitText: { fontSize: 16, fontFamily: "P-500", color: "#fff" },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",

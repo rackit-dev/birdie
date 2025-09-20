@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     height: 60,
   },
   appName: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-500",
     fontSize: 30,
     alignSelf: "center",
     textAlign: "center",
