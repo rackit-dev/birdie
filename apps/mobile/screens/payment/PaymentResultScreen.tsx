@@ -70,10 +70,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 64,
+    fontFamily: "P-500",
     marginBottom: 16,
   },
   title: {
     fontSize: 24,
+    fontFamily: "P-600",
     fontWeight: Platform.select({ ios: "700", android: "700" }),
     letterSpacing: -0.2,
     color: "#111827",
@@ -85,6 +87,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 15,
+    fontFamily: "P-500",
     lineHeight: 22,
     color: "#6B7280",
     textAlign: "center",

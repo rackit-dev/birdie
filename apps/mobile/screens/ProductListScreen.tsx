@@ -80,6 +80,7 @@ export default function ProductListScreen() {
           image: {
             uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
           },
+          isActive: item.is_active,
         }));
 
         setProducts(mapped);
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   headerText: {
     fontSize: 20,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -161,11 +162,11 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 14,
-    fontFamily: "P-Medium",
+    fontFamily: "P-500",
     marginBottom: 4,
   },
   priceText: {
     fontSize: 14,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
   },
 });

@@ -10,8 +10,11 @@ import ProductListScreen from "../screens/ProductListScreen";
 import SearchModal from "../screens/SearchModal";
 import SearchScreen from "../screens/SearchScreen";
 import PurchaseScreen from "../screens/PurchaseScreen";
+import CouponListScreen from "../screens/CouponListScreen";
 import PaymentWebviewScreen from "../screens/payment/PaymentWebviewScreen";
 import PaymentResultScreen from "../screens/payment/PaymentResultScreen";
+import QnaListScreen from "../screens/QnaListScreen";
+import OrderListScreen from "../screens/OrderListScreen";
 
 type PortOnePaymentRequest = {
   storeId: string;
@@ -19,8 +22,8 @@ type PortOnePaymentRequest = {
   paymentId: string; // 가맹점 주문번호(고유)
   orderName: string;
   totalAmount: number;
-  currency: "CURRENCY_KRW" | "CURRENCY_USD" | string;
-  payMethod?: "CARD" | "MOBILE" | "VBANK";
+  currency: "KRW" | "USD" | string;
+  payMethod?: "CARD" | "MOBILE";
   customer?: {
     fullName?: string;
     phoneNumber?: string;
@@ -47,8 +50,15 @@ export type RootStackParamList = {
       quantity: number;
       price: number;
       image: string;
+      option_1_type?: string;
+      option_1_value?: string;
+      option_2_type?: string;
+      option_2_value?: string;
+      option_3_type?: string;
+      option_3_value?: string;
     }[];
   };
+  CouponList: undefined;
   ProductList: { category: string; brand: string };
   Search: undefined;
   PaymentWebview: { params: PortOnePaymentRequest };
@@ -59,6 +69,8 @@ export type RootStackParamList = {
     code?: string;
     message?: string;
   };
+  OrderList: undefined;
+  OrderDetail: { orderId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -68,7 +80,13 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Loading" component={LoadingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen
+        name="Main"
+        component={TabNavigator}
+        options={{
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen
         name="ProductList"
         component={ProductListScreen}
@@ -85,6 +103,9 @@ export default function RootNavigator() {
       <Stack.Screen name="Purchase" component={PurchaseScreen} />
       <Stack.Screen name="PaymentWebview" component={PaymentWebviewScreen} />
       <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+      <Stack.Screen name="CouponList" component={CouponListScreen} />
+      <Stack.Screen name="QnaList" component={QnaListScreen} />
+      <Stack.Screen name="OrderList" component={OrderListScreen} />
     </Stack.Navigator>
   );
 }

@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: "P-500",
     fontSize: 14,
     color: "#000",
   },
@@ -177,12 +178,11 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 16,
-    fontFamily: "P-Medium",
+    fontFamily: "P-400",
   },
   selectedText: {
     fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: "P-Medium",
+    fontFamily: "P-600",
   },
   brandItem: {
     flexDirection: "row",
@@ -195,6 +195,6 @@ const styles = StyleSheet.create({
   },
   brandText: {
     fontSize: 16,
-    fontFamily: "P-Bold",
+    fontFamily: "P-400",
   },
 });

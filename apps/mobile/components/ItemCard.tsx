@@ -4,7 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Product } from "@/store/useLikeStore";
 
 type ItemCardProps = {
-  item: Product;
+  item: Product & { isActive?: boolean };
   isLiked: boolean;
   toggleLike: (item: Product) => void;
   userId: string;
@@ -35,6 +35,7 @@ export default function ItemCard({
           style={size === "large" ? styles.itemImageLarge : styles.itemImage}
           resizeMode="cover"
         />
+
         <Pressable onPress={() => toggleLike(item)} style={styles.heartWrapper}>
           {!isLiked ? (
             <>
@@ -50,6 +51,38 @@ export default function ItemCard({
             <Ionicons name="heart" size={17} color="#FF2D55" />
           )}
         </Pressable>
+        {item.isActive === false && (
+          <>
+            <View
+              style={{
+                ...StyleSheet.absoluteFillObject,
+                backgroundColor: "rgba(255,255,255,0.5)",
+                borderRadius: 8,
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: 5,
+                left: 5,
+                backgroundColor: "rgba(0,0,0,0.6)",
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 12,
+                  fontFamily: "P-500",
+                }}
+              >
+                품절
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
       <View
@@ -113,25 +146,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   brandText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
-    color: "#333",
     marginVertical: 3,
   },
-  nameText: {
-    fontFamily: "P-Medium",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  priceText: {
-    fontFamily: "P-Black",
-    fontSize: 14,
-  },
-  discountText: {
-    fontFamily: "P-Bold",
-    fontSize: 14,
-    color: "#FF2D55",
-  },
+  nameText: { fontFamily: "P-500", fontSize: 14, marginBottom: 4 },
+  priceText: { fontFamily: "P-600", fontSize: 14 },
+  discountText: { fontFamily: "P-600", fontSize: 14, color: "#FF2D55" },
   heartWrapper: {
     position: "absolute",
     bottom: 7,

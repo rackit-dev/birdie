@@ -48,6 +48,8 @@
     "react-native": "0.79.4",
     "react-native-daum-postcode": "^1.0.11",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-image-picker": "^8.2.1",
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-paper": "^5.14.5",
