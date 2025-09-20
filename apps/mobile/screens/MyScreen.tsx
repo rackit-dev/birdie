@@ -36,10 +36,18 @@ export default function MyScreen() {
 
       const fetchCouponCount = async () => {
         try {
-          const res = await axios.get(`${API_URL}/coupons/wallet`, {
-            params: { page: 1, items_per_page: 10, user_id: userId },
+          const res = await axios.get(`${API_URL}/coupons/wallet/by_user`, {
+            params: { user_id: userId },
           });
-          setCouponCount(res.data.total_count ?? 0);
+
+          const walletList = res.data.coupon_wallets ?? [];
+
+          // 사용하지 않은 쿠폰만 카운트
+          const availableCount = walletList.filter(
+            (c: any) => !c.is_used
+          ).length;
+
+          setCouponCount(availableCount);
         } catch (err) {
           console.error("쿠폰 개수 불러오기 실패:", err);
         }

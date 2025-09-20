@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -42,46 +42,44 @@ export default function CouponListScreen() {
   const userId = useUserIdStore((s) => s.id);
   const navigation = useNavigation();
 
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/coupons/wallet/by_user`, {
+        params: { user_id: userId },
+      });
+      console.log("쿠폰 지갑 응답:", res.data);
+
+      const walletList: Omit<CouponWallet, "coupon">[] =
+        res.data.coupon_wallets ?? [];
+
+      const merged = await Promise.all(
+        walletList.map(async (w) => {
+          try {
+            const detailRes = await axios.get(`${API_URL}/coupons/by_id`, {
+              params: { coupon_id: w.coupon_id },
+            });
+            return { ...w, coupon: detailRes.data };
+          } catch (e) {
+            console.error(`쿠폰 상세 불러오기 실패: ${w.coupon_id}`, e);
+            return { ...w, coupon: null };
+          }
+        })
+      );
+
+      const available = merged.filter(
+        (c) =>
+          !c.is_used && c.coupon && new Date(c.coupon.valid_until) > new Date()
+      );
+
+      setCoupons(available);
+    } catch (err) {
+      console.error("쿠폰 불러오기 실패:", err);
+    }
+  }, [API_URL, userId]);
+
   useEffect(() => {
-    const fetchCoupons = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/coupons/wallet/by_user`, {
-          params: { user_id: userId },
-        });
-        console.log("쿠폰 지갑 응답:", res.data);
-
-        const walletList: Omit<CouponWallet, "coupon">[] =
-          res.data.coupon_wallets ?? [];
-
-        const merged = await Promise.all(
-          walletList.map(async (w) => {
-            try {
-              const detailRes = await axios.get(`${API_URL}/coupons/by_id`, {
-                params: { coupon_id: w.coupon_id },
-              });
-              return { ...w, coupon: detailRes.data };
-            } catch (e) {
-              console.error(`쿠폰 상세 불러오기 실패: ${w.coupon_id}`, e);
-              return { ...w, coupon: null };
-            }
-          })
-        );
-
-        const available = merged.filter(
-          (c) =>
-            !c.is_used &&
-            c.coupon &&
-            new Date(c.coupon.valid_until) > new Date()
-        );
-
-        setCoupons(available);
-      } catch (err) {
-        console.error("쿠폰 불러오기 실패:", err);
-      }
-    };
-
     if (userId) fetchCoupons();
-  }, [userId]);
+  }, [userId, fetchCoupons]);
 
   const renderCoupon = ({ item }: { item: CouponWallet }) => {
     const c = item.coupon;
@@ -105,7 +103,8 @@ export default function CouponListScreen() {
             </TouchableOpacity>
           </View>
           <Text style={styles.titleText}>{c.description}</Text>
-          {c.discount_type === "비율" && c.max_discount_amount != null && (
+
+          {c.discount_type === "비율" ? (
             <Text style={styles.subText}>
               {`${(
                 Number(c.min_order_amount) || 0
@@ -113,7 +112,16 @@ export default function CouponListScreen() {
                 Number(c.max_discount_amount) || 0
               ).toLocaleString()}원 할인`}
             </Text>
+          ) : (
+            <Text style={styles.subText}>
+              {`${(
+                Number(c.min_order_amount) || 0
+              ).toLocaleString()}원 이상 주문 시, ${(
+                Number(c.discount_amount) || 0
+              ).toLocaleString()}원 할인`}
+            </Text>
           )}
+
           <Text style={styles.subText}>
             {(() => {
               const d = new Date(c.valid_until);
@@ -177,13 +185,7 @@ export default function CouponListScreen() {
                 setCouponCode("");
                 setShowInput(false);
 
-                const refreshed = await axios.get(
-                  `${API_URL}/coupons/wallet/by_user`,
-                  {
-                    params: { user_id: userId },
-                  }
-                );
-                const walletList = refreshed.data.coupon_wallets ?? [];
+                fetchCoupons();
               } catch (err: any) {
                 console.error("쿠폰 등록 실패:", err);
                 Alert.alert(
