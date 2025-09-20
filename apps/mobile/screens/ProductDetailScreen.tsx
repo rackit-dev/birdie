@@ -245,6 +245,7 @@ export default function ProductDetail() {
           const optRes = await axios.get(`${API_URL}/products/options`, {
             params: { product_id: id, product_option_type_id: t.id },
           });
+
           optionValues[t.option_type] = optRes.data.product_options;
         }
         setOptions(optionValues);
@@ -981,30 +982,53 @@ export default function ProductDetail() {
                       keyExtractor={(opt) => opt.id}
                       nestedScrollEnabled
                       style={{ maxHeight: 250 }}
-                      renderItem={({ item: opt }) => (
-                        <TouchableOpacity
-                          key={opt.id}
-                          style={[
-                            styles.optionItem,
-                            selected[t.option_type]?.value === opt.option &&
-                              styles.optionItemSelected,
-                          ]}
-                          onPress={() => {
-                            handleSelectOption(
-                              t.option_type,
-                              opt.option,
-                              opt.id,
-                              t.id
-                            );
-                            setIsOptionOpen((prev) => ({
-                              ...prev,
-                              [t.option_type]: false,
-                            }));
-                          }}
-                        >
-                          <Text>{opt.option}</Text>
-                        </TouchableOpacity>
-                      )}
+                      renderItem={({ item: opt }) => {
+                        const disabled = !opt.is_active;
+                        return (
+                          <TouchableOpacity
+                            key={opt.id}
+                            style={[
+                              styles.optionItem,
+                              selected[t.option_type]?.value === opt.option &&
+                                styles.optionItemSelected,
+                              disabled && { backgroundColor: "#f0f0f0" },
+                            ]}
+                            disabled={disabled}
+                            onPress={() => {
+                              handleSelectOption(
+                                t.option_type,
+                                opt.option,
+                                opt.id,
+                                t.id
+                              );
+                              setIsOptionOpen((prev) => ({
+                                ...prev,
+                                [t.option_type]: false,
+                              }));
+                            }}
+                          >
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <Text
+                                style={{ color: disabled ? "#aaa" : "#000" }}
+                              >
+                                {opt.option}
+                              </Text>
+                              {disabled && (
+                                <Text
+                                  style={{ color: "#878787ff", fontSize: 12 }}
+                                >
+                                  품절
+                                </Text>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }}
                     />
                   </View>
                 )}
