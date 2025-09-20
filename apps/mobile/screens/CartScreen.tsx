@@ -45,71 +45,118 @@ export default function CartScreen() {
 
   const userId = useUserIdStore((s) => s.id);
 
+  const fetchCartItemsWithProducts = async () => {
+    if (!userId) return;
+
+    try {
+      const cartRes = await axios.get(`${API_URL}/cartitems`, {
+        params: { user_id: userId },
+      });
+      const cartItemsRaw = cartRes.data.cartitems;
+
+      const productRes = await axios.get(
+        `${API_URL}/products?page=1&items_per_page=309`
+      );
+      const allProducts = productRes.data.products;
+
+      const mergedCartItems = cartItemsRaw.map((item: any) => {
+        const product = allProducts.find((p: any) => p.id === item.product_id);
+
+        let optionLabel = "옵션 정보 없음";
+        const options: string[] = [];
+
+        if (item.option_type_1 && item.option_1) {
+          options.push(`${item.option_type_1}: ${item.option_1}`);
+        }
+        if (item.option_type_2 && item.option_2) {
+          options.push(`${item.option_type_2}: ${item.option_2}`);
+        }
+        if (item.option_type_3 && item.option_3) {
+          options.push(`${item.option_type_3}: ${item.option_3}`);
+        }
+
+        if (options.length > 0) {
+          optionLabel = options.join(" / ");
+        }
+
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+
+          name: product?.name || "알 수 없음",
+          brand: product?.category_sub || "기본브랜드",
+          image: product
+            ? { uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg` }
+            : null,
+          option: optionLabel,
+          priceOriginal: product?.price_whole ?? 0,
+          priceDiscounted: product?.price_sell ?? 0,
+          isActive: product?.is_active ?? true,
+        };
+      });
+
+      setCartItems(mergedCartItems);
+    } catch (error) {
+      console.error("장바구니 또는 상품 정보 불러오기 실패:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchCartItemsWithProducts = async () => {
-      if (!userId) return;
-
-      try {
-        const cartRes = await axios.get(`${API_URL}/cartitems`, {
-          params: { user_id: userId },
-        });
-        const cartItemsRaw = cartRes.data.cartitems;
-
-        const productRes = await axios.get(
-          `${API_URL}/products?page=1&items_per_page=309`
-        );
-        const allProducts = productRes.data.products;
-
-        const mergedCartItems = cartItemsRaw.map((item: any) => {
-          const product = allProducts.find(
-            (p: any) => p.id === item.product_id
-          );
-
-          let optionLabel = "옵션 정보 없음";
-          const options: string[] = [];
-
-          if (item.option_type_1 && item.option_1) {
-            options.push(`${item.option_type_1}: ${item.option_1}`);
-          }
-          if (item.option_type_2 && item.option_2) {
-            options.push(`${item.option_type_2}: ${item.option_2}`);
-          }
-          if (item.option_type_3 && item.option_3) {
-            options.push(`${item.option_type_3}: ${item.option_3}`);
-          }
-
-          if (options.length > 0) {
-            optionLabel = options.join(" / ");
-          }
-
-          return {
-            id: item.id,
-            user_id: item.user_id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-
-            name: product?.name || "알 수 없음",
-            brand: product?.category_sub || "기본브랜드",
-            image: product
-              ? { uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg` }
-              : null,
-            option: optionLabel,
-            priceOriginal: product?.price_whole ?? 0,
-            priceDiscounted: product?.price_sell ?? 0,
-            isActive: product?.is_active ?? true,
-          };
-        });
-
-        setCartItems(mergedCartItems);
-      } catch (error) {
-        console.error("장바구니 또는 상품 정보 불러오기 실패:", error);
-      }
-    };
-
     fetchCartItemsWithProducts();
   }, [userId]);
+
+  const handleOrder = async () => {
+    const selectedRaw = cartItems.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+
+    if (selectedRaw.length === 0) {
+      Alert.alert("선택된 상품이 없습니다.");
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${API_URL}/products`, {
+        params: { page: 1, items_per_page: 500 },
+      });
+      const allProducts = res.data.products;
+
+      const hasSoldOut = selectedRaw.some((item) => {
+        const product = allProducts.find((p: any) => p.id === item.product_id);
+        return !product?.is_active;
+      });
+
+      if (hasSoldOut) {
+        Alert.alert(
+          "선택한 상품 중 품절된 상품이 있습니다. 장바구니를 확인해주세요."
+        );
+        await fetchCartItemsWithProducts();
+        return;
+      }
+
+      const selectedProducts = selectedRaw.map((item) => ({
+        id: item.product_id,
+        brand: item.brand,
+        name: item.name,
+        option: item.option,
+        quantity: item.quantity,
+        price: item.priceDiscounted * item.quantity,
+        image: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
+      }));
+
+      navigation.navigate("Purchase", {
+        fromCart: true,
+        products: selectedProducts,
+      });
+    } catch (err) {
+      console.error("상품 상태 확인 실패:", err);
+      Alert.alert("상품 상태 확인 중 오류가 발생했습니다.");
+    }
+  };
 
   const toggleSelectAll = () => {
     const activeItems = cartItems
@@ -452,32 +499,7 @@ export default function CartScreen() {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.bottomBar}
-        onPress={() => {
-          const selectedProducts = cartItems
-            .filter((item) => selectedItems.includes(item.id))
-            .map((item) => ({
-              id: item.product_id,
-              brand: item.brand,
-              name: item.name,
-              option: item.option,
-              quantity: item.quantity,
-              price: item.priceDiscounted * item.quantity,
-              image: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
-            }));
-
-          if (selectedProducts.length === 0) {
-            Alert.alert("선택된 상품이 없습니다.");
-            return;
-          }
-
-          navigation.navigate("Purchase", {
-            fromCart: true,
-            products: selectedProducts,
-          });
-        }}
-      >
+      <TouchableOpacity style={styles.bottomBar} onPress={handleOrder}>
         <Text style={styles.bottomBarText}>
           {getTotalPrice().toLocaleString()}원 주문하기
         </Text>
