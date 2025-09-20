@@ -132,9 +132,10 @@ export default function OrderPaymentScreen() {
   );
 
   const totalProductPrice = products.reduce<number>(
-    (acc: number, product: Product) => acc + product.price,
+    (acc, product: Product) => acc + product.price * product.quantity,
     0
   );
+
   const finalAmount = totalProductPrice - parseInt(point, 10);
 
   const groupedByBrand = products.reduce<Record<string, Product[]>>(
@@ -300,7 +301,7 @@ export default function OrderPaymentScreen() {
                       {item.option} / {item.quantity}개
                     </Text>
                     <Text style={styles.price}>
-                      {item.price.toLocaleString()}원
+                      {(item.price * item.quantity).toLocaleString()}원
                     </Text>
                   </View>
                 </View>

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Dimensions,
   useWindowDimensions,
+  FlatList,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -29,6 +30,16 @@ import { useUserIdStore } from "../store/useUserIdStore";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 
+type ProductOption = {
+  id: string;
+  product_id: string;
+  product_option_type_id: string;
+  option: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function ProductDetail() {
   const route = useRoute();
   const navigation =
@@ -38,13 +49,26 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [optionTypes, setOptionTypes] = useState<any[]>([]);
-  const [options, setOptions] = useState<Record<string, string[]>>({});
-  const [selected, setSelected] = useState<Record<string, string>>({});
-  const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const [options, setOptions] = useState<Record<string, ProductOption[]>>({});
+  const [selected, setSelected] = useState<
+    Record<string, { value: string; id: string; typeId: string }>
+  >({});
+
+  const [selectedOptions, setSelectedOptions] = useState<
+    {
+      key: string; // "사이즈: 235|색상: 블랙"
+      label: string; // "235 / 블랙"
+      quantity: number;
+      price: number;
+      optionType1Id: string;
+      option1Id: string;
+      optionType2Id?: string;
+      option2Id?: string;
+    }[]
+  >([]);
+  const [isOptionOpen, setIsOptionOpen] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
-  const [quantity, setQuantity] = useState(1);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
-  const [pendingQty, setPendingQty] = useState<number>(1);
   const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
   const [detailImages, setDetailImages] = useState<string[]>([]);
@@ -171,7 +195,6 @@ export default function ProductDetail() {
         });
         const list = res.data.inquiries || [];
 
-        // 이미지 존재 여부 확인 후 배열 붙이기
         const imagesMap: Record<string, string[]> = {};
         for (const inq of list) {
           const imgs: string[] = [];
@@ -191,7 +214,6 @@ export default function ProductDetail() {
           imagesMap[inq.id] = imgs;
         }
 
-        // inquiries에 images 붙이기
         const withImages = list.map((inq: any) => ({
           ...inq,
           images: imagesMap[inq.id] || [],
@@ -218,19 +240,13 @@ export default function ProductDetail() {
         const types = res.data.product_option_types;
         setOptionTypes(types);
 
-        const optionValues: Record<string, string[]> = {};
+        const optionValues: Record<string, ProductOption[]> = {};
         for (const t of types) {
           const optRes = await axios.get(`${API_URL}/products/options`, {
             params: { product_id: id, product_option_type_id: t.id },
           });
           optionValues[t.option_type] = optRes.data.product_options;
-
-          console.log(
-            `옵션값 for ${t.option_type}:`,
-            optRes.data.product_options
-          );
         }
-
         setOptions(optionValues);
       } catch (err) {
         console.error("옵션 불러오기 실패", err);
@@ -238,6 +254,82 @@ export default function ProductDetail() {
     };
     fetchOptions();
   }, [id]);
+
+  const handleSelectOption = (
+    optionType: string,
+    optionValue: string,
+    optionId: string,
+    typeId: string
+  ) => {
+    setSelected((prev) => {
+      const updated = {
+        ...prev,
+        [optionType]: { id: optionId, typeId, value: optionValue },
+      };
+
+      // 옵션이 1개짜리 상품이면 즉시 반영
+      if (optionTypes.length === 1) {
+        const key = `${updated[optionType].value}`;
+        setSelectedOptions((prevOpts) => {
+          if (prevOpts.some((o) => o.key === key)) return prevOpts;
+          return [
+            ...prevOpts,
+            {
+              key,
+              optionType1Id: updated[optionType].typeId,
+              option1Id: updated[optionType].id,
+              label: updated[optionType].value,
+              quantity: 1,
+              price: product.price_sell,
+            },
+          ];
+        });
+        return {}; // 초기화
+      }
+
+      // 옵션이 2개 이상일 경우: 모든 옵션이 다 선택되면 반영
+      if (Object.keys(updated).length === optionTypes.length) {
+        const key = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join("-");
+        const label = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join(" / ");
+
+        setSelectedOptions((prevOpts) => {
+          if (prevOpts.some((o) => o.key === key)) return prevOpts;
+          return [
+            ...prevOpts,
+            {
+              key,
+              label,
+              quantity: 1,
+              price: product.price_sell,
+              optionType1Id: updated[optionTypes[0].option_type].typeId,
+              option1Id: updated[optionTypes[0].option_type].id,
+              optionType2Id: updated[optionTypes[1].option_type].typeId,
+              option2Id: updated[optionTypes[1].option_type].id,
+            },
+          ];
+        });
+        return {}; // 초기화
+      }
+
+      return updated;
+    });
+  };
+
+  const updateQuantity = (key: string, delta: number) => {
+    setSelectedOptions((prev) =>
+      prev.map((o) =>
+        o.key === key ? { ...o, quantity: Math.max(1, o.quantity + delta) } : o
+      )
+    );
+  };
+
+  const removeOption = (key: string) => {
+    setSelectedOptions((prev) => prev.filter((o) => o.key !== key));
+  };
 
   const handleDeleteLike = async (product: Product) => {
     try {
@@ -838,8 +930,7 @@ export default function ProductDetail() {
       <Modal
         isVisible={showModal}
         onBackdropPress={() => setShowModal(false)}
-        swipeDirection="down"
-        onSwipeComplete={() => setShowModal(false)}
+        propagateSwipe
         backdropTransitionOutTiming={0}
         style={styles.modal}
       >
@@ -848,104 +939,113 @@ export default function ProductDetail() {
           <Text style={styles.sectionTitle}>옵션 선택</Text>
 
           <View>
-            <TouchableOpacity
-              style={[
-                styles.dropdownBox,
-                isOptionOpen && styles.dropdownBoxExpanded,
-              ]}
-              onPress={() => setIsOptionOpen(!isOptionOpen)}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={styles.dropdownText}>
-                  {Object.values(selected).join(", ") || "옵션을 선택하세요"}
-                </Text>
-                <Ionicons
-                  name={isOptionOpen ? "chevron-up" : "chevron-down"}
-                  size={18}
-                  color="black"
-                />
-              </View>
-            </TouchableOpacity>
+            {optionTypes.map((t) => (
+              <View key={t.id} style={{ marginBottom: 15 }}>
+                <TouchableOpacity
+                  style={styles.dropdownBox}
+                  onPress={() =>
+                    setIsOptionOpen((prev) => ({
+                      ...prev,
+                      [t.option_type]: !prev[t.option_type],
+                    }))
+                  }
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>
+                      {selected[t.option_type]?.value ||
+                        `${t.option_type}를 선택하세요`}
+                    </Text>
 
-            {isOptionOpen && (
-              <View style={styles.optionScrollContainer}>
-                <ScrollView>
-                  {optionTypes.map((t) => (
-                    <View key={t.id} style={{ marginTop: 15 }}>
-                      <Text style={styles.sectionTitle}>
-                        {t.option_type} 선택
-                      </Text>
-                      <ScrollView horizontal>
-                        {options[t.option_type]?.map((val) => (
-                          <TouchableOpacity
-                            key={val}
-                            style={[
-                              styles.optionItem,
-                              selected[t.option_type] === val &&
-                                styles.optionItemSelected,
-                            ]}
-                            onPress={() =>
-                              setSelected((prev) => ({
-                                ...prev,
-                                [t.option_type]: val,
-                              }))
-                            }
-                          >
-                            <Text>{val}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  ))}
-                </ScrollView>
+                    <Ionicons
+                      name={
+                        isOptionOpen[t.option_type]
+                          ? "chevron-up"
+                          : "chevron-down"
+                      }
+                      size={18}
+                      color="black"
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {isOptionOpen[t.option_type] && (
+                  <View style={styles.optionScrollContainer}>
+                    <FlatList
+                      data={options[t.option_type] || []}
+                      keyExtractor={(opt) => opt.id}
+                      nestedScrollEnabled
+                      style={{ maxHeight: 250 }}
+                      renderItem={({ item: opt }) => (
+                        <TouchableOpacity
+                          key={opt.id}
+                          style={[
+                            styles.optionItem,
+                            selected[t.option_type]?.value === opt.option &&
+                              styles.optionItemSelected,
+                          ]}
+                          onPress={() => {
+                            handleSelectOption(
+                              t.option_type,
+                              opt.option,
+                              opt.id,
+                              t.id
+                            );
+                            setIsOptionOpen((prev) => ({
+                              ...prev,
+                              [t.option_type]: false,
+                            }));
+                          }}
+                        >
+                          <Text>{opt.option}</Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                )}
               </View>
-            )}
+            ))}
           </View>
 
           <View style={{ marginTop: 20 }}>
-            <Text style={{ ...styles.sectionTitle, marginBottom: 15 }}>
-              수량 선택
-            </Text>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (pendingQty === 1) {
-                    setQtyAlertVisible(true);
-                    return;
-                  }
-                  setPendingQty((prev) => prev - 1);
-                }}
-                style={styles.qtyButton}
-              >
-                <Text style={{ fontSize: 20 }}>-</Text>
-              </TouchableOpacity>
-              <Text style={{ fontSize: 18 }}>{quantity}</Text>
-              <TouchableOpacity
-                onPress={() => setQuantity((prev) => prev + 1)}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontSize: 20, marginBottom: 2, marginLeft: 1 }}>
-                  +
+            {selectedOptions.map((opt) => (
+              <View key={opt.key} style={styles.selectedRow}>
+                <Text style={{ fontSize: 16, flex: 1 }}>{opt.label}</Text>
+
+                <View style={styles.qtyRow}>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, -1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>-</Text>
+                  </TouchableOpacity>
+                  <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, 1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>+</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* 가격 */}
+                <Text style={{ width: 80, textAlign: "right" }}>
+                  {(opt.price * opt.quantity).toLocaleString()}원
                 </Text>
-              </TouchableOpacity>
-            </View>
+
+                {/* X 버튼 */}
+                <TouchableOpacity onPress={() => removeOption(opt.key)}>
+                  <Text style={{ fontSize: 18, marginLeft: 10 }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
+
           <Modal
             isVisible={qtyAlertVisible}
             onBackdropPress={() => setQtyAlertVisible(false)}
@@ -962,6 +1062,7 @@ export default function ProductDetail() {
               </TouchableOpacity>
             </View>
           </Modal>
+
           <Modal
             isVisible={alreadyInCartAlert}
             onBackdropPress={() => setAlreadyInCartAlert(false)}
@@ -984,12 +1085,21 @@ export default function ProductDetail() {
               style={styles.cartButton}
               onPress={async () => {
                 try {
-                  await axios.post(`${API_URL}/cartitems`, {
-                    user_id: userId,
-                    product_id: product.id,
-                    quantity,
-                    ...buildOptionPayload(),
-                  });
+                  if (!userId) return;
+
+                  for (const opt of selectedOptions) {
+                    await axios.post(`${API_URL}/cartitems`, {
+                      user_id: userId,
+                      product_id: product.id,
+                      quantity: opt.quantity,
+                      option_type_1_id: opt.optionType1Id,
+                      option_1_id: opt.option1Id,
+                      is_option_1_active: true,
+                      option_type_2_id: opt.optionType2Id,
+                      option_2_id: opt.option2Id,
+                      is_option_2_active: true,
+                    });
+                  }
 
                   setCartSuccessVisible(true);
                   setTimeout(() => setCartSuccessVisible(false), 2000);
@@ -1020,17 +1130,15 @@ export default function ProductDetail() {
                 setShowModal(false);
                 navigation.navigate("Purchase", {
                   fromCart: false,
-                  products: [
-                    {
-                      id: product.id,
-                      brand: product.category_sub,
-                      image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
-                      name: product.name.replace(/_/g, " "),
-                      quantity,
-                      price: product.price_sell * quantity,
-                      ...buildOptionPayload(),
-                    },
-                  ],
+                  products: selectedOptions.map((opt) => ({
+                    id: product.id,
+                    brand: product.category_sub,
+                    image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                    name: product.name.replace(/_/g, " "),
+                    option: opt.label, // 옵션명 (사이즈·컬러 조합)
+                    quantity: opt.quantity,
+                    price: product.price_sell,
+                  })),
                 });
               }}
             >
@@ -1039,6 +1147,7 @@ export default function ProductDetail() {
           </View>
         </View>
       </Modal>
+
       <Modal
         isVisible={imageModalVisible}
         onBackdropPress={() => setImageModalVisible(false)}
@@ -1317,6 +1426,33 @@ const styles = StyleSheet.create({
   optionItemSelected: {
     backgroundColor: "#f9f9f9",
   },
+  selectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#fafafa",
+  },
+
+  qtyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+
+  qtyButton: {
+    width: 28,
+    height: 28,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   buttonRowFixed: {
     position: "absolute",
     bottom: 20,
@@ -1363,15 +1499,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     fontSize: 16,
-  },
-  qtyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
   },
   inquiryItem: {
     paddingVertical: 12,

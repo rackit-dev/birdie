@@ -53,7 +53,6 @@ export default function CartScreen() {
         const cartRes = await axios.get(`${API_URL}/cartitems`, {
           params: { user_id: userId },
         });
-
         const cartItemsRaw = cartRes.data.cartitems;
 
         const productRes = await axios.get(
@@ -66,11 +65,27 @@ export default function CartScreen() {
             (p: any) => p.id === item.product_id
           );
 
+          let optionLabel = "옵션 정보 없음";
+          const options: string[] = [];
+
+          if (item.option_type_1 && item.option_1) {
+            options.push(`${item.option_type_1}: ${item.option_1}`);
+          }
+          if (item.option_type_2 && item.option_2) {
+            options.push(`${item.option_type_2}: ${item.option_2}`);
+          }
+          if (item.option_type_3 && item.option_3) {
+            options.push(`${item.option_type_3}: ${item.option_3}`);
+          }
+
+          if (options.length > 0) {
+            optionLabel = options.join(" / ");
+          }
+
           return {
             id: item.id,
             user_id: item.user_id,
             product_id: item.product_id,
-            product_option_id: item.product_option_id,
             quantity: item.quantity,
             created_at: item.created_at,
             updated_at: item.updated_at,
@@ -80,8 +95,7 @@ export default function CartScreen() {
             image: product
               ? { uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg` }
               : null,
-            option: item.product_option_id,
-            options: [item.product_option_id],
+            option: { label: optionLabel },
             priceOriginal: product?.price_whole ?? 0,
             priceDiscounted: product?.price_sell ?? 0,
           };
@@ -322,7 +336,7 @@ export default function CartScreen() {
                         </TouchableOpacity>
                       </View>
                       <Text style={styles.optionText}>
-                        {item.option} / {item.quantity}개
+                        {item.option.label} / {item.quantity}개
                       </Text>
                       <View style={styles.priceRow}>
                         {item.priceOriginal > item.priceDiscounted && (
