@@ -87,6 +87,7 @@ export default function HomeScreen() {
             image: {
               uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
             },
+            isActive: item.is_active,
           }));
 
           const getRandomSample = (array: Product[], size: number) => {
@@ -116,6 +117,7 @@ export default function HomeScreen() {
             priceOriginal: 49000,
             discount: 20,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
           {
             id: "dummy2",
@@ -125,6 +127,7 @@ export default function HomeScreen() {
             priceOriginal: 99000,
             discount: 30,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
           {
             id: "dummy3",
@@ -134,6 +137,7 @@ export default function HomeScreen() {
             priceOriginal: 29000,
             discount: 0,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
         ];
 
@@ -189,9 +193,9 @@ export default function HomeScreen() {
               contentContainerStyle={styles.imageGrid}
               renderItem={({ item }) => (
                 <Pressable
-                  onPress={() =>
-                    navigation.navigate("ProductDetail", { id: item.id })
-                  }
+                  onPress={() => {
+                    navigation.navigate("ProductDetail", { id: item.id });
+                  }}
                   style={styles.productContainer}
                 >
                   <View style={{ position: "relative" }}>
@@ -207,6 +211,45 @@ export default function HomeScreen() {
                         );
                       }}
                     />
+
+                    {!item.isActive && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 5,
+                          left: 5,
+                          backgroundColor: "rgba(0,0,0,0.6)",
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 12,
+                            fontWeight: "600",
+                          }}
+                        >
+                          품절
+                        </Text>
+                      </View>
+                    )}
+
+                    {!item.isActive && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: "rgba(255,255,255,0.5)",
+                          borderRadius: 8,
+                        }}
+                      />
+                    )}
+
                     <Pressable
                       onPress={() => {
                         if (userId) {

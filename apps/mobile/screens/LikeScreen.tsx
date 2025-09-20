@@ -48,7 +48,10 @@ export default function LikeScreen() {
 
       {likedItems.length > 0 ? (
         <FlatList
-          data={likedItems}
+          data={likedItems.map((item) => ({
+            ...item,
+            isActive: (item as any).is_active,
+          }))}
           keyExtractor={(item) => item.id}
           numColumns={3}
           extraData={likedItems}
@@ -59,7 +62,7 @@ export default function LikeScreen() {
                 <ItemCard
                   item={item}
                   isLiked={isLiked}
-                  toggleLike={(_, product) => handleDeleteLike(product)}
+                  toggleLike={(product) => handleDeleteLike(product)}
                   userId={userId ?? ""}
                   size="large"
                   onPress={() =>

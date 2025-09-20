@@ -919,12 +919,20 @@ export default function ProductDetail() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.buyButton}
+          style={[
+            styles.buyButton,
+            !product.is_active && { backgroundColor: "#ccc" },
+          ]}
+          disabled={!product.is_active}
           onPress={() => {
-            setShowModal(true);
+            if (product.is_active) {
+              setShowModal(true);
+            }
           }}
         >
-          <Text style={styles.buyText}>구매하기</Text>
+          <Text style={styles.buyText}>
+            {product.is_active ? "구매하기" : "품절"}
+          </Text>
         </TouchableOpacity>
       </View>
 

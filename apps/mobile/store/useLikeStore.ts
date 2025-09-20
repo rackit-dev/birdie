@@ -11,6 +11,7 @@ export type Product = {
   priceOriginal?: number;
   discount?: number;
   product_like_id?: string;
+  isActive: boolean;
 };
 
 type LikeStore = {

@@ -80,6 +80,7 @@ export default function ProductListScreen() {
           image: {
             uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
           },
+          isActive: item.is_active,
         }));
 
         setProducts(mapped);

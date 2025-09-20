@@ -98,6 +98,7 @@ export default function CartScreen() {
             option: { label: optionLabel },
             priceOriginal: product?.price_whole ?? 0,
             priceDiscounted: product?.price_sell ?? 0,
+            isActive: product?.is_active ?? true,
           };
         });
 
@@ -301,15 +302,55 @@ export default function CartScreen() {
                         })
                       }
                     >
-                      {item.image ? (
-                        <Image
-                          source={item.image}
-                          style={styles.grayBox}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={styles.grayBox} />
-                      )}
+                      <View style={{ position: "relative" }}>
+                        {item.image ? (
+                          <Image
+                            source={item.image}
+                            style={styles.grayBox}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.grayBox} />
+                        )}
+
+                        {!item.isActive && (
+                          <>
+                            {/* 품절 배지 */}
+                            <View
+                              style={{
+                                position: "absolute",
+                                top: 5,
+                                left: 5,
+                                backgroundColor: "rgba(0,0,0,0.6)",
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                borderRadius: 4,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: "white",
+                                  fontSize: 12,
+                                  fontWeight: "600",
+                                }}
+                              >
+                                품절
+                              </Text>
+                            </View>
+                            <View
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: "rgba(255,255,255,0.5)",
+                                borderRadius: 4,
+                              }}
+                            />
+                          </>
+                        )}
+                      </View>
                     </TouchableOpacity>
 
                     <View style={styles.itemDetails}>
