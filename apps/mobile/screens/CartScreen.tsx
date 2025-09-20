@@ -8,6 +8,7 @@ import {
   Alert,
   Dimensions,
   Image,
+  FlatList,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
@@ -18,8 +19,6 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import { useUserIdStore } from "../store/useUserIdStore";
 
-const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
-
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Cart">;
 
 export default function CartScreen() {
@@ -28,13 +27,29 @@ export default function CartScreen() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [pendingOption, setPendingOption] = useState<string>("");
   const [pendingQty, setPendingQty] = useState<number>(1);
   const [pendingPrice, setPendingPrice] = useState<number>(0);
-  const [isOptionOpen, setIsOptionOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
+  const [optionTypes, setOptionTypes] = useState<any[]>([]);
+  const [options, setOptions] = useState<Record<string, any[]>>({});
+  const [selected, setSelected] = useState<
+    Record<string, { value: string; id: string; typeId: string }>
+  >({});
+  const [selectedOptions, setSelectedOptions] = useState<
+    {
+      key: string;
+      label: string;
+      quantity: number;
+      price: number;
+      optionType1Id: string;
+      option1Id: string;
+      optionType2Id?: string;
+      option2Id?: string;
+    }[]
+  >([]);
+  const [isOptionOpen, setIsOptionOpen] = useState<Record<string, boolean>>({});
+
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -96,13 +111,53 @@ export default function CartScreen() {
           priceOriginal: product?.price_whole ?? 0,
           priceDiscounted: product?.price_sell ?? 0,
           isActive: product?.is_active ?? true,
+
+          options: [
+            item.option_type_1 && item.option_1
+              ? {
+                  type: item.option_type_1,
+                  value: item.option_1,
+                  active: item.is_option_1_active,
+                }
+              : null,
+            item.option_type_2 && item.option_2
+              ? {
+                  type: item.option_type_2,
+                  value: item.option_2,
+                  active: item.is_option_2_active,
+                }
+              : null,
+            item.option_type_3 && item.option_3
+              ? {
+                  type: item.option_type_3,
+                  value: item.option_3,
+                  active: item.is_option_3_active,
+                }
+              : null,
+          ].filter(Boolean),
         };
       });
+
+      setCartItems(mergedCartItems);
 
       setCartItems(mergedCartItems);
     } catch (error) {
       console.error("장바구니 또는 상품 정보 불러오기 실패:", error);
     }
+  };
+
+  const updateQuantity = (key: string, delta: number) => {
+    setSelectedOptions((prev) =>
+      prev.map((opt) =>
+        opt.key === key
+          ? { ...opt, quantity: Math.max(1, opt.quantity + delta) }
+          : opt
+      )
+    );
+  };
+
+  const removeOption = (key: string) => {
+    setSelectedOptions((prev) => prev.filter((opt) => opt.key !== key));
   };
 
   useEffect(() => {
@@ -241,15 +296,226 @@ export default function CartScreen() {
     }
   };
 
-  const openOptionModal = (id: string, options: string[]) => {
-    const currentItem = cartItems.find((item) => item.id === id);
+  const openOptionModal = async (id: string) => {
+    const currentItem = cartItems.find((c) => c.id === id);
     if (!currentItem) return;
+
     setCurrentItemId(id);
-    setCurrentOptions(options);
-    setPendingOption(currentItem.option);
     setPendingQty(currentItem.quantity);
-    setModalVisible(true);
     setPendingPrice(currentItem.priceDiscounted);
+
+    try {
+      const res = await axios.get(`${API_URL}/products/option_types`, {
+        params: { product_id: currentItem.product_id },
+      });
+      const types = res.data.product_option_types;
+      setOptionTypes(types);
+
+      const optionValues: Record<string, any[]> = {};
+      for (const t of types) {
+        const optRes = await axios.get(`${API_URL}/products/options`, {
+          params: {
+            product_id: currentItem.product_id,
+            product_option_type_id: t.id,
+          },
+        });
+        optionValues[t.option_type] = optRes.data.product_options;
+      }
+      setOptions(optionValues);
+
+      const initialSelected: Record<
+        string,
+        { value: string; id: string; typeId: string }
+      > = {};
+
+      currentItem.options.forEach((opt: any) => {
+        const type = types.find((t: any) => t.option_type === opt.type);
+        if (type) {
+          const match = optionValues[opt.type]?.find(
+            (o: any) => o.option === opt.value
+          );
+          if (match) {
+            initialSelected[opt.type] = {
+              id: match.id,
+              typeId: type.id,
+              value: match.option,
+            };
+          }
+        }
+      });
+
+      setSelected(initialSelected);
+
+      if (Object.keys(initialSelected).length > 0) {
+        const key = Object.values(initialSelected)
+          .map((o) => o.value)
+          .join("-");
+        const label = Object.values(initialSelected)
+          .map((o) => o.value)
+          .join(" / ");
+
+        setSelectedOptions([
+          {
+            key,
+            label,
+            quantity: currentItem.quantity,
+            price: currentItem.priceDiscounted,
+            optionType1Id: initialSelected[types[0].option_type]?.typeId,
+            option1Id: initialSelected[types[0].option_type]?.id,
+            optionType2Id: types[1]
+              ? initialSelected[types[1].option_type]?.typeId
+              : undefined,
+            option2Id: types[1]
+              ? initialSelected[types[1].option_type]?.id
+              : undefined,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error("옵션 불러오기 실패", err);
+    }
+
+    setModalVisible(true);
+  };
+
+  const handleUpdateOption = async () => {
+    if (!currentItemId || selectedOptions.length === 0) return;
+
+    const opt = selectedOptions[0];
+    const currentItem = cartItems.find((c) => c.id === currentItemId);
+    if (!currentItem) return;
+
+    try {
+      // 1. 같은 product_id + 같은 옵션 조합 있는지 확인
+      const normalizeOptions = (opts: { type: string; value: string }[]) =>
+        opts
+          .map((o) => `${o.type}:${o.value}`)
+          .sort()
+          .join("|");
+
+      const duplicateItem = cartItems.find((c) => {
+        if (c.product_id !== currentItem.product_id || c.id === currentItemId) {
+          return false;
+        }
+
+        const currentKey = normalizeOptions(
+          Object.entries(selected).map(([type, val]) => ({
+            type,
+            value: val.value,
+          }))
+        );
+
+        const compareKey = normalizeOptions(c.options);
+
+        return currentKey === compareKey;
+      });
+
+      if (duplicateItem) {
+        const mergedQty = duplicateItem.quantity + opt.quantity;
+
+        // 2. 이미 같은 옵션이 있으면 → merge (수량 합치기)
+        await axios.put(`${API_URL}/cartitems`, {
+          cartitem_id: duplicateItem.id,
+          user_id: userId,
+          product_id: currentItem.product_id,
+          quantity: mergedQty,
+          option_type_1_id: opt.optionType1Id,
+          option_1_id: opt.option1Id,
+          is_option_1_active: true,
+          option_type_2_id: opt.optionType2Id,
+          option_2_id: opt.option2Id,
+          is_option_2_active: true,
+          option_type_3_id: undefined,
+          option_3_id: undefined,
+          is_option_3_active: true,
+        });
+
+        // 현재 수정하던 cartitem은 삭제
+        await axios.delete(`${API_URL}/cartitems?cartitem_id=${currentItemId}`);
+      } else {
+        // 3. 없으면 그냥 옵션 변경
+        await axios.put(`${API_URL}/cartitems`, {
+          cartitem_id: currentItemId,
+          user_id: userId,
+          product_id: currentItem.product_id,
+          quantity: opt.quantity,
+          option_type_1_id: opt.optionType1Id,
+          option_1_id: opt.option1Id,
+          is_option_1_active: true,
+          option_type_2_id: opt.optionType2Id,
+          option_2_id: opt.option2Id,
+          is_option_2_active: true,
+        });
+      }
+
+      await fetchCartItemsWithProducts();
+      setModalVisible(false);
+    } catch (err) {
+      console.error("옵션 변경 실패:", err);
+      Alert.alert("옵션 변경 실패", "다시 시도해주세요.");
+    }
+  };
+
+  const handleSelectOption = (
+    optionType: string,
+    optionValue: string,
+    optionId: string,
+    typeId: string
+  ) => {
+    setSelected((prev) => {
+      const updated = {
+        ...prev,
+        [optionType]: { id: optionId, typeId, value: optionValue },
+      };
+
+      // 옵션이 1개짜리 상품일 경우 → 바로 selectedOptions에 반영
+      if (optionTypes.length === 1) {
+        const key = `${updated[optionType].value}`;
+        const label = updated[optionType].value;
+
+        setSelectedOptions([
+          {
+            key,
+            label,
+            quantity: pendingQty, // 장바구니에 있던 수량 유지
+            price: pendingPrice,
+            optionType1Id: updated[optionType].typeId,
+            option1Id: updated[optionType].id,
+          },
+        ]);
+
+        return updated; // 상태 유지
+      }
+
+      // 옵션이 2개 이상일 경우 → 전부 선택됐을 때만 반영
+      if (Object.keys(updated).length === optionTypes.length) {
+        const key = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join("-");
+        const label = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join(" / ");
+
+        setSelectedOptions([
+          {
+            key,
+            label,
+            quantity: pendingQty,
+            price: pendingPrice,
+            optionType1Id: updated[optionTypes[0].option_type].typeId,
+            option1Id: updated[optionTypes[0].option_type].id,
+            optionType2Id: optionTypes[1]
+              ? updated[optionTypes[1].option_type].typeId
+              : undefined,
+            option2Id: optionTypes[1]
+              ? updated[optionTypes[1].option_type].id
+              : undefined,
+          },
+        ]);
+      }
+
+      return updated;
+    });
   };
 
   const getTotalPrice = () => {
@@ -295,7 +561,16 @@ export default function CartScreen() {
           </Text>
           <View style={{ flex: 1 }} />
           <TouchableOpacity onPress={confirmDeleteSelected}>
-            <Text style={{ color: "#666", fontSize: 14 }}>선택 삭제</Text>
+            <Text
+              style={{
+                color: "#666",
+                fontSize: 14,
+                fontFamily: "P-400",
+                textDecorationLine: "underline",
+              }}
+            >
+              선택 삭제
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -385,7 +660,7 @@ export default function CartScreen() {
                                 style={{
                                   color: "white",
                                   fontSize: 12,
-                                  fontWeight: "600",
+                                  fontFamily: "P-500",
                                 }}
                               >
                                 품절
@@ -455,7 +730,7 @@ export default function CartScreen() {
                   <View style={styles.optionsButtonRow}>
                     <TouchableOpacity
                       style={styles.changeButton}
-                      onPress={() => openOptionModal(item.id, item.options)}
+                      onPress={() => openOptionModal(item.id)}
                     >
                       <Text>옵션 변경</Text>
                     </TouchableOpacity>
@@ -508,151 +783,154 @@ export default function CartScreen() {
       <Modal
         isVisible={modalVisible}
         onBackdropPress={() => setModalVisible(false)}
-        swipeDirection="down"
-        onSwipeComplete={() => setModalVisible(false)}
+        propagateSwipe
         backdropTransitionOutTiming={0}
         style={styles.modal}
       >
         <View style={styles.modalContent}>
           <View style={styles.dragHandle} />
-          <Text style={styles.optionTitle}>옵션 선택</Text>
 
-          <View>
-            <TouchableOpacity
-              style={[
-                styles.dropdownBox,
-                isOptionOpen && styles.dropdownBoxExpanded,
-              ]}
-              onPress={() => setIsOptionOpen(!isOptionOpen)}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+          {optionTypes.map((t) => (
+            <View key={t.id}>
+              <TouchableOpacity
+                style={styles.dropdownBox}
+                onPress={() =>
+                  setIsOptionOpen((prev) => ({
+                    ...prev,
+                    [t.option_type]: !prev[t.option_type],
+                  }))
+                }
               >
-                <Text style={styles.dropdownText}>{selectedOption}</Text>
-                <Text>
-                  {isOptionOpen ? (
-                    <Ionicons name="chevron-up" size={18} color="black" />
-                  ) : (
-                    <Ionicons name="chevron-down" size={18} color="black" />
-                  )}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {isOptionOpen && (
-              <View style={styles.optionScrollContainer}>
-                <ScrollView>
-                  {OPTIONS.map((opt, index) => (
-                    <TouchableOpacity
-                      key={opt}
-                      style={[
-                        styles.optionItem,
-                        opt === selectedOption && styles.optionItemSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedOption(opt);
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text>{opt}</Text>
-                        {index === 0 && (
-                          <Text style={{ color: "red", fontSize: 12 }}>
-                            마지막 1개
-                          </Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.qtySection}>
-            <Text style={styles.qtyTitle}>수량 선택</Text>
-            <View style={styles.qtyRow}>
-              <View style={styles.qtyButtonRow}>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (pendingQty === 1) {
-                      setQtyAlertVisible(true);
-                      return;
-                    }
-                    setPendingQty((prev) => prev - 1);
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
-                  style={styles.qtyButton}
                 >
-                  <Text style={styles.qtyButtonText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.qtyValue}>{pendingQty}</Text>
-                <TouchableOpacity
-                  onPress={() => setPendingQty((prev) => prev + 1)}
-                  style={styles.qtyButton}
-                >
-                  <Text style={styles.qtyButtonText}>+</Text>
+                  <Text style={styles.dropdownText}>
+                    {selected[t.option_type]?.value || "옵션 선택"}
+                  </Text>
+                  <Ionicons
+                    name={
+                      isOptionOpen[t.option_type]
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={18}
+                    color="black"
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {isOptionOpen[t.option_type] && (
+                <View style={styles.optionScrollContainer}>
+                  <FlatList
+                    data={options[t.option_type] || []}
+                    keyExtractor={(opt) => opt.id}
+                    nestedScrollEnabled
+                    style={{ maxHeight: 200 }}
+                    renderItem={({ item: opt }) => {
+                      const disabled = !opt.is_active;
+                      return (
+                        <TouchableOpacity
+                          key={opt.id}
+                          style={[
+                            styles.optionItem,
+                            selected[t.option_type]?.value === opt.option &&
+                              styles.optionItemSelected,
+                            disabled && { backgroundColor: "#f0f0f0" },
+                          ]}
+                          disabled={disabled}
+                          onPress={() => {
+                            handleSelectOption(
+                              t.option_type,
+                              opt.option,
+                              opt.id,
+                              t.id
+                            );
+                            setIsOptionOpen((prev) => ({
+                              ...prev,
+                              [t.option_type]: false,
+                            }));
+                          }}
+                        >
+                          <View style={styles.optionRow}>
+                            <Text style={{ color: disabled ? "#aaa" : "#000" }}>
+                              {opt.option}
+                            </Text>
+                            {disabled && (
+                              <Text style={{ color: "red", fontSize: 12 }}>
+                                품절
+                              </Text>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+          ))}
+
+          <View style={{ marginTop: 20 }}>
+            {selectedOptions.map((opt) => (
+              <View key={opt.key} style={styles.selectedRow}>
+                <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
+                  {opt.label}
+                </Text>
+                <View style={styles.qtyRow}>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, -1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>-</Text>
+                  </TouchableOpacity>
+                  <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, 1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={{ width: 80, textAlign: "right" }}>
+                  {(opt.price * opt.quantity).toLocaleString()}원
+                </Text>
+                <TouchableOpacity onPress={() => removeOption(opt.key)}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontFamily: "P-500",
+                      marginLeft: 10,
+                    }}
+                  >
+                    ✕
+                  </Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.qtyTotal}>
-                {(pendingQty * pendingPrice).toLocaleString()}원
-              </Text>
-            </View>
+            ))}
           </View>
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.cancelButtonText}>취소</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.confirmButton}
+              style={styles.cartButton}
               onPress={() => {
-                if (!currentItemId) return;
-                setCartItems((prev) =>
-                  prev.map((item) =>
-                    item.id === currentItemId
-                      ? {
-                          ...item,
-                          option: pendingOption,
-                          quantity: pendingQty,
-                        }
-                      : item
-                  )
-                );
                 setModalVisible(false);
               }}
             >
-              <Text style={styles.confirmButtonText}>변경하기</Text>
+              <Text style={{ ...styles.buyText, color: "#000" }}>취소</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.buyButton}
+              onPress={handleUpdateOption}
+            >
+              <Text style={styles.buyText}>변경하기</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <Modal
-          isVisible={qtyAlertVisible}
-          onBackdropPress={() => setQtyAlertVisible(false)}
-        >
-          <View style={styles.alertModalContent}>
-            <Text style={{ ...styles.alertText, marginBottom: 20 }}>
-              더 이상 수량을 줄일 수 없습니다.
-            </Text>
-            <TouchableOpacity
-              onPress={() => setQtyAlertVisible(false)}
-              style={{ ...styles.alertButton }}
-            >
-              <Text style={styles.alertButtonText}>확인</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
       </Modal>
     </View>
   );
@@ -670,11 +948,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#f4f4f4",
     paddingHorizontal: 12,
   },
-  brandLabel: {
-    fontWeight: "600",
-    fontSize: 16,
-    marginLeft: 10,
-  },
+  brandLabel: { fontFamily: "P-500", fontSize: 16, marginLeft: 10 },
   itemRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -698,10 +972,11 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontSize: 14,
+    fontFamily: "P-500",
     flexShrink: 1,
     flexWrap: "wrap",
   },
-  optionText: { fontSize: 12, color: "grey" },
+  optionText: { fontSize: 12, fontFamily: "P-500", color: "grey" },
   priceRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -712,12 +987,13 @@ const styles = StyleSheet.create({
   },
   priceOld: {
     fontSize: 12,
+    fontFamily: "P-500",
     color: "#aaa",
     textDecorationLine: "line-through",
   },
   priceFinal: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: "P-600",
   },
   changeButton: {
     borderWidth: 1,
@@ -746,15 +1022,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
   },
-  summaryTitle: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 12,
-  },
+  summaryTitle: { fontFamily: "P-500", fontSize: 16, marginBottom: 12 },
   totalAmount: {
     textAlign: "right",
     fontSize: 17,
-    fontWeight: "700",
+    fontFamily: "P-600",
     color: "#000",
     marginTop: 12,
   },
@@ -767,13 +1039,13 @@ const styles = StyleSheet.create({
   bottomBarText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: "P-500",
     marginBottom: 12,
   },
   qtyTotal: {
     fontSize: 16,
     marginLeft: 8,
-    fontWeight: "700",
+    fontFamily: "P-500",
   },
   modal: {
     justifyContent: "flex-end",
@@ -797,7 +1069,7 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-500",
     marginBottom: 10,
   },
   dropdownBox: {
@@ -805,6 +1077,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 12,
     borderRadius: 8,
+    marginTop: 10,
     backgroundColor: "#fff",
   },
   dropdownRow: {
@@ -820,12 +1093,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
   },
-  optionItem: {
-    padding: 12,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
   optionItemSelected: {
     backgroundColor: "#f1f1f1",
   },
@@ -835,34 +1102,30 @@ const styles = StyleSheet.create({
   },
   qtyTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-500",
     marginBottom: 10,
   },
   qtyRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 50,
-  },
-  qtyButtonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 20,
+    marginHorizontal: 10,
   },
   qtyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
     borderWidth: 1,
     borderColor: "#ccc",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 4,
   },
   qtyButtonText: {
     fontSize: 20,
+    fontFamily: "P-500",
   },
   qtyValue: {
     fontSize: 18,
+    fontFamily: "P-500",
   },
   cancelButton: {
     flex: 1,
@@ -875,7 +1138,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
     color: "#000",
   },
   confirmButton: {
@@ -887,13 +1150,8 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
     color: "#fff",
-  },
-  optionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
   },
   dropdownBoxExpanded: {
     borderBottomLeftRadius: 0,
@@ -901,17 +1159,32 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 16,
+    fontFamily: "P-500",
   },
   optionScrollContainer: {
-    maxHeight: 250,
-    marginBottom: 20,
+    maxHeight: 200, // 🔥 리스트 높이 제한
     borderWidth: 1,
     borderColor: "#eee",
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    overflow: "hidden",
   },
-  lastOneText: {
-    fontSize: 12,
-    color: "red",
+
+  optionItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    backgroundColor: "#fff",
   },
+
+  optionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
   alertModalContent: {
     backgroundColor: "white",
     padding: 20,
@@ -920,6 +1193,7 @@ const styles = StyleSheet.create({
   },
   alertText: {
     fontSize: 16,
+    fontFamily: "P-500",
   },
   alertButton: {
     backgroundColor: "black",
@@ -929,7 +1203,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
   brandDivider: {
@@ -946,10 +1220,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: "P-500",
   },
   option: {
     fontSize: 12,
+    fontFamily: "P-500",
     color: "#666",
     marginVertical: 4,
   },
@@ -963,7 +1238,7 @@ const styles = StyleSheet.create({
   },
   alertCancelText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
     color: "#000",
   },
   alertConfirmButton: {
@@ -975,7 +1250,42 @@ const styles = StyleSheet.create({
   },
   alertConfirmText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
+    color: "#fff",
+  },
+  selectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#fafafa",
+  },
+
+  cartButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+
+  buyButton: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#000",
+    paddingVertical: 16,
+    borderRadius: 5,
+  },
+
+  buyText: {
+    fontSize: 16,
+    fontFamily: "P-500",
     color: "#fff",
   },
 });
