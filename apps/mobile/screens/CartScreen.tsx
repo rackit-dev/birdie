@@ -95,7 +95,7 @@ export default function CartScreen() {
             image: product
               ? { uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg` }
               : null,
-            option: { label: optionLabel },
+            option: optionLabel,
             priceOriginal: product?.price_whole ?? 0,
             priceDiscounted: product?.price_sell ?? 0,
             isActive: product?.is_active ?? true,
@@ -112,14 +112,21 @@ export default function CartScreen() {
   }, [userId]);
 
   const toggleSelectAll = () => {
-    if (selectedItems.length === cartItems.length) {
+    const activeItems = cartItems
+      .filter((item) => item.isActive)
+      .map((item) => item.id);
+
+    if (selectedItems.length === activeItems.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cartItems.map((item) => item.id));
+      setSelectedItems(activeItems);
     }
   };
 
   const toggleSelectItem = (id: string) => {
+    const target = cartItems.find((item) => item.id === id);
+    if (!target?.isActive) return;
+
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -377,7 +384,7 @@ export default function CartScreen() {
                         </TouchableOpacity>
                       </View>
                       <Text style={styles.optionText}>
-                        {item.option.label} / {item.quantity}개
+                        {item.option} / {item.quantity}개
                       </Text>
                       <View style={styles.priceRow}>
                         {item.priceOriginal > item.priceDiscounted && (

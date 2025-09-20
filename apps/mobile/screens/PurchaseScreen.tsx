@@ -13,6 +13,8 @@ import {
   useRoute,
   useFocusEffect,
 } from "@react-navigation/native";
+import Modal from "react-native-modal";
+import axios from "axios";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import * as SecureStore from "expo-secure-store";
@@ -33,11 +35,32 @@ type PurchaseScreenProps = NativeStackScreenProps<
 
 type Product = RootStackParamList["Purchase"]["products"][number];
 
+type CouponDetail = {
+  id: string;
+  code: string;
+  description: string;
+  discount_type: "비율" | "정액";
+  discount_rate?: number;
+  discount_amount?: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  valid_until: string;
+};
+
+type CouponWallet = {
+  id: string;
+  coupon_id: string;
+  is_used: boolean;
+  created_at: string;
+  updated_at: string;
+  coupon?: CouponDetail | null;
+};
+
 const makePaymentId = () =>
   `mid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 export default function OrderPaymentScreen() {
-  const [point, setPoint] = useState("1750");
+  const [point, setPoint] = useState("0");
   const [selectedPayment, setSelectedPayment] = useState("tosspay");
   const [normalType, setNormalType] = useState<"card" | "phone">("card");
 
@@ -51,6 +74,20 @@ export default function OrderPaymentScreen() {
 
   const [showListModal, setShowListModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  const [couponModalVisible, setCouponModalVisible] = useState(false);
+  const [selectedCoupons, setSelectedCoupons] = useState<
+    Record<string, string | null>
+  >({});
+  const [targetProductId, setTargetProductId] = useState<string | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+
+  const [targetProductKey, setTargetProductKey] = useState<string | null>(null);
+
+  const makeProductKey = (p: Product) =>
+    `${p.id}-${p.option || ""}-${p.option_1_value || ""}-${
+      p.option_2_value || ""
+    }-${p.option_3_value || ""}`;
 
   const formatName = (name: string) => name.replace(/_/g, " ");
   const navigation = useNavigation<PurchaseScreenProps["navigation"]>();
@@ -136,8 +173,6 @@ export default function OrderPaymentScreen() {
     0
   );
 
-  const finalAmount = totalProductPrice - parseInt(point, 10);
-
   const groupedByBrand = products.reduce<Record<string, Product[]>>(
     (acc, product) => {
       if (!acc[product.brand]) acc[product.brand] = [];
@@ -146,6 +181,79 @@ export default function OrderPaymentScreen() {
     },
     {}
   );
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("session_token");
+        if (!token) return;
+
+        const res = await axios.get(`${API_URL}/coupons/wallet/by_user`, {
+          params: { user_id: userId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("구매 페이지 쿠폰 응답:", res.data);
+
+        const walletList: CouponWallet[] = res.data.coupon_wallets ?? [];
+
+        const merged: CouponWallet[] = await Promise.all(
+          walletList.map(async (w) => {
+            try {
+              const detailRes = await axios.get(`${API_URL}/coupons/by_id`, {
+                params: { coupon_id: w.coupon_id },
+              });
+              return { ...w, coupon: detailRes.data };
+            } catch (e) {
+              console.error(`쿠폰 상세 불러오기 실패: ${w.coupon_id}`, e);
+              return { ...w, coupon: null };
+            }
+          })
+        );
+
+        const available = merged.filter(
+          (c) =>
+            !c.is_used &&
+            c.coupon &&
+            new Date(c.coupon.valid_until) > new Date()
+        );
+
+        setAvailableCoupons(available);
+      } catch (err) {
+        console.error("구매페이지 쿠폰 불러오기 실패:", err);
+        setAvailableCoupons([]);
+      }
+    };
+    if (userId) fetchCoupons();
+  }, [userId]);
+
+  // 전체 쿠폰 할인 금액 계산
+  const totalCouponDiscount = products.reduce((acc, p) => {
+    const key = makeProductKey(p);
+    const appliedCouponId = selectedCoupons[key];
+    const appliedCoupon = availableCoupons.find(
+      (c) => c.id === appliedCouponId
+    );
+    if (!appliedCoupon?.coupon) return acc;
+
+    const productPrice = p.price * p.quantity;
+    let discount = 0;
+
+    if (appliedCoupon.coupon.discount_type === "비율") {
+      const rate = appliedCoupon.coupon.discount_rate || 0;
+      const rawDiscount = Math.floor((productPrice * rate) / 100);
+      discount = appliedCoupon.coupon.max_discount_amount
+        ? Math.min(rawDiscount, appliedCoupon.coupon.max_discount_amount)
+        : rawDiscount;
+    } else {
+      discount = appliedCoupon.coupon.discount_amount || 0;
+    }
+
+    return acc + discount;
+  }, 0);
+
+  const finalAmount =
+    totalProductPrice - parseInt(point, 10) - totalCouponDiscount;
 
   const handlePayment = async () => {
     const { channelKey, payMethod } = (() => {
@@ -165,10 +273,14 @@ export default function OrderPaymentScreen() {
     const productType =
       payMethod === "MOBILE" ? ("PRODUCT_TYPE_REAL" as const) : undefined;
 
+    const couponDiscount = totalCouponDiscount;
+    const finalAmount =
+      totalProductPrice - parseInt(point, 10) - couponDiscount;
+
     const orderPayload = {
       user_id: userId,
       subtotal_price: totalProductPrice,
-      coupon_discount_price: 0,
+      coupon_discount_price: couponDiscount,
       point_discount_price: parseInt(point, 10),
       total_price: finalAmount,
       recipient_name: recipientName,
@@ -177,17 +289,52 @@ export default function OrderPaymentScreen() {
       address_line1: addressLine1,
       address_line2: addressLine2,
       order_memo: orderMemo || "",
-      items: products.map((p) => ({
-        product_id: p.id,
-        coupon_wallet_id: null,
-        quantity: p.quantity,
-        unit_price: p.price,
-        coupon_discount_price: 0,
-        point_discount_price: 0,
-        final_price: p.price * p.quantity,
-      })),
-    };
+      items: products.map((p) => {
+        const key = makeProductKey(p);
+        const appliedCouponId = selectedCoupons[key];
+        const appliedCoupon = availableCoupons.find(
+          (c) => c.id === appliedCouponId
+        );
+        let couponDiscount = 0;
 
+        if (appliedCoupon?.coupon) {
+          const productPrice = p.price * p.quantity;
+          if (appliedCoupon.coupon.discount_type === "비율") {
+            const rate = appliedCoupon.coupon.discount_rate || 0;
+            const rawDiscount = Math.floor((productPrice * rate) / 100);
+            couponDiscount = appliedCoupon.coupon.max_discount_amount
+              ? Math.min(rawDiscount, appliedCoupon.coupon.max_discount_amount)
+              : rawDiscount;
+          } else {
+            couponDiscount = appliedCoupon.coupon.discount_amount || 0;
+          }
+        }
+
+        const parseOption = (optionStr: string) => {
+          const parts = optionStr.split("/").map((s) => s.trim());
+          const result: any = {};
+          parts.forEach((part, i) => {
+            const [type, value] = part.split(":").map((s) => s.trim());
+            result[`option_${i + 1}_type`] = type;
+            result[`option_${i + 1}_value`] = value;
+          });
+          return result;
+        };
+
+        return {
+          product_id: p.id,
+          product_name: p.name,
+          coupon_wallet_id: appliedCouponId,
+          quantity: p.quantity,
+          unit_price: p.price,
+          coupon_discount_price: couponDiscount,
+          point_discount_price: 0,
+          final_price: p.price * p.quantity - couponDiscount,
+          ...parseOption(p.option),
+        };
+      }),
+    };
+    console.log("📦 주문 payload:", JSON.stringify(orderPayload, null, 2));
     try {
       const token = await SecureStore.getItemAsync("session_token");
       if (!token) throw new Error("로그인 토큰 없음");
@@ -208,6 +355,20 @@ export default function OrderPaymentScreen() {
 
       const orderData = await res.json();
       console.log("주문 생성 성공:", orderData);
+
+      for (const key of Object.keys(selectedCoupons)) {
+        const couponId = selectedCoupons[key];
+        if (couponId) {
+          try {
+            await axios.put(`${API_URL}/coupons/wallet/use`, null, {
+              params: { coupon_wallet_id: couponId },
+            });
+            console.log("쿠폰 사용 처리 완료:", couponId);
+          } catch (err) {
+            console.error("쿠폰 사용 처리 실패:", err);
+          }
+        }
+      }
 
       const request = {
         storeId: STORE_ID,
@@ -283,32 +444,90 @@ export default function OrderPaymentScreen() {
 
         <View style={styles.section}>
           <Text style={styles.title}>주문 상품 {products.length}개</Text>
+
           {Object.entries(groupedByBrand).map(([brand, items]) => (
-            <View style={styles.title} key={brand}>
-              {items.map((item, index) => (
-                <View
-                  key={`${item.name}-${item.option}-${index}`}
-                  style={[styles.productBox, { marginBottom: 10 }]}
-                >
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.productImage}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.productName}>{brand}</Text>
-                    <Text style={styles.option}>
-                      {formatName(item.name)} {"\n"}
-                      {item.option} / {item.quantity}개
-                    </Text>
-                    <Text style={styles.price}>
-                      {(item.price * item.quantity).toLocaleString()}원
-                    </Text>
+            <View key={brand}>
+              {items.map((item, index) => {
+                const productKey = makeProductKey(item);
+
+                return (
+                  <View
+                    key={`${productKey}-${index}`}
+                    style={{ marginBottom: 20 }}
+                  >
+                    <View style={styles.productBox}>
+                      <Image
+                        source={{ uri: item.image }}
+                        style={styles.productImage}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.productName}>{brand}</Text>
+                        <Text style={styles.option}>
+                          {formatName(item.name)} {"\n"}
+                          {item.option} / {item.quantity}개
+                        </Text>
+                        <Text style={styles.price}>
+                          {(item.price * item.quantity).toLocaleString()}원
+                        </Text>
+
+                        {selectedCoupons[productKey] &&
+                          (() => {
+                            const selectedCoupon = availableCoupons.find(
+                              (c) => c.id === selectedCoupons[productKey]
+                            );
+                            if (!selectedCoupon?.coupon) return null;
+
+                            const productPrice = item.price * item.quantity;
+                            let discount = 0;
+
+                            if (
+                              selectedCoupon.coupon.discount_type === "비율"
+                            ) {
+                              const rate =
+                                selectedCoupon.coupon.discount_rate || 0;
+                              const rawDiscount = Math.floor(
+                                (productPrice * rate) / 100
+                              );
+                              discount = selectedCoupon.coupon
+                                .max_discount_amount
+                                ? Math.min(
+                                    rawDiscount,
+                                    selectedCoupon.coupon.max_discount_amount
+                                  )
+                                : rawDiscount;
+                            } else {
+                              discount =
+                                selectedCoupon.coupon.discount_amount || 0;
+                            }
+
+                            const discountedPrice = Math.max(
+                              productPrice - discount,
+                              0
+                            );
+
+                            return (
+                              <Text style={styles.discountedPrice}>
+                                쿠폰 적용가: {discountedPrice.toLocaleString()}
+                                원
+                              </Text>
+                            );
+                          })()}
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      style={styles.couponBtn}
+                      onPress={() => {
+                        setTargetProductKey(productKey);
+                        setCouponModalVisible(true);
+                      }}
+                    >
+                      <Text>쿠폰 사용</Text>
+                    </TouchableOpacity>
                   </View>
-                </View>
-              ))}
-              <TouchableOpacity activeOpacity={1} style={styles.couponBtn}>
-                <Text>쿠폰 사용</Text>
-              </TouchableOpacity>
+                );
+              })}
             </View>
           ))}
         </View>
@@ -390,9 +609,7 @@ export default function OrderPaymentScreen() {
               <Text>사용 취소</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.subText}>
-            적용한도(7%) 1,750원 / 보유 5,764원
-          </Text>
+          <Text style={styles.subText}>0원 / 보유 0원</Text>
         </View>
 
         <View style={styles.section}>
@@ -447,6 +664,138 @@ export default function OrderPaymentScreen() {
           fetchAddresses();
         }}
       />
+
+      <Modal
+        isVisible={couponModalVisible}
+        onBackdropPress={() => setCouponModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View
+          style={{
+            backgroundColor: "#fff",
+            padding: 20,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            maxHeight: "70%",
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "P-600",
+              fontSize: 20,
+              marginBottom: 16,
+            }}
+          >
+            쿠폰 선택
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.couponBox,
+              !selectedCoupons[targetProductKey!] && styles.couponBoxSelected,
+            ]}
+            onPress={() => {
+              setSelectedCoupons((prev) => ({
+                ...prev,
+                [targetProductKey!]: null,
+              }));
+            }}
+          >
+            <Text style={styles.couponText}>선택 안 함</Text>
+          </TouchableOpacity>
+
+          {availableCoupons.length === 0 ? (
+            <Text
+              style={{ textAlign: "center", color: "#888", marginTop: 20 }}
+            ></Text>
+          ) : (
+            availableCoupons.map((c) => {
+              const targetProduct =
+                products.find((p) => p.id === targetProductId) || products[0];
+              const productPrice = targetProduct.price * targetProduct.quantity;
+
+              let discountText = "";
+              if (c.coupon?.discount_type === "비율") {
+                const rate = c.coupon.discount_rate || 0;
+                const rawDiscount = Math.floor((productPrice * rate) / 100);
+
+                const finalDiscount = c.coupon.max_discount_amount
+                  ? Math.min(rawDiscount, c.coupon.max_discount_amount)
+                  : rawDiscount;
+
+                discountText = `${finalDiscount.toLocaleString()}원 할인`;
+              } else if (c.coupon?.discount_type === "정액") {
+                const amount = c.coupon.discount_amount || 0;
+                discountText = `${amount.toLocaleString()}원 할인`;
+              }
+
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[
+                    styles.couponBox,
+                    selectedCoupons[targetProductKey!] === c.id &&
+                      styles.couponBoxSelected,
+                    Object.values(selectedCoupons).includes(c.id) &&
+                      selectedCoupons[targetProductKey!] !== c.id && {
+                        opacity: 0.4,
+                      },
+                  ]}
+                  disabled={
+                    Object.values(selectedCoupons).includes(c.id) &&
+                    selectedCoupons[targetProductKey!] !== c.id
+                  }
+                  onPress={() => {
+                    if (
+                      Object.values(selectedCoupons).includes(c.id) &&
+                      selectedCoupons[targetProductKey!] !== c.id
+                    ) {
+                      alert("이미 다른 상품에 적용된 쿠폰입니다.");
+                      return;
+                    }
+
+                    setSelectedCoupons((prev) => ({
+                      ...prev,
+                      [targetProductKey!]: c.id,
+                    }));
+                  }}
+                >
+                  <Text style={styles.couponText}>
+                    {c.coupon?.description ?? "쿠폰"}
+                  </Text>
+                  <Text style={styles.couponSubText}>{discountText}</Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+
+          <TouchableOpacity
+            style={{
+              marginTop: 16,
+              padding: 12,
+              alignItems: "center",
+              borderRadius: 8,
+              backgroundColor: "#000",
+            }}
+            onPress={() => {
+              console.log("선택된 쿠폰:", selectedCoupons[targetProductKey!]);
+
+              setCouponModalVisible(false);
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "P-600",
+                padding: 4,
+                fontSize: 16,
+              }}
+            >
+              선택 쿠폰 사용하기
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -526,6 +875,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 5,
+  },
+  couponBox: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+  },
+  couponBoxSelected: {
+    borderColor: "#000",
+  },
+  couponText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  couponSubText: {
+    fontSize: 13,
+    color: "#555",
   },
   row: {
     flexDirection: "row",
@@ -655,5 +1023,11 @@ const styles = StyleSheet.create({
   },
   headerClose: {
     fontSize: 25,
+  },
+  discountedPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FF2D55",
+    marginTop: 4,
   },
 });

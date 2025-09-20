@@ -49,6 +49,12 @@ export type RootStackParamList = {
       quantity: number;
       price: number;
       image: string;
+      option_1_type?: string;
+      option_1_value?: string;
+      option_2_type?: string;
+      option_2_value?: string;
+      option_3_type?: string;
+      option_3_value?: string;
     }[];
   };
   CouponList: undefined;
