@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 import { useUserIdStore } from "./useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 export type Product = {
   id: string;
@@ -19,9 +20,6 @@ type LikeStore = {
   fetchLikedItems: () => Promise<void>;
   toggleLike: (item: Product) => Promise<void>;
 };
-
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
 const useLikeStore = create<LikeStore>((set, get) => ({
   likedItems: [],

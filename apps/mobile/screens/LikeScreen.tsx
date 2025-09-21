@@ -9,13 +9,13 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useCallback } from "react";
 import axios from "axios";
+import { API_URL } from "@env";
 
 export default function LikeScreen() {
   const { likedItems, fetchLikedItems } = useLikeStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userId = useUserIdStore((s) => s.id);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useFocusEffect(
     useCallback(() => {

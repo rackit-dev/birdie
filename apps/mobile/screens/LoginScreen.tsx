@@ -10,9 +10,14 @@ import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
 import { login } from "@react-native-seoul/kakao-login";
 import { useUserIdStore } from "../store/useUserIdStore";
 import axios from "axios";
+import {
+  API_URL,
+  GOOGLE_IOS_CLIENT_ID,
+  GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_WEB_CLIENT_ID,
+} from "@env";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
-const AUTH_ENDPOINT = `${API_BASE}/users/social-login`;
+const AUTH_ENDPOINT = `${API_URL}/users/social-login`;
 
 export default function LoginScreen() {
   const navigation =
@@ -61,7 +66,7 @@ export default function LoginScreen() {
 
     // 2. 유저 프로필 조회 후 zustand 업데이트
     try {
-      const profileRes = await axios.get(`${API_BASE}/users`, {
+      const profileRes = await axios.get(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${sessionToken}` },
       });
       const profile = profileRes.data;
@@ -97,9 +102,9 @@ export default function LoginScreen() {
   };
 
   // 구글
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const webClientId = GOOGLE_WEB_CLIENT_ID;
+  const androidClientId = GOOGLE_ANDROID_CLIENT_ID;
+  const iosClientId = GOOGLE_IOS_CLIENT_ID;
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId,

@@ -20,6 +20,7 @@ import { useUserIdStore } from "../store/useUserIdStore";
 import axios from "axios";
 import Modal from "react-native-modal";
 import { launchImageLibrary } from "react-native-image-picker";
+import { API_URL } from "@env";
 
 export default function QnaPage() {
   const route = useRoute();
@@ -42,8 +43,6 @@ export default function QnaPage() {
   const [images, setImages] = useState<string[]>([]);
 
   const inquiryOptions = ["사이즈", "배송", "재입고", "상품상세문의"];
-
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const handleSubmit = async () => {
     if (!inquiryType || !content) {

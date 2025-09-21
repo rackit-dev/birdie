@@ -4,13 +4,12 @@ import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
 import { useUserIdStore } from "@/store/useUserIdStore";
 import axios from "axios";
+import { API_URL } from "@env";
 
 const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const setUser = useUserIdStore((state) => state.setUser);
   const clearUser = useUserIdStore((s) => s.clearUser);
-
-  const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -22,7 +21,7 @@ const LoadingScreen: React.FC = () => {
 
       if (token) {
         try {
-          const res = await axios.get(`${API_BASE}/users`, {
+          const res = await axios.get(`${API_URL}/users`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 

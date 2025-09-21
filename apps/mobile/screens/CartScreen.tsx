@@ -18,6 +18,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import CustomHeader from "../components/CustomHeader";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Cart">;
 
@@ -54,9 +55,6 @@ export default function CartScreen() {
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteMode, setDeleteMode] = useState<"single" | "multiple">("single");
-
-  const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
-  const IMAGE_URL = `${process.env.EXPO_PUBLIC_API_IMAGE_URL}`;
 
   const userId = useUserIdStore((s) => s.id);
 

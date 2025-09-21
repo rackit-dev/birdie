@@ -11,6 +11,7 @@ import CustomHeader from "../components/CustomHeader";
 import LinearGradient from "react-native-linear-gradient";
 import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
@@ -28,8 +29,6 @@ export default function HomeScreen() {
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
   const userId = useUserIdStore((s) => s.id);
 
   const wrapName = (raw: string) => {

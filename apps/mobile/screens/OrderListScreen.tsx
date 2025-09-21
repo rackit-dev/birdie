@@ -14,6 +14,7 @@ import axios from "axios";
 import Modal from "react-native-modal";
 import CustomHeader from "../components/CustomHeader";
 import { useUserIdStore } from "@/store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 type Props = NativeStackScreenProps<RootStackParamList, "PaymentResult">;
 
@@ -24,8 +25,6 @@ export default function OrderListScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const userId = useUserIdStore((s) => s.id);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useEffect(() => {
     const fetchOrders = async () => {

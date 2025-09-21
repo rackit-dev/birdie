@@ -11,6 +11,7 @@ import * as SecureStore from "expo-secure-store";
 import CustomHeader from "../components/CustomHeader";
 
 import AddressEditModal from "./AddressEditModal";
+import { API_URL } from "@env";
 
 type Address = {
   id: string;
@@ -49,8 +50,6 @@ export default function AddressListModal({
   const [alertButtons, setAlertButtons] = useState<
     { text: string; onPress: () => void; style?: "cancel" | "destructive" }[]
   >([{ text: "확인", onPress: () => setAlertVisible(false) }]);
-
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   const showAlert = (
     title: string,

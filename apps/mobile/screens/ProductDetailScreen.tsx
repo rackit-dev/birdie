@@ -27,6 +27,7 @@ import CustomHeader from "../components/CustomHeader";
 import useLikeStore, { Product } from "@/store/useLikeStore";
 import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 const TABS = ["정보", "추천", "후기", "문의"];
 
@@ -92,8 +93,6 @@ export default function ProductDetail() {
 
   const userId = useUserIdStore((s) => s.id);
   // const name = useUserIdStore((s) => s.name);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   /* 테스트용
   useEffect(() => {

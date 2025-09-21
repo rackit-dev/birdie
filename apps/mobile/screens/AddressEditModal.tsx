@@ -12,6 +12,7 @@ import {
 import * as SecureStore from "expo-secure-store";
 import DaumPostcode from "react-native-daum-postcode";
 import CustomHeader from "../components/CustomHeader";
+import { API_URL } from "@env";
 
 type Address = {
   id: string;
@@ -50,8 +51,6 @@ export default function AddressEditModal({
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
-
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (address) {

@@ -12,6 +12,7 @@ import axios from "axios";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import Modal from "react-native-modal";
 import CustomHeader from "../components/CustomHeader";
+import { API_URL, IMAGE_URL } from "@env";
 
 export default function QnaListScreen() {
   const route = useRoute();
@@ -28,9 +29,6 @@ export default function QnaListScreen() {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
 
   useEffect(() => {
     const fetchInquiries = async () => {

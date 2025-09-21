@@ -8,13 +8,14 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import CustomHeader from "../components/CustomHeader";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL } from "@env";
 
 export default function MyScreen() {
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
   const [cartCount, setCartCount] = useState(0);
   const [couponCount, setCouponCount] = useState(0);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
   const userId = useUserIdStore((s) => s.id);
   const name = useUserIdStore((s) => s.name);
   const clearUser = useUserIdStore((s) => s.clearUser);

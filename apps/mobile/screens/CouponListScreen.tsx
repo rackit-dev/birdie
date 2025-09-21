@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import CustomHeader from "../components/CustomHeader";
 import axios from "axios";
 import { useUserIdStore } from "@/store/useUserIdStore";
+import { API_URL } from "@env";
 
 type CouponDetail = {
   id: string;
@@ -38,7 +39,7 @@ export default function CouponListScreen() {
   const [coupons, setCoupons] = useState<CouponWallet[]>([]);
   const [showInput, setShowInput] = useState(false);
   const [couponCode, setCouponCode] = useState("");
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
   const userId = useUserIdStore((s) => s.id);
   const navigation = useNavigation();
 

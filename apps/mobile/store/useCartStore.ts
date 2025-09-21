@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 import { useUserIdStore } from "./useUserIdStore";
+import { API_URL } from "@env";
 
 type CartState = {
   count: number;
@@ -22,7 +23,7 @@ export const useCartStore = create<CartState>((set) => ({
 
     try {
       set({ loading: true, error: undefined });
-      const API_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;
+
       const res = await axios.get(`${API_URL}/cartitems`, {
         params: { user_id: userId },
       });

@@ -18,6 +18,7 @@ import axios from "axios";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import * as SecureStore from "expo-secure-store";
+import { API_URL } from "@env";
 
 import CustomHeader from "../components/CustomHeader";
 import AddressListModal from "./AddressListModal";
@@ -93,8 +94,6 @@ export default function OrderPaymentScreen() {
   const navigation = useNavigation<PurchaseScreenProps["navigation"]>();
   const route = useRoute<PurchaseScreenProps["route"]>();
   const products = (route.params?.products || []) as Product[];
-
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchUser = async () => {
