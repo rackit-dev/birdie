@@ -388,6 +388,7 @@
 			baseConfigurationReference = 39D180D5370B6E2B3107496E /* Pods-ung26.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ung26/ung26.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -398,6 +399,7 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = ung26/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "영스배드민턴";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -425,11 +427,13 @@
 			baseConfigurationReference = B21B46353572B535CB45850B /* Pods-ung26.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ung26/ung26.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 48Q883LNGP;
 				INFOPLIST_FILE = ung26/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "영스배드민턴";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
