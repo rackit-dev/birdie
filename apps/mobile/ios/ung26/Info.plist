@@ -125,7 +125,7 @@
   <true/>
   <key>NSExceptionDomains</key>
   <dict>
-    <key>13.209.201.52</key>
+    <key>youngsminton.shop</key>
     <dict>
       <key>NSIncludesSubdomains</key>
       <true/>

@@ -1,4 +1,4 @@
-process.env.EXPO_ROUTER_APP_ROOT = "./app";
+// process.env.EXPO_ROUTER_APP_ROOT = "./app";
 
 module.exports = function (api) {
   api.cache(true);
@@ -15,6 +15,14 @@ module.exports = function (api) {
           safe: false,
           allowUndefined: true,
           verbose: false,
+        },
+      ],
+      [
+        "module-resolver",
+        {
+          alias: {
+            "@": "./",
+          },
         },
       ],
     ],
