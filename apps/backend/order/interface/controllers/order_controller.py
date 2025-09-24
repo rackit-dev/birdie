@@ -164,7 +164,7 @@ async def payment_webhook(
     return webhook
 
 
-@router.post("/payment/refund/whole")
+@router.post("/payment/refund/whole", status_code=201)
 @inject
 def payment_refund_whole(
     #current_user: Annotated[CurrentUser, Depends(get_current_user)],

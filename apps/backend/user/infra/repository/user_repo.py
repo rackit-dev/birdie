@@ -78,7 +78,7 @@ class UserRepository(IUserRepository):
                     if key["kid"] == kid:
                         public_key = key
                         break
-                social_response = jwt.decode(social_token, public_key, algorithms=["RS256"], audience="com.ung26.mobile")
+                social_response = jwt.decode(social_token, public_key, algorithms=["RS256"], audience="com.youngs.badminton")
                 if social_response["iss"] not in ["https://appleid.apple.com", "appleid.apple.com"]:
                     raise ValueError
             else:

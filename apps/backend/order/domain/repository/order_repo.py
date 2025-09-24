@@ -158,3 +158,10 @@ class IOrderRepository(metaclass=ABCMeta):
         Find a payment by its merchant ID.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def make_refund(self, order: Order, order_items: list[OrderItem], payment: Payment, refund: Refund):
+        """
+        Atomically cancel order, order items, and refund coupons if needed.
+        """
+        raise NotImplementedError

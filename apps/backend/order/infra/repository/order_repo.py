@@ -10,6 +10,7 @@ from order.domain.order import Coupon as CouponVO
 from order.domain.order import CouponWallet as CouponWalletVO
 from order.domain.order import OrderItem as OrderItemVO
 from order.domain.order import Payment as PaymentVO
+from order.domain.order import Refund as RefundVO
 from order.infra.db_models.order import Order, Coupon, CouponWallet, OrderItem, Payment, Refund
 
 
@@ -280,3 +281,58 @@ class OrderRepository(IOrderRepository):
             if not payment:
                 raise HTTPException(status_code=404, detail="Payment not found")
             return PaymentVO(**row_to_dict(payment))
+
+    def make_refund(self, order: OrderVO, order_items: OrderItemVO, payment: PaymentVO, refund: RefundVO):
+        with SessionLocal() as db:
+            try:
+                # Update Order status to "주문취소"
+                db_order = db.query(Order).filter(Order.id == order.id).first()
+                if not db_order:
+                    raise HTTPException(status_code=404, detail="Order not found")
+                db_order.status = "주문취소"
+                db_order.updated_at = order.updated_at
+                db.add(db_order)
+
+                # Update each OrderItem status to "주문취소"
+                for item in order_items:
+                    db_item = db.query(OrderItem).filter(OrderItem.id == item.id).first()
+                    if not db_item:
+                        raise HTTPException(status_code=404, detail=f"OrderItem {item.id} not found")
+                    db_item.status = "주문취소"
+                    db_item.updated_at = item.updated_at
+                    db.add(db_item)
+
+                    # If OrderItem has a coupon_wallet_id, mark the CouponWallet as unused
+                    if item.coupon_wallet_id:
+                        db_coupon_wallet = db.query(CouponWallet).filter(CouponWallet.id == item.coupon_wallet_id).first()
+                        if db_coupon_wallet:
+                            db_coupon_wallet.is_used = False
+                            db_coupon_wallet.used_at = None
+                            db_coupon_wallet.updated_at = item.updated_at
+                            db.add(db_coupon_wallet)
+
+                db_payment = db.query(Payment).filter(Payment.id == payment.id).first()
+                if not db_payment:
+                    raise HTTPException(status_code=404, detail="Payment not found")
+                db_payment.status = "취소"
+                db_payment.updated_at = payment.updated_at
+                db.add(db_payment)
+
+                # Create a Refund record
+                new_refund = Refund(
+                    id=refund.id,
+                    order_id=refund.order_id,
+                    payment_id=refund.payment_id,
+                    merchant_id=refund.merchant_id,
+                    status=refund.status,
+                    amount=refund.amount,
+                    restore_point_amount=refund.restore_point_amount,
+                    memo=refund.memo,
+                    created_at=refund.created_at,
+                    updated_at=refund.updated_at,
+                )
+                db.add(new_refund)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=str(e))
