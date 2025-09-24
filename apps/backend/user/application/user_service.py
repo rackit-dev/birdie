@@ -89,7 +89,7 @@ class UserService:
                     name=generate_random_name(),
                     provider=provider,
                     provider_id=social_response["sub"],
-                    email=social_response["email"],
+                    email=social_response.get("email", None),
                     password=None,
                     memo=None,
                     created_at=now,

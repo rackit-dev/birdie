@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import List
+from typing import Annotated, List
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
 from containers import Container
+from common.auth import CurrentUser, get_current_user, get_admin_user
 from order.application.order_service import OrderService
 
 router = APIRouter(prefix="/orders")
@@ -91,6 +92,14 @@ class CreateOrderRequest(BaseModel):
     items: List[CreateOrderItemRequest]
 
 
+class CreateRefundRequest(BaseModel):
+    order_id: str = Field(min_length=10, max_length=36)
+    payment_id: str = Field(min_length=10, max_length=36)
+    merchant_id: str = Field(min_length=10, max_length=128)
+    amount: int = Field(ge=0, le=999999999)
+    memo: str | None = Field(default="주문 전 취소", max_length=100)
+
+
 @router.post("", response_model=OrderResponse)
 @inject
 def create_order(
@@ -153,6 +162,23 @@ async def payment_webhook(
 ):
     webhook = await order_service.handle_webhook(request, is_test=False)
     return webhook
+
+
+@router.post("/payment/refund/whole", status_code=201)
+@inject
+def payment_refund_whole(
+    #current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    request: CreateRefundRequest,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    refund = order_service.refund_payment(
+        order_id=request.order_id,
+        payment_id=request.payment_id,
+        merchant_id=request.merchant_id,
+        amount=request.amount,
+        memo=request.memo,
+    )
+    return refund
 
 
 """

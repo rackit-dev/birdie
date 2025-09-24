@@ -6,7 +6,7 @@ from ulid import ULID
 import portone_server_sdk as portone
 from dateutil import parser
 
-from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment
+from order.domain.order import Order, Coupon, CouponWallet, OrderItem, Payment, Refund
 from order.domain.repository.order_repo import IOrderRepository
 from config import get_settings
 
@@ -300,7 +300,44 @@ class OrderService:
                 self.order_repo.save_payment(payment)
             except Exception as e:
                 raise HTTPException(status_code=400, detail=str(e))
-        elif isinstance(webhook, portone.webhook.WebhookTransactionCancelled): # 결제 취소
-            pass
         else:
             return {"status": "ignored", "message": "Unhandled webhook type"}
+
+    def refund_payment(self, order_id: str, payment_id: str, merchant_id: str, amount: int, memo: str | None) -> Refund:
+        order = self.order_repo.find_by_id(order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+
+        payment = self.order_repo.find_payment_by_id(payment_id)
+        if not payment or payment.status != "성공":
+            raise HTTPException(status_code=404, detail="Payment not found")
+        
+        if amount <= 0 or amount != payment.amount:
+            raise HTTPException(status_code=400, detail="Invalid refund amount")
+
+        try:
+            response = self.portone_client.cancel_payment(
+                payment_id=merchant_id,
+                amount=amount,
+                reason=memo,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        if isinstance(response.cancellation, portone.payment.SucceededPaymentCancellation): # 취소 성공
+            order_items = self.order_repo.get_order_items(order_id)
+            now = datetime.now(timezone.utc)
+            refund = Refund(
+                id=self.ulid.generate(),
+                order_id=order_id,
+                payment_id=payment_id,
+                merchant_id=merchant_id,
+                status="완료",
+                amount=amount,
+                restore_point_amount=0,
+                created_at=now,
+                updated_at=now,
+                memo=memo,
+            )
+            self.order_repo.make_refund(order, order_items, payment, refund)
+            return refund

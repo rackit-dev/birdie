@@ -104,7 +104,7 @@ class Payment(Base):
     order_id = mapped_column(ForeignKey("Orders.id"), nullable=False, unique=True)
     merchant_id = mapped_column(String(128), nullable=False)
 
-    status = mapped_column(Enum("대기중", "성공", "실패", name="status"), default="대기중")
+    status = mapped_column(Enum("대기중", "성공", "실패", "취소", name="status"), default="대기중")
     method = mapped_column(String(16), nullable=False)
     amount = mapped_column(Numeric(10, 0), nullable=False)
     paid_at = mapped_column(DateTime, nullable=True)
@@ -126,3 +126,19 @@ class PointTransaction(Base):
 
     created_at = mapped_column(DateTime, nullable=False)
     updated_at = mapped_column(DateTime, nullable=False)
+
+
+class Refund(Base):
+    __tablename__ = "Refund"
+
+    id = mapped_column(String(36), primary_key=True)
+    order_id = mapped_column(String(36), nullable=False)
+    payment_id = mapped_column(ForeignKey("Payment.id"), nullable=False)
+    merchant_id = mapped_column(String(128), nullable=False)
+    status = mapped_column(Enum("요청", "완료", "거부", name="status"), default="요청", nullable=False)
+    amount = mapped_column(Numeric(10, 0), nullable=False)
+    restore_point_amount = mapped_column(Numeric(10, 0), nullable=False)
+
+    created_at = mapped_column(DateTime, nullable=False)
+    updated_at = mapped_column(DateTime, nullable=False)
+    memo = mapped_column(Text, nullable=True)
