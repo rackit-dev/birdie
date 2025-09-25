@@ -11,6 +11,7 @@ import CustomHeader from "../components/CustomHeader";
 import LinearGradient from "react-native-linear-gradient";
 import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 const shuffleArray = (array: Product[]) => {
   return array.sort(() => Math.random() - 0.5);
@@ -28,8 +29,6 @@ export default function HomeScreen() {
 
   type Navigation = NativeStackNavigationProp<RootStackParamList, "Main">;
   const navigation = useNavigation<Navigation>();
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
   const userId = useUserIdStore((s) => s.id);
 
   const wrapName = (raw: string) => {
@@ -59,7 +58,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (userId) {
-        fetchCount(userId);
+        fetchCount();
         fetchLikedItems();
       }
     }, [fetchCount, fetchLikedItems, userId])
@@ -87,6 +86,7 @@ export default function HomeScreen() {
             image: {
               uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
             },
+            isActive: item.is_active,
           }));
 
           const getRandomSample = (array: Product[], size: number) => {
@@ -116,6 +116,7 @@ export default function HomeScreen() {
             priceOriginal: 49000,
             discount: 20,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
           {
             id: "dummy2",
@@ -125,6 +126,7 @@ export default function HomeScreen() {
             priceOriginal: 99000,
             discount: 30,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
           {
             id: "dummy3",
@@ -134,6 +136,7 @@ export default function HomeScreen() {
             priceOriginal: 29000,
             discount: 0,
             image: require("../assets/images/items/shoes1.jpg"),
+            isActive: true,
           },
         ];
 
@@ -189,9 +192,9 @@ export default function HomeScreen() {
               contentContainerStyle={styles.imageGrid}
               renderItem={({ item }) => (
                 <Pressable
-                  onPress={() =>
-                    navigation.navigate("ProductDetail", { id: item.id })
-                  }
+                  onPress={() => {
+                    navigation.navigate("ProductDetail", { id: item.id });
+                  }}
                   style={styles.productContainer}
                 >
                   <View style={{ position: "relative" }}>
@@ -207,6 +210,45 @@ export default function HomeScreen() {
                         );
                       }}
                     />
+
+                    {!item.isActive && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 5,
+                          left: 5,
+                          backgroundColor: "rgba(0,0,0,0.6)",
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 12,
+                            fontFamily: "P-500",
+                          }}
+                        >
+                          품절
+                        </Text>
+                      </View>
+                    )}
+
+                    {!item.isActive && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: "rgba(255,255,255,0.5)",
+                          borderRadius: 8,
+                        }}
+                      />
+                    )}
+
                     <Pressable
                       onPress={() => {
                         if (userId) {
@@ -363,13 +405,13 @@ export default function HomeScreen() {
               marginTop: 10,
             }}
           >
-            <Text style={{ marginTop: 10, fontFamily: "P-Bold", fontSize: 16 }}>
+            <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
               고객센터 1588-1588
             </Text>
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "#B0B0B0",
               }}
@@ -378,7 +420,7 @@ export default function HomeScreen() {
             </Text>
             <Text
               style={{
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "#B0B0B0",
               }}
@@ -388,7 +430,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -397,7 +439,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 15,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -415,7 +457,7 @@ export default function HomeScreen() {
             />
             <Text
               style={{
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -425,7 +467,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 25,
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -444,7 +486,7 @@ export default function HomeScreen() {
             />
             <Text
               style={{
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -454,7 +496,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 marginTop: 20,
-                fontFamily: "P-Bold",
+                fontFamily: "P-500",
                 fontSize: 14,
               }}
             >
@@ -464,7 +506,7 @@ export default function HomeScreen() {
               style={{
                 marginTop: 20,
                 marginRight: 20,
-                fontFamily: "P-Medium",
+                fontFamily: "P-500",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -523,8 +565,8 @@ const styles = StyleSheet.create({
     pointerEvents: "none",
   },
   sloganText: {
-    fontFamily: "P-Bold",
-    fontSize: 28,
+    fontFamily: "P-600",
+    fontSize: 30,
     color: "#fff",
     textAlign: "left",
     textShadowColor: "rgba(45, 45, 45, 0.6)",
@@ -537,7 +579,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   font: {
-    fontFamily: "P-Extra-Bold",
+    fontFamily: "P-700",
     fontSize: 24,
     marginBottom: 10,
   },
@@ -561,22 +603,21 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   brandText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
-    color: "#333",
     marginVertical: 3,
   },
   nameText: {
-    fontFamily: "P-regular",
+    fontFamily: "P-500",
     fontSize: 14,
     marginBottom: 4,
   },
   priceText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 14,
   },
   discountText: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-700",
     fontSize: 14,
     color: "#FF2D55",
   },

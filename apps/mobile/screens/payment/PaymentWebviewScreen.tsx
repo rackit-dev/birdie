@@ -11,7 +11,6 @@ export default function PaymentWebviewScreen() {
   const navigation = useNavigation<Props["navigation"]>();
   const route = useRoute<Props["route"]>();
   const request = route.params.params;
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: "center" }}>

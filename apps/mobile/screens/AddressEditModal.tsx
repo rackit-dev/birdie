@@ -8,11 +8,11 @@ import {
   ScrollView,
   Modal,
   SafeAreaView,
-  Alert,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import DaumPostcode from "react-native-daum-postcode";
 import CustomHeader from "../components/CustomHeader";
+import { API_URL } from "@env";
 
 type Address = {
   id: string;
@@ -30,7 +30,7 @@ type Address = {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSaved: () => void; // 저장 후 목록 새로고침
+  onSaved: () => void;
   address: Address | null;
 };
 
@@ -48,7 +48,9 @@ export default function AddressEditModal({
   const [orderMemo, setOrderMemo] = useState("");
   const [showPostcode, setShowPostcode] = useState(false);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
     if (address) {
@@ -61,9 +63,15 @@ export default function AddressEditModal({
     }
   }, [address]);
 
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   const handleSave = async () => {
     if (!zipcode || !line1 || !name || !phone) {
-      Alert.alert("필수 입력", "우편번호, 주소, 수령인, 휴대폰은 필수입니다.");
+      showAlert("필수 입력", "우편번호, 주소, 수령인, 휴대폰은 필수입니다.");
       return;
     }
     try {
@@ -97,7 +105,7 @@ export default function AddressEditModal({
       onClose();
     } catch (err) {
       console.error("주소 수정 실패:", err);
-      Alert.alert("오류", "주소 수정 중 문제가 발생했습니다.");
+      showAlert("오류", "주소 수정 중 문제가 발생했습니다.");
     }
   };
 
@@ -130,7 +138,12 @@ export default function AddressEditModal({
               style={styles.zipBtn}
               onPress={() => setShowPostcode(true)}
             >
-              <Text style={{ fontFamily: "P-Medium", color: "#fff" }}>
+              <Text
+                style={{
+                  fontFamily: "P-500",
+                  color: "#fff",
+                }}
+              >
                 우편번호 찾기
               </Text>
             </TouchableOpacity>
@@ -205,6 +218,23 @@ export default function AddressEditModal({
             />
           </SafeAreaView>
         </Modal>
+
+        <Modal visible={alertVisible} transparent animationType="fade">
+          <View style={styles.alertOverlay}>
+            <View style={styles.alertBox}>
+              {alertTitle ? (
+                <Text style={styles.alertTitle}>{alertTitle}</Text>
+              ) : null}
+              <Text style={styles.alertMessage}>{alertMessage}</Text>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setAlertVisible(false)}
+              >
+                <Text style={styles.alertButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -249,7 +279,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "P-500",
   },
   postcodeHeader: {
     height: 40,
@@ -265,5 +295,40 @@ const styles = StyleSheet.create({
   headerClose: {
     fontSize: 25,
     fontFamily: "P-600",
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertBox: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    width: "75%",
+    alignItems: "center",
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontFamily: "P-500",
+    marginBottom: 10,
+  },
+  alertMessage: {
+    fontSize: 16,
+    fontFamily: "P-500",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  alertButton: {
+    backgroundColor: "black",
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+  },
+  alertButtonText: {
+    color: "white",
+    fontFamily: "P-500",
+    fontSize: 16,
   },
 });

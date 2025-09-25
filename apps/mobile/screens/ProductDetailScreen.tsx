@@ -13,10 +13,12 @@ import {
   TouchableOpacity,
   Dimensions,
   useWindowDimensions,
+  FlatList,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,41 +27,19 @@ import CustomHeader from "../components/CustomHeader";
 import useLikeStore, { Product } from "@/store/useLikeStore";
 import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 const TABS = ["정보", "추천", "후기", "문의"];
-const OPTIONS = ["230mm", "240mm", "250mm", "260mm", "270mm", "280mm"];
-const mockQnA = [
-  {
-    category: "상품상세문의",
-    title: "끊어짐",
-    content: "우포스 오리지널 끊어짐 이슈가 많은데 보완됐나요?",
-    user: "gse***",
-    date: "25.06.22",
-    answered: false,
-    secret: false,
-  },
-  {
-    category: "상품상세문의",
-    title: "문의 입니다.",
-    content: "박스에 풀리 씌워져 왔는데 정상인가요?",
-    user: "yu1***",
-    date: "25.06.13",
-    answered: true,
-    secret: false,
-    answer: "안녕하세요 우포스입니다. 일부 사이즈는 신형박스로 출고 중입니다.",
-    answerUser: "우포스 담당자",
-    answerDate: "25.06.16",
-  },
-  {
-    category: "배송",
-    title: "상품 관련 문의입니다.",
-    content: "",
-    user: "jim***",
-    date: "25.06.07",
-    answered: true,
-    secret: true,
-  },
-];
+
+type ProductOption = {
+  id: string;
+  product_id: string;
+  product_option_type_id: string;
+  option: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export default function ProductDetail() {
   const route = useRoute();
@@ -69,24 +49,77 @@ export default function ProductDetail() {
   const [currentTab, setCurrentTab] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(OPTIONS[0]);
-  const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const [optionTypes, setOptionTypes] = useState<any[]>([]);
+  const [options, setOptions] = useState<Record<string, ProductOption[]>>({});
+  const [selected, setSelected] = useState<
+    Record<string, { value: string; id: string; typeId: string }>
+  >({});
+
+  const [selectedOptions, setSelectedOptions] = useState<
+    {
+      key: string; // "사이즈: 235|색상: 블랙"
+      label: string; // "235 / 블랙"
+      quantity: number;
+      price: number;
+      optionType1Id: string;
+      option1Id: string;
+      optionType2Id?: string;
+      option2Id?: string;
+    }[]
+  >([]);
+  const [isOptionOpen, setIsOptionOpen] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
-  const [quantity, setQuantity] = useState(1);
   const [qtyAlertVisible, setQtyAlertVisible] = useState(false);
-  const [pendingQty, setPendingQty] = useState<number>(1);
   const [alreadyInCartAlert, setAlreadyInCartAlert] = useState(false);
   const [cartSuccessVisible, setCartSuccessVisible] = useState(false);
   const [detailImages, setDetailImages] = useState<string[]>([]);
   const { width: screenWidth } = useWindowDimensions();
   const [imageHeights, setImageHeights] = useState<number[]>([]);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewImages, setReviewImages] = useState<Record<string, string[]>>(
+    {}
+  );
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedReviewImages, setSelectedReviewImages] = useState<string[]>(
+    []
+  );
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [inquiryCount, setInquiryCount] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const fetchCartCount = useCartStore((s) => s.fetchCount);
   const invalidateCart = useCartStore((s) => s.invalidate);
 
   const userId = useUserIdStore((s) => s.id);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
+  // const name = useUserIdStore((s) => s.name);
+
+  /* 테스트용
+  useEffect(() => {
+    if (!product || !userId) return;
+
+    console.log("리뷰 POST에 필요한 값 확인");
+    console.log("user_id:", userId);
+    console.log("user_name:", name);
+    console.log("product_id:", product.id);
+  }, [product, userId]); */
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const yy = String(d.getFullYear()).slice(2);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yy}.${mm}.${dd}`;
+  };
+
+  const buildOptionPayload = () => {
+    const payload: any = {};
+    optionTypes.forEach((t, idx) => {
+      payload[`option_${idx + 1}_type`] = t.option_type;
+      payload[`option_${idx + 1}_value`] = selected[t.option_type] ?? null;
+    });
+    return payload;
+  };
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -105,6 +138,198 @@ export default function ProductDetail() {
       }
     }, [fetchLikedItems, fetchCartCount])
   );
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/products/reviews/by_product`, {
+          params: { product_id: id },
+        });
+        const list = res.data.product_reviews || [];
+
+        setReviews(list);
+
+        const imagesMap: Record<string, string[]> = {};
+
+        for (const rev of list) {
+          const imgs: string[] = [];
+
+          for (let idx = 1; idx <= 5; idx++) {
+            const url = `${IMAGE_URL}/reviews/${rev.id}/img_${idx}.png`;
+            try {
+              const head = await axios.head(url);
+
+              if (head.status === 200) {
+                imgs.push(url);
+              } else {
+                break;
+              }
+            } catch (err: any) {
+              console.log("요청 실패:", url, err.message);
+              break;
+            }
+          }
+
+          imagesMap[rev.id] = imgs;
+        }
+        setReviewImages(imagesMap);
+      } catch (err) {
+        console.error("리뷰 불러오기 실패:", err);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
+  // 이름 마스킹 함수
+  const maskName = (name: string) => {
+    if (!name) return "";
+    return name[0] + "**";
+  };
+
+  useEffect(() => {
+    const fetchInquiries = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/users/inquiry/by_product`, {
+          params: { product_id: id },
+        });
+        const list = res.data.inquiries || [];
+
+        const imagesMap: Record<string, string[]> = {};
+        for (const inq of list) {
+          const imgs: string[] = [];
+          for (let idx = 1; idx <= 5; idx++) {
+            const url = `${IMAGE_URL}/inquiries/${inq.id}/img_${idx}.png`;
+            try {
+              const head = await axios.head(url);
+              if (head.status === 200) {
+                imgs.push(url);
+              } else {
+                break;
+              }
+            } catch {
+              break;
+            }
+          }
+          imagesMap[inq.id] = imgs;
+        }
+
+        const withImages = list.map((inq: any) => ({
+          ...inq,
+          images: imagesMap[inq.id] || [],
+        }));
+
+        setInquiries(withImages);
+        setInquiryCount(res.data.total_count || 0);
+      } catch (err) {
+        console.error("문의 불러오기 실패:", err);
+      }
+    };
+
+    if (currentTab === 3) {
+      fetchInquiries();
+    }
+  }, [id, currentTab]);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/products/option_types`, {
+          params: { product_id: id },
+        });
+        const types = res.data.product_option_types;
+        setOptionTypes(types);
+
+        const optionValues: Record<string, ProductOption[]> = {};
+        for (const t of types) {
+          const optRes = await axios.get(`${API_URL}/products/options`, {
+            params: { product_id: id, product_option_type_id: t.id },
+          });
+
+          optionValues[t.option_type] = optRes.data.product_options;
+        }
+        setOptions(optionValues);
+      } catch (err) {
+        console.error("옵션 불러오기 실패", err);
+      }
+    };
+    fetchOptions();
+  }, [id]);
+
+  const handleSelectOption = (
+    optionType: string,
+    optionValue: string,
+    optionId: string,
+    typeId: string
+  ) => {
+    setSelected((prev) => {
+      const updated = {
+        ...prev,
+        [optionType]: { id: optionId, typeId, value: optionValue },
+      };
+
+      // 옵션이 1개짜리 상품이면 즉시 반영
+      if (optionTypes.length === 1) {
+        const key = `${updated[optionType].value}`;
+        setSelectedOptions((prevOpts) => {
+          if (prevOpts.some((o) => o.key === key)) return prevOpts;
+          return [
+            ...prevOpts,
+            {
+              key,
+              optionType1Id: updated[optionType].typeId,
+              option1Id: updated[optionType].id,
+              label: updated[optionType].value,
+              quantity: 1,
+              price: product.price_sell,
+            },
+          ];
+        });
+        return {}; // 초기화
+      }
+
+      // 옵션이 2개 이상일 경우: 모든 옵션이 다 선택되면 반영
+      if (Object.keys(updated).length === optionTypes.length) {
+        const key = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join("-");
+        const label = optionTypes
+          .map((t) => updated[t.option_type].value)
+          .join(" / ");
+
+        setSelectedOptions((prevOpts) => {
+          if (prevOpts.some((o) => o.key === key)) return prevOpts;
+          return [
+            ...prevOpts,
+            {
+              key,
+              label,
+              quantity: 1,
+              price: product.price_sell,
+              optionType1Id: updated[optionTypes[0].option_type].typeId,
+              option1Id: updated[optionTypes[0].option_type].id,
+              optionType2Id: updated[optionTypes[1].option_type].typeId,
+              option2Id: updated[optionTypes[1].option_type].id,
+            },
+          ];
+        });
+        return {}; // 초기화
+      }
+
+      return updated;
+    });
+  };
+
+  const updateQuantity = (key: string, delta: number) => {
+    setSelectedOptions((prev) =>
+      prev.map((o) =>
+        o.key === key ? { ...o, quantity: Math.max(1, o.quantity + delta) } : o
+      )
+    );
+  };
+
+  const removeOption = (key: string) => {
+    setSelectedOptions((prev) => prev.filter((o) => o.key !== key));
+  };
 
   const handleDeleteLike = async (product: Product) => {
     try {
@@ -244,124 +469,282 @@ export default function ProductDetail() {
       case 2:
         return (
           <View style={styles.tabContent}>
-            <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 10 }}>
-              96%가 만족했어요
-            </Text>
-
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{ fontWeight: "700", fontSize: 16, marginBottom: 6 }}
-              >
-                만족해요{" "}
-                <Text style={{ color: "red", fontSize: 13 }}>BEST</Text>
-              </Text>
-              <Text style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
-                감튀조아 🌟 Yellow · 2025.05.14
-              </Text>
-
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {[1, 2, 3, 4].map((_, idx) => (
-                  <View
-                    key={idx}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 10, marginBottom: 20 }}
+            >
+              {reviews
+                .flatMap((rev) => reviewImages[rev.id] || [])
+                .slice(0, 6) // 최대 6장까지만
+                .map((imgUrl, i) => (
+                  <Image
+                    key={i}
+                    source={{ uri: imgUrl }}
                     style={{
                       width: 80,
                       height: 80,
-                      backgroundColor: "#ddd",
                       borderRadius: 6,
                       marginRight: 10,
                     }}
                   />
                 ))}
-              </ScrollView>
+            </ScrollView>
 
-              <View style={{ marginTop: 15 }}>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>옵션</Text> ivory · black
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>체형</Text> 164cm · 58kg
-                </Text>
-                <Text style={{ fontSize: 14, marginBottom: 4 }}>
-                  <Text style={{ fontWeight: "600" }}>사이즈</Text> 잘 맞아요
-                </Text>
-              </View>
-
-              <Text style={{ marginTop: 12, fontSize: 14 }}>
-                아직 신어보진 못했는데 신으면 귀여워질 거 같은 느낌입니다
+            {reviews.length === 0 ? (
+              <Text
+                style={{
+                  color: "#666",
+                  textAlign: "center",
+                  marginTop: 20,
+                  marginBottom: 20,
+                }}
+              >
+                아직 등록된 후기가 없습니다.
               </Text>
-            </View>
+            ) : (
+              reviews.map((rev) => (
+                <View
+                  key={rev.id}
+                  style={{
+                    marginBottom: 20,
+                    borderBottomColor: "#eee",
+                    borderBottomWidth: 1,
+                    paddingBottom: 15,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View style={{ flex: 1, marginRight: 10 }}>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Text style={{ fontFamily: "P-600", marginRight: 8 }}>
+                        {maskName(rev.user_name)}
+                      </Text>
+                      {[...Array(5)].map((_, i) => (
+                        <FontAwesome
+                          key={i}
+                          name={i < rev.rating ? "star" : "star-o"}
+                          size={14}
+                          color="#FFD700"
+                          style={{ marginRight: 2 }}
+                        />
+                      ))}
+                    </View>
+
+                    <Text
+                      style={{
+                        marginTop: 8,
+                        fontFamily: "P-500",
+                        fontSize: 14,
+                        color: "#333",
+                      }}
+                    >
+                      {rev.content}
+                    </Text>
+                  </View>
+
+                  {reviewImages[rev.id]?.[0] && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedReviewImages(reviewImages[rev.id] || []);
+                        setImageModalVisible(true);
+                      }}
+                    >
+                      <Image
+                        source={{ uri: reviewImages[rev.id][0] }}
+                        style={{ width: 80, height: 80, borderRadius: 6 }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            )}
           </View>
         );
 
       case 3:
         return (
           <View style={styles.tabContent}>
-            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 10 }}>
-              상품문의 ({mockQnA.length})
-            </Text>
-
-            {mockQnA.map((item, index) => (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 18, fontFamily: "P-600" }}>
+                상품문의 ({inquiryCount})
+              </Text>
               <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  if (!item.secret) {
+                onPress={() =>
+                  navigation.navigate("QnaList", {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price_sell,
+                    image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                  })
+                }
+              >
+                <Text
+                  style={{
+                    fontFamily: "P-400",
+                    fontSize: 14,
+                    color: "#666",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  더보기
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {inquiries.length === 0 ? (
+              <Text
+                style={{ color: "#666", textAlign: "center", marginTop: 20 }}
+              >
+                아직 등록된 문의가 없습니다.
+              </Text>
+            ) : (
+              inquiries.slice(0, 3).map((item, index) => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => {
                     const updated = [...expandedItems];
                     updated[index] = !updated[index];
                     setExpandedItems(updated);
-                  }
-                }}
-                style={{
-                  paddingVertical: 12,
-                  borderBottomColor: "#eee",
-                  borderBottomWidth: 1,
-                }}
-              >
-                <Text style={{ color: "#666", fontSize: 12 }}>
-                  {item.category}
-                </Text>
-                <Text style={{ fontWeight: "600", fontSize: 15 }}>
-                  {item.secret ? "🔒 상품 관련 문의입니다." : item.title}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
-                  {item.answered ? "답변완료" : "답변예정"} · {item.user} ·{" "}
-                  {item.date}
-                </Text>
-
-                {expandedItems[index] && !item.secret && (
+                  }}
+                  style={styles.inquiryItem}
+                >
                   <View
                     style={{
-                      marginTop: 12,
-                      backgroundColor: "#f7f7f7",
-                      padding: 12,
-                      borderRadius: 6,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
                     }}
                   >
-                    <Text style={{ color: "#444", fontSize: 14 }}>
-                      {item.content}
-                    </Text>
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                      <Text
+                        style={{
+                          fontFamily: "P-500",
+                          color: "#666",
+                          fontSize: 13,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {item.type}
+                      </Text>
+                      <Text
+                        style={{ fontFamily: "P-500", fontSize: 16 }}
+                        numberOfLines={1}
+                      >
+                        {item.content}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "P-500",
+                          fontSize: 13,
+                          color: "#999",
+                          marginTop: 4,
+                        }}
+                      >
+                        {item.status === "PENDING" ? "답변 대기" : "답변 완료"}{" "}
+                        · {formatDate(item.created_at)}
+                      </Text>
+                    </View>
 
-                    {item.answer && (
-                      <View style={{ marginTop: 10 }}>
-                        <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                          답변. {item.answerUser}
-                        </Text>
-                        <Text style={{ color: "#444", fontSize: 14 }}>
-                          {item.answer}
-                        </Text>
-                        <Text
-                          style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}
-                        >
-                          {item.answerDate}
-                        </Text>
-                      </View>
+                    {item.images && item.images.length > 0 && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedReviewImages(item.images); // 전체 배열 넣어줌
+                          setImageModalVisible(true);
+                        }}
+                      >
+                        <Image
+                          source={{ uri: item.images[0] }}
+                          style={{ width: 80, height: 80, borderRadius: 6 }}
+                        />
+                      </TouchableOpacity>
                     )}
                   </View>
-                )}
-              </TouchableOpacity>
-            ))}
+
+                  {expandedItems[index] && (
+                    <View
+                      style={{
+                        marginTop: 12,
+                        backgroundColor: "#f7f7f7",
+                        padding: 12,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "P-400",
+                          color: "#333",
+                          fontSize: 16,
+                          marginTop: 8,
+                          marginBottom: 8,
+                        }}
+                      >
+                        {item.content}
+                      </Text>
+
+                      {item.answer && (
+                        <>
+                          <View
+                            style={{
+                              height: 1,
+                              backgroundColor: "#eee",
+                              marginVertical: 10,
+                            }}
+                          />
+                          <View>
+                            <Text
+                              style={{
+                                fontFamily: "P-600",
+                                fontSize: 16,
+                                marginTop: 8,
+                                marginBottom: 4,
+                              }}
+                            >
+                              답변
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: "P-400",
+                                color: "#444",
+                                fontSize: 16,
+                              }}
+                            >
+                              {item.answer}
+                            </Text>
+                            <Text
+                              style={{
+                                color: "#aaa",
+                                fontSize: 12,
+                                marginTop: 4,
+                              }}
+                            >
+                              {formatDate(item.updated_at)}
+                            </Text>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
 
             <TouchableOpacity
-              onPress={() => navigation.navigate("Qna", { id })}
+              onPress={() =>
+                navigation.navigate("Qna", {
+                  id: product.id,
+                  name: product.name,
+                  price: product.price_sell,
+                  image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                })
+              }
               style={{
                 marginTop: 20,
                 borderWidth: 1,
@@ -371,7 +754,7 @@ export default function ProductDetail() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontWeight: "600", fontSize: 16 }}>
+              <Text style={{ fontFamily: "P-600", fontSize: 16 }}>
                 판매자에게 문의하기
               </Text>
             </TouchableOpacity>
@@ -399,14 +782,14 @@ export default function ProductDetail() {
             alignItems: "center",
           }}
         >
-          <Text style={{ color: "white", fontSize: 14, fontWeight: "500" }}>
+          <Text style={{ color: "white", fontSize: 14, fontFamily: "P-500" }}>
             장바구니에 담겼습니다.
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
             <Text
               style={{
                 color: "white",
-                fontWeight: "700",
+                fontFamily: "P-600",
                 fontSize: 14,
                 textDecorationLine: "underline",
               }}
@@ -444,13 +827,24 @@ export default function ProductDetail() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingTop: 10,
+                paddingBottom: 10,
               }}
             >
-              <Text style={{ color: "orange", fontSize: 20 }}>★</Text>
-              <Text style={styles.smallText}>4.6</Text>
+              <Text
+                style={{ color: "orange", fontFamily: "P-500", fontSize: 20 }}
+              >
+                ★
+              </Text>
+              <Text style={styles.smallText}>
+                {reviews.length > 0
+                  ? (
+                      reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+                      reviews.length
+                    ).toFixed(1)
+                  : "0.0"}
+              </Text>
               <Text style={[styles.smallText, { marginLeft: 8 }]}>
-                후기 320개
+                후기 {reviews.length}개
               </Text>
             </View>
             {product.discount_rate > 0 && (
@@ -535,125 +929,175 @@ export default function ProductDetail() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.buyButton}
+          style={[
+            styles.buyButton,
+            !product.is_active && { backgroundColor: "#ccc" },
+          ]}
+          disabled={!product.is_active}
           onPress={() => {
-            setShowModal(true);
+            if (product.is_active) {
+              setShowModal(true);
+            }
           }}
         >
-          <Text style={styles.buyText}>구매하기</Text>
+          <Text style={styles.buyText}>
+            {product.is_active ? "구매하기" : "품절"}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <Modal
         isVisible={showModal}
         onBackdropPress={() => setShowModal(false)}
-        swipeDirection="down"
-        onSwipeComplete={() => setShowModal(false)}
+        propagateSwipe
         backdropTransitionOutTiming={0}
         style={styles.modal}
       >
         <View style={styles.modalContent}>
           <View style={styles.dragHandle} />
-          <Text style={styles.sectionTitle}>옵션 선택</Text>
 
           <View>
-            <TouchableOpacity
-              style={[
-                styles.dropdownBox,
-                isOptionOpen && styles.dropdownBoxExpanded,
-              ]}
-              onPress={() => setIsOptionOpen(!isOptionOpen)}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={styles.dropdownText}>{selectedOption}</Text>
-                <Text>
-                  {isOptionOpen ? (
-                    <Ionicons name="chevron-up" size={18} color="black" />
-                  ) : (
-                    <Ionicons name="chevron-down" size={18} color="black" />
-                  )}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            {optionTypes.map((t) => (
+              <View key={t.id}>
+                <TouchableOpacity
+                  style={styles.dropdownBox}
+                  onPress={() =>
+                    setIsOptionOpen((prev) => ({
+                      ...prev,
+                      [t.option_type]: !prev[t.option_type],
+                    }))
+                  }
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>
+                      {selected[t.option_type]?.value || "옵션 선택"}
+                    </Text>
 
-            {isOptionOpen && (
-              <View style={styles.optionScrollContainer}>
-                <ScrollView>
-                  {OPTIONS.map((opt, index) => (
-                    <TouchableOpacity
-                      key={opt}
-                      style={[
-                        styles.optionItem,
-                        opt === selectedOption && styles.optionItemSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedOption(opt);
+                    <Ionicons
+                      name={
+                        isOptionOpen[t.option_type]
+                          ? "chevron-up"
+                          : "chevron-down"
+                      }
+                      size={18}
+                      color="black"
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {isOptionOpen[t.option_type] && (
+                  <View style={styles.optionScrollContainer}>
+                    <FlatList
+                      data={options[t.option_type] || []}
+                      keyExtractor={(opt) => opt.id}
+                      nestedScrollEnabled
+                      style={{ maxHeight: 250 }}
+                      renderItem={({ item: opt }) => {
+                        const disabled = !opt.is_active;
+                        return (
+                          <TouchableOpacity
+                            key={opt.id}
+                            style={[
+                              styles.optionItem,
+                              selected[t.option_type]?.value === opt.option &&
+                                styles.optionItemSelected,
+                              disabled && { backgroundColor: "#f0f0f0" },
+                            ]}
+                            disabled={disabled}
+                            onPress={() => {
+                              handleSelectOption(
+                                t.option_type,
+                                opt.option,
+                                opt.id,
+                                t.id
+                              );
+                              setIsOptionOpen((prev) => ({
+                                ...prev,
+                                [t.option_type]: false,
+                              }));
+                            }}
+                          >
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <Text
+                                style={{ color: disabled ? "#aaa" : "#000" }}
+                              >
+                                {opt.option}
+                              </Text>
+                              {disabled && (
+                                <Text
+                                  style={{
+                                    color: "#878787ff",
+                                    fontSize: 12,
+                                    fontFamily: "P-500",
+                                  }}
+                                >
+                                  품절
+                                </Text>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                        );
                       }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Text>{opt}</Text>
-                        {index === 0 && (
-                          <Text style={{ color: "red", fontSize: 12 }}>
-                            마지막 1개
-                          </Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                    />
+                  </View>
+                )}
               </View>
-            )}
+            ))}
           </View>
 
           <View style={{ marginTop: 20 }}>
-            <Text style={{ ...styles.sectionTitle, marginBottom: 15 }}>
-              수량 선택
-            </Text>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  if (pendingQty === 1) {
-                    setQtyAlertVisible(true);
-                    return;
-                  }
-                  setPendingQty((prev) => prev - 1);
-                }}
-                style={styles.qtyButton}
-              >
-                <Text style={{ fontSize: 20 }}>-</Text>
-              </TouchableOpacity>
-              <Text style={{ fontSize: 18 }}>{quantity}</Text>
-              <TouchableOpacity
-                onPress={() => setQuantity((prev) => prev + 1)}
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontSize: 20, marginBottom: 2, marginLeft: 1 }}>
-                  +
+            {selectedOptions.map((opt) => (
+              <View key={opt.key} style={styles.selectedRow}>
+                <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
+                  {opt.label}
                 </Text>
-              </TouchableOpacity>
-            </View>
+
+                <View style={styles.qtyRow}>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, -1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>-</Text>
+                  </TouchableOpacity>
+                  <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(opt.key, 1)}
+                    style={styles.qtyButton}
+                  >
+                    <Text>+</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={{ width: 80, textAlign: "right" }}>
+                  {(opt.price * opt.quantity).toLocaleString()}원
+                </Text>
+
+                <TouchableOpacity onPress={() => removeOption(opt.key)}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontFamily: "P-500",
+                      marginLeft: 10,
+                    }}
+                  >
+                    ✕
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
+
           <Modal
             isVisible={qtyAlertVisible}
             onBackdropPress={() => setQtyAlertVisible(false)}
@@ -670,6 +1114,7 @@ export default function ProductDetail() {
               </TouchableOpacity>
             </View>
           </Modal>
+
           <Modal
             isVisible={alreadyInCartAlert}
             onBackdropPress={() => setAlreadyInCartAlert(false)}
@@ -692,12 +1137,21 @@ export default function ProductDetail() {
               style={styles.cartButton}
               onPress={async () => {
                 try {
-                  const res = await axios.post(`${API_URL}/cartitems`, {
-                    user_id: userId,
-                    product_id: product.id,
-                    product_option_id: selectedOption,
-                    quantity: quantity,
-                  });
+                  if (!userId) return;
+
+                  for (const opt of selectedOptions) {
+                    await axios.post(`${API_URL}/cartitems`, {
+                      user_id: userId,
+                      product_id: product.id,
+                      quantity: opt.quantity,
+                      option_type_1_id: opt.optionType1Id,
+                      option_1_id: opt.option1Id,
+                      is_option_1_active: true,
+                      option_type_2_id: opt.optionType2Id,
+                      option_2_id: opt.option2Id,
+                      is_option_2_active: true,
+                    });
+                  }
 
                   setCartSuccessVisible(true);
                   setTimeout(() => setCartSuccessVisible(false), 2000);
@@ -728,23 +1182,84 @@ export default function ProductDetail() {
                 setShowModal(false);
                 navigation.navigate("Purchase", {
                   fromCart: false,
-                  products: [
-                    {
-                      id: product.id,
-                      brand: product.category_sub,
-                      image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
-                      name: product.name.replace(/_/g, " "),
-                      option: selectedOption,
-                      quantity,
-                      price: product.price_sell * quantity,
-                    },
-                  ],
+                  products: selectedOptions.map((opt) => ({
+                    id: product.id,
+                    brand: product.category_sub,
+                    image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+                    name: product.name.replace(/_/g, " "),
+                    option: opt.label, // 옵션명 (사이즈·컬러 조합)
+                    quantity: opt.quantity,
+                    price: product.price_sell,
+                  })),
                 });
               }}
             >
               <Text style={styles.buyText}>구매하기</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      <Modal
+        isVisible={imageModalVisible}
+        onBackdropPress={() => setImageModalVisible(false)}
+        onBackButtonPress={() => setImageModalVisible(false)}
+        style={{ margin: 0 }}
+      >
+        <View style={{ flex: 1, backgroundColor: "black" }}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={(e) => {
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / Dimensions.get("window").width
+              );
+              setCurrentIndex(index);
+            }}
+            scrollEventThrottle={16}
+            contentContainerStyle={{
+              alignItems: "center",
+              paddingVertical: 40,
+            }}
+          >
+            {selectedReviewImages.map((imgUrl, i) => (
+              <Image
+                key={i}
+                source={{ uri: imgUrl }}
+                style={{
+                  width: Dimensions.get("window").width,
+                  height: Dimensions.get("window").height * 0.6,
+                }}
+                resizeMode="contain"
+              />
+            ))}
+          </ScrollView>
+
+          <View
+            style={{
+              position: "absolute",
+              bottom: 40,
+              alignSelf: "center",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 12,
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 14, fontFamily: "P-500" }}>
+              {currentIndex + 1} / {selectedReviewImages.length}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setImageModalVisible(false)}
+            style={{ position: "absolute", top: 60, right: 20 }}
+          >
+            <Text style={{ fontFamily: "P-600", color: "white", fontSize: 30 }}>
+              ✕
+            </Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -774,10 +1289,11 @@ const styles = StyleSheet.create({
   productImage: { width: "100%", height: 450 },
   brandText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-600",
   },
   smallText: {
     fontSize: 14,
+    fontFamily: "P-500",
   },
   productInfo: {
     paddingHorizontal: 16,
@@ -786,17 +1302,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "600",
+    fontFamily: "P-600",
     marginVertical: 5,
   },
   priceOriginal: {
     fontSize: 16,
+    fontFamily: "P-500",
     color: "#999",
     textDecorationLine: "line-through",
   },
   priceDiscount: {
     fontSize: 20,
-    fontWeight: "700",
+    fontFamily: "P-600",
     paddingTop: 3,
     paddingBottom: 15,
   },
@@ -808,7 +1325,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "P-600",
     marginBottom: 8,
   },
   tabBar: {
@@ -827,11 +1344,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 15,
+    fontFamily: "P-500",
     color: "#999",
   },
   tabTextActive: {
     color: "#000",
-    fontWeight: "700",
+    fontFamily: "P-600",
   },
   tabContent: {
     padding: 20,
@@ -858,7 +1376,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginRight: 4,
     fontSize: 16,
-    fontWeight: "500",
+    fontFamily: "P-500",
   },
   buttonRow: {
     flexDirection: "row",
@@ -886,7 +1404,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "P-500",
   },
   banner: {
     backgroundColor: "#eee",
@@ -940,9 +1458,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     backgroundColor: "#fff",
   },
-  dropdownText: {
-    fontSize: 16,
-  },
+  dropdownText: { fontFamily: "P-400", fontSize: 16, color: "#888" },
   optionScrollContainer: {
     maxHeight: 250,
     marginBottom: 20,
@@ -953,15 +1469,37 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "#fff",
   },
-  optionText: {
-    fontSize: 16,
-  },
+  optionText: { fontFamily: "P-500", fontSize: 16 },
   dropdownBoxExpanded: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
   },
   optionItemSelected: {
     backgroundColor: "#f9f9f9",
+  },
+  selectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#fafafa",
+  },
+  qtyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+  qtyButton: {
+    width: 28,
+    height: 28,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonRowFixed: {
     position: "absolute",
@@ -985,20 +1523,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  lastOneText: {
-    fontSize: 12,
-    color: "red",
-  },
   alertModalContent: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
     alignItems: "center",
   },
-  alertText: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
+  alertText: { fontFamily: "P-500", fontSize: 16, marginBottom: 20 },
   alertButton: {
     backgroundColor: "black",
     paddingVertical: 12,
@@ -1007,16 +1538,12 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: "white",
-    fontWeight: "600",
+    fontFamily: "P-500",
     fontSize: 16,
   },
-  qtyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
+  inquiryItem: {
+    paddingVertical: 12,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
   },
 });

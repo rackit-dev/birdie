@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Alert,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import CustomHeader from "../components/CustomHeader";
 
 import AddressEditModal from "./AddressEditModal";
+import { API_URL } from "@env";
 
 type Address = {
   id: string;
@@ -44,7 +44,31 @@ export default function AddressListModal({
   const [editTarget, setEditTarget] = useState<Address | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertButtons, setAlertButtons] = useState<
+    { text: string; onPress: () => void; style?: "cancel" | "destructive" }[]
+  >([{ text: "확인", onPress: () => setAlertVisible(false) }]);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    buttons?: {
+      text: string;
+      onPress: () => void;
+      style?: "cancel" | "destructive";
+    }[]
+  ) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    if (buttons) setAlertButtons(buttons);
+    else
+      setAlertButtons([
+        { text: "확인", onPress: () => setAlertVisible(false) },
+      ]);
+    setAlertVisible(true);
+  };
 
   const fetchAddresses = async () => {
     try {
@@ -87,11 +111,11 @@ export default function AddressListModal({
         throw new Error(`삭제 실패 (status ${res.status})`);
       }
 
-      Alert.alert("삭제 완료", "배송지가 삭제되었습니다.");
+      showAlert("삭제 완료", "배송지가 삭제되었습니다.");
       fetchAddresses();
     } catch (err) {
       console.error("배송지 삭제 실패:", err);
-      Alert.alert("오류", "배송지 삭제 중 문제가 발생했습니다.");
+      showAlert("오류", "배송지 삭제 중 문제가 발생했습니다.");
     }
   };
 
@@ -158,8 +182,12 @@ export default function AddressListModal({
                   <Text style={{ color: "#ccc", marginHorizontal: 6 }}>|</Text>
                   <TouchableOpacity
                     onPress={() =>
-                      Alert.alert("확인", "배송지를 삭제하시겠습니까?", [
-                        { text: "취소", style: "cancel" },
+                      showAlert("확인", "배송지를 삭제하시겠습니까?", [
+                        {
+                          text: "취소",
+                          style: "cancel",
+                          onPress: () => setAlertVisible(false),
+                        },
                         {
                           text: "삭제",
                           style: "destructive",
@@ -173,10 +201,7 @@ export default function AddressListModal({
                 </View>
               </View>
             ))}
-            <TouchableOpacity
-              style={styles.addBtnBottom}
-              onPress={() => console.log("배송지 추가")}
-            >
+            <TouchableOpacity style={styles.addBtnBottom} onPress={onAdd}>
               <Text style={styles.addBtnText}>배송지 추가</Text>
             </TouchableOpacity>
 
@@ -188,6 +213,37 @@ export default function AddressListModal({
             />
           </ScrollView>
         )}
+
+        <Modal visible={alertVisible} transparent animationType="fade">
+          <View style={styles.alertOverlay}>
+            <View style={styles.alertBox}>
+              {alertTitle ? (
+                <Text style={styles.alertTitle}>{alertTitle}</Text>
+              ) : null}
+              <Text style={styles.alertMessage}>{alertMessage}</Text>
+              <View style={styles.alertButtonRow}>
+                {alertButtons.map((btn, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.alertButton,
+                      btn.style === "destructive" && {
+                        backgroundColor: "#ea0000ff",
+                      },
+                      btn.style === "cancel" && { backgroundColor: "#000" },
+                    ]}
+                    onPress={() => {
+                      setAlertVisible(false);
+                      btn.onPress();
+                    }}
+                  >
+                    <Text style={styles.alertButtonText}>{btn.text}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -206,11 +262,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontFamily: "P-500",
     marginBottom: 6,
   },
   emptySub: {
     fontSize: 16,
+    fontFamily: "P-400",
     color: "#888",
     marginBottom: 20,
   },
@@ -228,7 +285,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addBtnText: {
-    fontFamily: "P-Medium",
+    fontFamily: "P-500",
     color: "#fff",
     fontSize: 16,
   },
@@ -273,5 +330,45 @@ const styles = StyleSheet.create({
   footerAction: {
     fontFamily: "P-400",
     fontSize: 14,
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertBox: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    width: "75%",
+    alignItems: "center",
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontFamily: "P-500",
+    marginBottom: 10,
+  },
+  alertMessage: {
+    fontSize: 16,
+    fontFamily: "P-500",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  alertButtonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  alertButton: {
+    flex: 1,
+    backgroundColor: "black",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  alertButtonText: {
+    color: "white",
+    fontFamily: "P-500",
+    fontSize: 16,
   },
 });

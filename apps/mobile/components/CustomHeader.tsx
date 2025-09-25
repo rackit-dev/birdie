@@ -117,12 +117,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "bold",
+    fontFamily: "P-600",
     color: "#000",
   },
   appName: {
-    fontFamily: "P-Bold",
-    fontSize: 21,
+    fontFamily: "P-600",
+    fontSize: 22,
     alignSelf: "center",
     textAlign: "center",
     marginTop: 5,
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   cartBadgeText: {
     color: "white",
     fontSize: 10,
-    fontWeight: "bold",
+    fontFamily: "P-600",
   },
   backWithTitle: {
     flexDirection: "row",

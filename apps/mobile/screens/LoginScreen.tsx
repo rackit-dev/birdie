@@ -8,9 +8,16 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
 import { login } from "@react-native-seoul/kakao-login";
+import { useUserIdStore } from "../store/useUserIdStore";
+import axios from "axios";
+import {
+  API_URL,
+  GOOGLE_IOS_CLIENT_ID,
+  GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_WEB_CLIENT_ID,
+} from "@env";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
-const AUTH_ENDPOINT = `${API_BASE}/users/social-login`;
+const AUTH_ENDPOINT = `${API_URL}/users/social-login`;
 
 export default function LoginScreen() {
   const navigation =
@@ -38,11 +45,41 @@ export default function LoginScreen() {
       data = raw ? JSON.parse(raw) : {};
     } catch {}
 
+    if (r.status === 422) {
+      let message =
+        "탈퇴한 회원은 탈퇴일로부터 30일 이후에만 재가입할 수 있습니다.";
+
+      if (data?.detail) {
+        console.log("서버 응답 detail:", data.detail);
+      }
+      throw new Error(message);
+    }
+
     const sessionToken = data.sessionToken || data.token || data.access_token;
 
     if (!r.ok || !sessionToken) {
       throw new Error(data?.error || `세션 발급 실패 (status ${r.status})`);
     }
+
+    // 1. SecureStore에 내 서비스 토큰 저장
+    await SecureStore.setItemAsync("session_token", sessionToken);
+
+    // 2. 유저 프로필 조회 후 zustand 업데이트
+    try {
+      const profileRes = await axios.get(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
+      const profile = profileRes.data;
+
+      useUserIdStore.getState().setUser({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+      });
+    } catch (err) {
+      console.error("프로필 불러오기 실패:", err);
+    }
+
     return sessionToken as string;
   }
 
@@ -50,9 +87,9 @@ export default function LoginScreen() {
   const handleKakaoLogin = async () => {
     try {
       const { accessToken } = await login();
-      console.log("kakao accessToken", accessToken);
-      const sessionToken = await exchangeWithServer("KAKAO", accessToken);
-      await SecureStore.setItemAsync("session_token", sessionToken);
+      // console.log("kakao accessToken", accessToken);
+
+      await exchangeWithServer("KAKAO", accessToken);
       navigation.replace("Main");
     } catch (e: any) {
       if (e?.code === "E_CANCELLED_OPERATION") return;
@@ -65,9 +102,9 @@ export default function LoginScreen() {
   };
 
   // 구글
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const webClientId = GOOGLE_WEB_CLIENT_ID;
+  const androidClientId = GOOGLE_ANDROID_CLIENT_ID;
+  const iosClientId = GOOGLE_IOS_CLIENT_ID;
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId,
@@ -81,8 +118,8 @@ export default function LoginScreen() {
       try {
         const accessToken = response.authentication?.accessToken ?? "";
         // console.log("google accessToken", accessToken);
-        const sessionToken = await exchangeWithServer("GOOGLE", accessToken);
-        await SecureStore.setItemAsync("session_token", sessionToken);
+
+        await exchangeWithServer("GOOGLE", accessToken);
         navigation.replace("Main");
       } catch (e: any) {
         Alert.alert("Google 로그인 실패", e?.message ?? "서버 교환 실패");
@@ -102,11 +139,10 @@ export default function LoginScreen() {
       });
 
       const idToken = credential.identityToken ?? ""; // JWT
-      const authCode = credential.authorizationCode;
       // console.log("apple identityToken", idToken);
       // console.log("apple authCode", authCode);
-      const sessionToken = await exchangeWithServer("APPLE", idToken);
-      await SecureStore.setItemAsync("session_token", sessionToken);
+
+      await exchangeWithServer("APPLE", idToken);
       navigation.replace("Main");
     } catch (e: any) {
       if (e?.code === "ERR_CANCELED") return;
@@ -214,21 +250,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 35,
   },
   appDescription: {
-    fontFamily: "P-medium",
+    fontFamily: "P-500",
     fontSize: 24,
     alignSelf: "flex-start",
     textAlign: "left",
   },
   appName: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     fontSize: 45,
     alignSelf: "flex-start",
     textAlign: "left",
-    marginTop: 10,
+    marginTop: 6,
   },
   snsCaption: {
     marginTop: 6,
     marginBottom: 20,
+    fontFamily: "P-500",
     fontSize: 14,
     color: "#bbbbbbff",
     textAlign: "center",

@@ -12,6 +12,7 @@ import CustomHeader from "../components/CustomHeader";
 import ItemCard from "@/components/ItemCard";
 import useLikeStore, { Product } from "@/store/useLikeStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import { API_URL, IMAGE_URL } from "@env";
 
 export default function ProductListScreen() {
   const route = useRoute<any>();
@@ -21,8 +22,6 @@ export default function ProductListScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const IMAGE_URL = process.env.EXPO_PUBLIC_API_IMAGE_URL;
   const userId = useUserIdStore((s) => s.id);
 
   const categoryMap: Record<string, string> = {
@@ -80,6 +79,7 @@ export default function ProductListScreen() {
           image: {
             uri: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
           },
+          isActive: item.is_active,
         }));
 
         setProducts(mapped);
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   headerText: {
     fontSize: 20,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -161,11 +161,11 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 14,
-    fontFamily: "P-Medium",
+    fontFamily: "P-500",
     marginBottom: 4,
   },
   priceText: {
     fontSize: 14,
-    fontFamily: "P-Bold",
+    fontFamily: "P-600",
   },
 });

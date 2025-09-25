@@ -9,13 +9,13 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useCallback } from "react";
 import axios from "axios";
+import { API_URL } from "@env";
 
 export default function LikeScreen() {
   const { likedItems, fetchLikedItems } = useLikeStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userId = useUserIdStore((s) => s.id);
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useFocusEffect(
     useCallback(() => {
@@ -48,7 +48,10 @@ export default function LikeScreen() {
 
       {likedItems.length > 0 ? (
         <FlatList
-          data={likedItems}
+          data={likedItems.map((item) => ({
+            ...item,
+            isActive: (item as any).is_active,
+          }))}
           keyExtractor={(item) => item.id}
           numColumns={3}
           extraData={likedItems}
@@ -59,7 +62,7 @@ export default function LikeScreen() {
                 <ItemCard
                   item={item}
                   isLiked={isLiked}
-                  toggleLike={(_, product) => handleDeleteLike(product)}
+                  toggleLike={(product) => handleDeleteLike(product)}
                   userId={userId ?? ""}
                   size="large"
                   onPress={() =>
@@ -91,6 +94,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    fontFamily: "P-500",
     color: "#888",
     textAlign: "center",
     marginTop: 20,

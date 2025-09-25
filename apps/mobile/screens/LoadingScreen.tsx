@@ -3,12 +3,13 @@ import { View, Text, StyleSheet } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
 import { useUserIdStore } from "@/store/useUserIdStore";
+import axios from "axios";
+import { API_URL } from "@env";
 
 const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const setUser = useUserIdStore((state) => state.setUser);
-
-  const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const clearUser = useUserIdStore((s) => s.clearUser);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -16,21 +17,21 @@ const LoadingScreen: React.FC = () => {
 
       const token = await SecureStore.getItemAsync("session_token");
 
-      console.log("token", token);
+      // console.log("token", token);
 
       if (token) {
         try {
-          const res = await fetch(`${API_BASE}/users`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          const res = await axios.get(`${API_URL}/users`, {
+            headers: { Authorization: `Bearer ${token}` },
           });
 
-          if (!res.ok) throw new Error("Failed to fetch user");
+          const data = res.data;
 
-          const data = await res.json();
-
-          setUser({ id: data.id, name: data.name, email: data.email });
+          setUser({
+            id: res.data.id,
+            name: res.data.name,
+            email: res.data.email,
+          });
 
           navigation.replace("Main");
 
@@ -38,12 +39,14 @@ const LoadingScreen: React.FC = () => {
           // navigation.replace("Login");
         } catch (err) {
           console.error("유저정보 불러오기 실패:", err);
+          clearUser();
           navigation.replace("Login");
         }
       } else {
         // 테스트용
         // navigation.replace("Main");
 
+        clearUser();
         navigation.replace("Login");
       }
     };
@@ -70,7 +73,7 @@ const styles = StyleSheet.create({
     height: 60,
   },
   appName: {
-    fontFamily: "P-Bold",
+    fontFamily: "P-500",
     fontSize: 30,
     alignSelf: "center",
     textAlign: "center",

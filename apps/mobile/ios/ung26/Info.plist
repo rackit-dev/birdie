@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>ung26</string>
+    <string>영스배드민턴</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -15,7 +15,9 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
+    <string>영스배드민턴</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>앱에서 사진을 업로드하기 위해 접근 권한이 필요합니다.</string>
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
@@ -123,7 +125,7 @@
   <true/>
   <key>NSExceptionDomains</key>
   <dict>
-    <key>13.209.201.52</key>
+    <key>youngsminton.shop</key>
     <dict>
       <key>NSIncludesSubdomains</key>
       <true/>
