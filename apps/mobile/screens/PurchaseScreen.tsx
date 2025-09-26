@@ -310,6 +310,10 @@ export default function OrderPaymentScreen() {
         }
 
         const parseOption = (optionStr: string) => {
+          if (!optionStr || optionStr === "옵션 없음") {
+            return {};
+          }
+
           const parts = optionStr.split("/").map((s) => s.trim());
           const result: any = {};
           parts.forEach((part, i) => {
