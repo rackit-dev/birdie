@@ -379,7 +379,7 @@ export default function OrderPaymentScreen() {
         payMethod,
         ...(productType ? { productType } : {}),
         customData: orderData.id,
-        noticeUrls: [`${API_URL}/orders/payment/webhook`],
+        noticeUrls: [`${API_URL}/orders/payment/webhook/test`],
       } as const;
 
       navigation.navigate("PaymentWebview", { params: request });

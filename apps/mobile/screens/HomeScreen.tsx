@@ -250,13 +250,7 @@ export default function HomeScreen() {
                     )}
 
                     <Pressable
-                      onPress={() => {
-                        if (userId) {
-                          toggleLike(item);
-                        } else {
-                          console.warn("로그인이 필요합니다");
-                        }
-                      }}
+                      onPress={() => toggleLike(item)}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -334,13 +328,7 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                     <Pressable
-                      onPress={() => {
-                        if (userId) {
-                          toggleLike(item);
-                        } else {
-                          console.warn("로그인이 필요합니다");
-                        }
-                      }}
+                      onPress={() => toggleLike(item)}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (

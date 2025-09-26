@@ -12,7 +12,7 @@ import axios from "axios";
 import { API_URL } from "@env";
 
 export default function LikeScreen() {
-  const { likedItems, fetchLikedItems } = useLikeStore();
+  const { likedItems, fetchLikedItems, toggleLike } = useLikeStore();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userId = useUserIdStore((s) => s.id);
@@ -26,6 +26,11 @@ export default function LikeScreen() {
   );
 
   const handleDeleteLike = async (product: Product) => {
+    if (!userId) {
+      toggleLike(product);
+      return;
+    }
+
     try {
       if (!product.product_like_id) {
         console.warn("삭제할 product_like_id가 없습니다.");
@@ -34,9 +39,7 @@ export default function LikeScreen() {
       await axios.delete(`${API_URL}/products/like`, {
         params: { product_like_id: product.product_like_id },
       });
-      if (userId) {
-        fetchLikedItems();
-      }
+      fetchLikedItems();
     } catch (err) {
       console.error("좋아요 삭제 실패:", err);
     }
@@ -48,10 +51,7 @@ export default function LikeScreen() {
 
       {likedItems.length > 0 ? (
         <FlatList
-          data={likedItems.map((item) => ({
-            ...item,
-            isActive: (item as any).is_active,
-          }))}
+          data={likedItems}
           keyExtractor={(item) => item.id}
           numColumns={3}
           extraData={likedItems}

@@ -4,7 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Product } from "@/store/useLikeStore";
 
 type ItemCardProps = {
-  item: Product & { isActive?: boolean };
+  item: Product;
   isLiked: boolean;
   toggleLike: (item: Product) => void;
   userId: string;
@@ -36,7 +36,10 @@ export default function ItemCard({
           resizeMode="cover"
         />
 
-        <Pressable onPress={() => toggleLike(item)} style={styles.heartWrapper}>
+        <Pressable
+          onPress={() => toggleLike(item)}
+          style={[styles.heartWrapper, { zIndex: 2 }]}
+        >
           {!isLiked ? (
             <>
               <Ionicons
@@ -58,6 +61,7 @@ export default function ItemCard({
                 ...StyleSheet.absoluteFillObject,
                 backgroundColor: "rgba(255,255,255,0.5)",
                 borderRadius: 8,
+                zIndex: 1,
               }}
             />
             <View
@@ -69,6 +73,7 @@ export default function ItemCard({
                 paddingHorizontal: 6,
                 paddingVertical: 2,
                 borderRadius: 4,
+                zIndex: 2,
               }}
             >
               <Text

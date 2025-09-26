@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,6 +7,8 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import CustomHeader from "../components/CustomHeader";
+import useLikeStore from "../store/useLikeStore";
+import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
 import { API_URL } from "@env";
 
@@ -65,9 +67,12 @@ export default function MyScreen() {
 
       clearUser();
 
+      useLikeStore.getState().reset();
+      useCartStore.getState().reset();
+
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" as never }],
+        routes: [{ name: "Main" as never }],
       });
     } catch (err) {
       console.error("로그아웃 실패:", err);
@@ -92,9 +97,12 @@ export default function MyScreen() {
       await SecureStore.deleteItemAsync("session_token");
       clearUser();
 
+      useLikeStore.getState().reset();
+      useCartStore.getState().reset();
+
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" as never }],
+        routes: [{ name: "Main" as never }],
       });
     } catch (err) {
       console.error("탈퇴 실패:", err);
@@ -111,21 +119,38 @@ export default function MyScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
-          <View>
-            <Text style={styles.userId}>{name ? name : "로그인 필요"}</Text>
-            <Text style={styles.linkText}>자세히 보기 &gt;</Text>
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              if (!name) {
+                navigation.navigate("Login");
+              }
+            }}
+            activeOpacity={name ? 1 : 0.7}
+          >
+            <Text style={styles.userId}>
+              {name ? name : "로그인/회원가입 >"}
+            </Text>
+            {name && <Text style={styles.linkText}>자세히 보기 &gt;</Text>}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.iconRow}>
           {[
-            { label: "포인트", value: "0P" },
-            { label: "쿠폰", value: `${couponCount}장`, route: "CouponList" },
+            { label: "포인트", value: userId ? "0P" : "0P", route: "Point" },
+            {
+              label: "쿠폰",
+              value: userId ? `${couponCount}장` : "0장",
+              route: "CouponList",
+            },
           ].map((item, idx) => (
             <TouchableOpacity
               key={idx}
               style={styles.iconItem}
               onPress={() => {
+                if (!userId) {
+                  navigation.navigate("Login"); // 비회원이면 로그인 화면
+                  return;
+                }
                 if (item.route) navigation.navigate(item.route as never);
               }}
             >
@@ -147,6 +172,10 @@ export default function MyScreen() {
               key={idx}
               style={styles.menuRow}
               onPress={() => {
+                if (!userId) {
+                  navigation.navigate("Login");
+                  return;
+                }
                 if (item.route) navigation.navigate(item.route as never);
               }}
             >
@@ -164,21 +193,34 @@ export default function MyScreen() {
           ))}
         </View>
 
-        <View
-          style={{
-            padding: 16,
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <TouchableOpacity onPress={handleLogout}>
-            <Text style={styles.menuText}>로그아웃</Text>
-          </TouchableOpacity>
+        {userId && (
+          <View
+            style={{
+              padding: 16,
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <TouchableOpacity onPress={handleLogout}>
+              <Text style={styles.menuText}>로그아웃</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleDeleteAccount}>
-            <Text style={[styles.menuText, { color: "red" }]}>회원 탈퇴</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={() =>
+                Alert.alert("회원 탈퇴", "정말 탈퇴하시겠습니까?", [
+                  { text: "취소", style: "cancel" },
+                  {
+                    text: "탈퇴",
+                    style: "destructive",
+                    onPress: handleDeleteAccount,
+                  },
+                ])
+              }
+            >
+              <Text style={[styles.menuText, { color: "red" }]}>회원 탈퇴</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View
           style={{

@@ -1,4 +1,4 @@
-package com.ung26.mobile
+package com.youngs.badminton
 
 import android.app.Application
 import android.content.res.Configuration
@@ -25,6 +25,9 @@ class MainApplication : Application(), ReactApplication {
             val packages = PackageList(this).packages
             // Packages that cannot be autolinked yet can be added manually here, for example:
             // packages.add(MyReactNativePackage())
+
+            packages.add(KakaoLoginPackage())
+
             return packages
           }
 

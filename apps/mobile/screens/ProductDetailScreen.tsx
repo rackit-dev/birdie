@@ -14,6 +14,7 @@ import {
   Dimensions,
   useWindowDimensions,
   FlatList,
+  Alert,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -737,14 +738,28 @@ export default function ProductDetail() {
             )}
 
             <TouchableOpacity
-              onPress={() =>
+              onPress={() => {
+                if (!userId) {
+                  Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                    { text: "취소", style: "cancel" },
+                    {
+                      text: "로그인",
+                      onPress: () => {
+                        setShowModal(false);
+                        navigation.navigate("Login");
+                      },
+                    },
+                  ]);
+                  return;
+                }
+
                 navigation.navigate("Qna", {
                   id: product.id,
                   name: product.name,
                   price: product.price_sell,
                   image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
-                })
-              }
+                });
+              }}
               style={{
                 marginTop: 20,
                 borderWidth: 1,
@@ -911,9 +926,20 @@ export default function ProductDetail() {
       <View style={styles.fixedBuy}>
         <TouchableOpacity
           style={styles.likeButton}
-          onPress={() => {
-            if (userId) toggleLike(product);
-          }}
+          onPress={() =>
+            toggleLike({
+              id: product.id,
+              name: product.name,
+              brand: product.category_sub,
+              priceSell: product.price_sell,
+              priceOriginal: product.price_whole,
+              discount: product.discount_rate,
+              image: {
+                uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+              },
+              isActive: product.is_active ?? false,
+            })
+          }
         >
           {!likedItems.some((liked) => liked.id === product.id) ? (
             <>
@@ -1137,7 +1163,19 @@ export default function ProductDetail() {
               style={styles.cartButton}
               onPress={async () => {
                 try {
-                  if (!userId) return;
+                  if (!userId) {
+                    Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                      { text: "취소", style: "cancel" },
+                      {
+                        text: "로그인",
+                        onPress: () => {
+                          setShowModal(false);
+                          navigation.navigate("Login");
+                        },
+                      },
+                    ]);
+                    return;
+                  }
 
                   for (const opt of selectedOptions) {
                     await axios.post(`${API_URL}/cartitems`, {
@@ -1179,6 +1217,20 @@ export default function ProductDetail() {
             <TouchableOpacity
               style={styles.buyButton}
               onPress={() => {
+                if (!userId) {
+                  Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                    { text: "취소", style: "cancel" },
+                    {
+                      text: "로그인",
+                      onPress: () => {
+                        setShowModal(false);
+                        navigation.navigate("Login");
+                      },
+                    },
+                  ]);
+                  return;
+                }
+
                 setShowModal(false);
                 navigation.navigate("Purchase", {
                   fromCart: false,
@@ -1187,7 +1239,7 @@ export default function ProductDetail() {
                     brand: product.category_sub,
                     image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
                     name: product.name.replace(/_/g, " "),
-                    option: opt.label, // 옵션명 (사이즈·컬러 조합)
+                    option: opt.label,
                     quantity: opt.quantity,
                     price: product.price_sell,
                   })),

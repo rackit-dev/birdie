@@ -16,6 +16,7 @@ import {
   GOOGLE_ANDROID_CLIENT_ID,
   GOOGLE_WEB_CLIENT_ID,
 } from "@env";
+import CustomHeader from "../components/CustomHeader";
 
 const AUTH_ENDPOINT = `${API_URL}/users/social-login`;
 

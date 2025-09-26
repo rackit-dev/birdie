@@ -1,4 +1,4 @@
-package com.ung26.mobile
+package com.youngs.badminton
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
