@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   productContainerLarge: {
-    height: 270,
+    flex: 1,
     alignItems: "flex-start",
   },
   imageWrapper: {
@@ -139,7 +139,6 @@ const styles = StyleSheet.create({
   },
   itemImageLarge: {
     width: "100%",
-    height: "auto",
     aspectRatio: 0.85,
     marginBottom: 8,
   },
