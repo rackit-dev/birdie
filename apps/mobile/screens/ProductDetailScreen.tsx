@@ -1177,6 +1177,12 @@ export default function ProductDetail() {
                     return;
                   }
 
+                  // TODO: 선택할 옵션 없을 때 예외처리
+                  if (selectedOptions.length === 0) {
+                    Alert.alert("옵션을 선택해주세요.");
+                    return;
+                  }
+
                   for (const opt of selectedOptions) {
                     await axios.post(`${API_URL}/cartitems`, {
                       user_id: userId,
@@ -1228,6 +1234,12 @@ export default function ProductDetail() {
                       },
                     },
                   ]);
+                  return;
+                }
+
+                // TODO: 선택할 옵션 없을 때 예외처리
+                if (selectedOptions.length === 0) {
+                  Alert.alert("옵션을 선택해주세요.");
                   return;
                 }
 
