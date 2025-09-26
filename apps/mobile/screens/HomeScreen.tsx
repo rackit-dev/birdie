@@ -394,44 +394,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
-              고객센터 1588-1588
-            </Text>
-            <Text
-              style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-                color: "#B0B0B0",
-              }}
-            >
-              운영시간 평일 10:00 - 18:00 (토-일, 공휴일 휴무)
-            </Text>
-            <Text
-              style={{
-                fontFamily: "P-500",
-                fontSize: 14,
-                color: "#B0B0B0",
-              }}
-            >
-              점심시간 평일 13:00 - 14:00
-            </Text>
-            <Text
-              style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              자주 묻는 질문
-            </Text>
-            <Text
-              style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              1:1 문의
+              고객센터 010-4089-1315
             </Text>
             <View
               style={{
@@ -445,7 +408,7 @@ export default function HomeScreen() {
             />
             <Text
               style={{
-                fontFamily: "P-500",
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
@@ -454,58 +417,85 @@ export default function HomeScreen() {
             </Text>
             <Text
               style={{
-                marginTop: 25,
-                fontFamily: "P-500",
+                marginTop: 15,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              법적 고지사항
+              메일{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                rackit.biz@gmail.com
+              </Text>
             </Text>
-            <View
-              style={{
-                marginTop: 30,
-                marginBottom: 30,
-                width: "92%",
-                height: 0.7,
-                backgroundColor: "#BCBCBC",
-                alignSelf: "center",
-              }}
-            />
+
             <Text
               style={{
-                fontFamily: "P-500",
+                marginTop: 10,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              이용약관
+              상호명{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                배드민턴창고 지족점
+              </Text>
             </Text>
             <Text
               style={{
-                marginTop: 20,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              개인정보처리방침
-            </Text>
-            <Text
-              style={{
-                marginTop: 20,
-                marginRight: 20,
-                fontFamily: "P-500",
+                marginTop: 10,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-              통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-              있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-              일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-              통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-              있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-              어쩌구
+              대표자{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                정호영
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              사업자등록번호{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                5893500524
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              사업장 소재지{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                대전광역시 유성구 북유성대로 147 4층 (우 : 34078)
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              통신판매업번호{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                2024-대전유성-1546
+              </Text>
             </Text>
           </View>
         }
