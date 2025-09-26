@@ -17,6 +17,7 @@ import CustomHeader from "../components/CustomHeader";
 import useLikeStore from "../store/useLikeStore";
 import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import AddressListModal from "../screens/AddressListModal";
 import { API_URL } from "@env";
 
 export default function MyScreen() {
@@ -227,6 +228,16 @@ export default function MyScreen() {
                   navigation.navigate("Login");
                   return;
                 }
+
+                if (
+                  item.label === "취소/반품/교환 내역" ||
+                  item.label === "배송지 관리" ||
+                  item.label === "환불계좌 관리"
+                ) {
+                  Alert.alert("준비중입니다");
+                  return;
+                }
+
                 if (item.route) navigation.navigate(item.route as never);
               }}
             >
@@ -237,8 +248,14 @@ export default function MyScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>문의</Text>
-          {["고객센터/공지사항", "상품 문의"].map((label, idx) => (
-            <TouchableOpacity key={idx} style={styles.menuRow}>
+          {["고객센터/공지사항"].map((label, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.menuRow}
+              onPress={() => {
+                Alert.alert("준비중입니다");
+              }}
+            >
               <Text style={styles.menuText}>{label}</Text>
             </TouchableOpacity>
           ))}
