@@ -1,4 +1,5 @@
 from typing import List
+from sqlalchemy import case, cast, Integer
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, UploadFile
 import MySQLdb
@@ -275,7 +276,14 @@ class ProductRepository(IProductRepository):
             product_options = db.query(ProductOption).filter(
                 ProductOption.product_id == product_id,
                 ProductOption.product_option_type_id == product_option_type_id
-            ).order_by(ProductOption.option.asc())
+            ).order_by(
+            case(
+                (ProductOption.option.op('REGEXP')('^[0-9]+$'), 0),  # 숫자면 0
+                else_=1  # 아니면 1
+            ),
+            cast(ProductOption.option, Integer),  # 숫자면 숫자순
+            ProductOption.option.asc()  # 아니면 알파벳순
+        )
             total_count = product_options.count()
 
             if not product_options:
