@@ -124,6 +124,16 @@ def get_order(
     return {"order": order, "items": orderitems}
 
 
+@router.get("/by_user", response_model=GetOrdersResponse)
+@inject
+def get_orders_by_user(
+    user_id: str,
+    order_service: OrderService = Depends(Provide[Container.order_service]),
+):
+    total_count, orders = order_service.get_orders_by_user(user_id)
+    return {"total_count": total_count, "orders": orders}
+
+
 @router.get("", response_model=GetOrdersResponse)
 @inject
 def get_orders(

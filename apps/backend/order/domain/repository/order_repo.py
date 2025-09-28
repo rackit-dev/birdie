@@ -25,6 +25,13 @@ class IOrderRepository(metaclass=ABCMeta):
         Get a paginated list of orders.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_orders_by_user(self, user_id: str) -> tuple[int, List[Order]]:
+        """
+        Get all orders for a specific user.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def update(self, order: Order):
