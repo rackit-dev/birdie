@@ -32,13 +32,12 @@ export default function OrderListScreen() {
       if (!userId) return;
 
       try {
-        const res = await axios.get(`${API_URL}/orders`, {
-          params: { page: 1, items_per_page: 50 },
+        // 새 API 사용
+        const res = await axios.get(`${API_URL}/orders/by_user`, {
+          params: { user_id: userId },
         });
 
-        const myOrders = (res.data.orders || []).filter(
-          (o: any) => o.user_id === userId
-        );
+        const myOrders = res.data.orders || [];
 
         const detailed = await Promise.all(
           myOrders.map(async (o: any) => {
