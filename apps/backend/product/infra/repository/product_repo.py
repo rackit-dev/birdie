@@ -1,5 +1,7 @@
 from typing import List
+from sqlalchemy import case, cast, Integer
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import func
 from fastapi import HTTPException, UploadFile
 import MySQLdb
 
@@ -114,6 +116,13 @@ class ProductRepository(IProductRepository):
             offset = (page - 1) * items_per_page
             products = query.limit(items_per_page).offset(offset).all()
 
+        return total_count, [ProductVO(**row_to_dict(product)) for product in products]
+
+    def get_products_recommended(self, user_id: str) -> tuple[int, list[ProductVO]]:
+        with SessionLocal() as db:
+            query = db.query(Product).filter(Product.is_active == True).order_by(func.rand()).limit(20)
+            products = query.all()
+            total_count = len(products)
         return total_count, [ProductVO(**row_to_dict(product)) for product in products]
 
     def update(self, product_vo: ProductVO, image_thumbnail: UploadFile | None, image_detail: List[UploadFile] | None) -> ProductVO:
@@ -275,7 +284,14 @@ class ProductRepository(IProductRepository):
             product_options = db.query(ProductOption).filter(
                 ProductOption.product_id == product_id,
                 ProductOption.product_option_type_id == product_option_type_id
-            ).order_by(ProductOption.option.asc())
+            ).order_by(
+            case(
+                (ProductOption.option.op('REGEXP')('^[0-9]+$'), 0),  # 숫자면 0
+                else_=1  # 아니면 1
+            ),
+            cast(ProductOption.option, Integer),  # 숫자면 숫자순
+            ProductOption.option.asc()  # 아니면 알파벳순
+        )
             total_count = product_options.count()
 
             if not product_options:

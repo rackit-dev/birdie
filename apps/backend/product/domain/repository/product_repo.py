@@ -47,6 +47,10 @@ class IProductRepository(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
+    def get_products_recommended(self, user_id: str) -> tuple[int, list[Product]]:
+        raise NotImplementedError
+
+    @abstractmethod
     def update(self,
              product: Product,
              image_thumbnail: UploadFile,

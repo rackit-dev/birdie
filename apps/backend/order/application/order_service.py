@@ -107,6 +107,10 @@ class OrderService:
     def get_orders(self, page: int, items_per_page: int) -> tuple[int, List[Order]]:
         total_count, orders = self.order_repo.get_orders(page, items_per_page)
         return total_count, orders
+    
+    def get_orders_by_user(self, user_id: str) -> tuple[int, List[Order]]:
+        total_count, orders = self.order_repo.get_orders_by_user(user_id)
+        return total_count, orders
 
     def create_coupon(
         self,

@@ -51,6 +51,13 @@ class OrderRepository(IOrderRepository):
             offset = (page - 1) * items_per_page
             orders = query.limit(items_per_page).offset(offset).all()
             return total_count, [OrderVO(**row_to_dict(order)) for order in orders]
+    
+    def get_orders_by_user(self, user_id: str) -> tuple[int, List[OrderVO]]:
+        with SessionLocal() as db:
+            query = db.query(Order).filter(Order.user_id == user_id)
+            total_count = query.count()
+            orders = query.all()
+            return total_count, [OrderVO(**row_to_dict(order)) for order in orders]
 
     def update(self, order_vo: OrderVO):
         with SessionLocal() as db:
