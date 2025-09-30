@@ -54,24 +54,24 @@ class ProductService:
             updated_at=now,
         )
         new_product = self.product_repo.save(product, image_thumbnail, image_detail)
-
         return new_product
     
     def get_products(self, page: int, items_per_page: int) -> tuple[int, list[Product]]:
         products = self.product_repo.get_products(page, items_per_page)
-
         return products
     
     def get_products_by_id(self, product_id: str) -> tuple[int, list[Product]]:
         products = self.product_repo.get_products_by_id(product_id)
-
         return products
     
     def get_products_by_category(self, page: int, items_per_page: int, category_main: str, category_sub) -> tuple[int, list[Product]]:
         products = self.product_repo.get_products_by_category(page, items_per_page, category_main, category_sub)
-
         return products
     
+    def get_recommended_products(self, user_id: str) -> tuple[int, list[Product]]:
+        total_count, products = self.product_repo.get_products_recommended(user_id)
+        return total_count, products
+
     def update_product(
         self,
         product_id: str,

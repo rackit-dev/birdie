@@ -1,6 +1,7 @@
 from typing import List
 from sqlalchemy import case, cast, Integer
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import func
 from fastapi import HTTPException, UploadFile
 import MySQLdb
 
@@ -115,6 +116,13 @@ class ProductRepository(IProductRepository):
             offset = (page - 1) * items_per_page
             products = query.limit(items_per_page).offset(offset).all()
 
+        return total_count, [ProductVO(**row_to_dict(product)) for product in products]
+
+    def get_products_recommended(self, user_id: str) -> tuple[int, list[ProductVO]]:
+        with SessionLocal() as db:
+            query = db.query(Product).filter(Product.is_active == True).order_by(func.rand()).limit(20)
+            products = query.all()
+            total_count = len(products)
         return total_count, [ProductVO(**row_to_dict(product)) for product in products]
 
     def update(self, product_vo: ProductVO, image_thumbnail: UploadFile | None, image_detail: List[UploadFile] | None) -> ProductVO:

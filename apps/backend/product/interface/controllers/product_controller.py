@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from pydantic import BaseModel, Field
 
 from containers import Container
-from common.auth import CurrentUser, get_admin_user
+from common.auth import CurrentUser, get_current_user, get_admin_user
 from utils.val_image import validate_images
 from product.application.product_service import ProductService
 
@@ -107,6 +107,20 @@ def get_products_by_category(
     return {
         "total_count": total_count,
         "page": page,
+        "products": products,
+    }
+
+
+@router.get("/recommended", response_model=GetProductsResponse)
+@inject
+def get_recommended_products(
+    #current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    product_service: ProductService = Depends(Provide[Container.product_service]),
+):
+    total_count, products = product_service.get_recommended_products('test_user_id')
+    return {
+        "total_count": total_count,
+        "page": 1,
         "products": products,
     }
 
