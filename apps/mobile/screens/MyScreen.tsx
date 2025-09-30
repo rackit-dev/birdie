@@ -292,7 +292,7 @@ export default function MyScreen() {
         onBackdropPress={() => setIsEditModalVisible(false)}
       >
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>내 정보 수정</Text>
+          <Text style={styles.modalTitle}>이름 수정</Text>
           <TextInput
             style={styles.input}
             placeholder="닉네임 입력"
@@ -309,14 +309,18 @@ export default function MyScreen() {
           <TouchableOpacity
             style={{ marginTop: 20, alignSelf: "flex-end" }}
             onPress={() =>
-              Alert.alert("회원 탈퇴", "정말 탈퇴하시겠습니까?", [
-                { text: "취소", style: "cancel" },
-                {
-                  text: "탈퇴",
-                  style: "destructive",
-                  onPress: handleDeleteAccount,
-                },
-              ])
+              Alert.alert(
+                "회원 탈퇴",
+                "탈퇴 시 30일이내 재가입이 불가능합니다. 정말 탈퇴하시겠습니까?",
+                [
+                  { text: "취소", style: "cancel" },
+                  {
+                    text: "탈퇴",
+                    style: "destructive",
+                    onPress: handleDeleteAccount,
+                  },
+                ]
+              )
             }
           >
             <Text
