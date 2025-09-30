@@ -72,11 +72,10 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/products?page=1&items_per_page=309`
-        );
+        const response = await axios.get(`${API_URL}/products/recommended`);
+
         if (response.data && Array.isArray(response.data.products)) {
-          const fullData = response.data.products.map((item: any) => ({
+          const mapped = response.data.products.map((item: any) => ({
             id: item.id,
             name: item.name,
             brand: item.category_sub,
@@ -89,61 +88,22 @@ export default function HomeScreen() {
             isActive: item.is_active,
           }));
 
+          setShuffledImages1(mapped);
+
           const getRandomSample = (array: Product[], size: number) => {
             const shuffled = [...array].sort(() => 0.5 - Math.random());
             return shuffled.slice(0, size);
           };
-
-          const sampled = getRandomSample(fullData, 20);
-          setShuffledImages1(sampled);
-          setShuffledImages2(getRandomSample(fullData, 20));
+          setShuffledImages2(getRandomSample(mapped, 20));
 
           const randomBanner =
-            fullData[Math.floor(Math.random() * fullData.length)];
+            mapped[Math.floor(Math.random() * mapped.length)];
           if (randomBanner?.image) {
             setBannerImage(randomBanner.image);
           }
         }
       } catch (err) {
-        console.error("상품 API 호출 실패:", err);
-
-        const dummyData: Product[] = [
-          {
-            id: "dummy1",
-            name: "테스트 스니커즈",
-            brand: "DummyBrand",
-            priceSell: 39000,
-            priceOriginal: 49000,
-            discount: 20,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-          {
-            id: "dummy2",
-            name: "테스트 러닝화",
-            brand: "TestBrand",
-            priceSell: 69000,
-            priceOriginal: 99000,
-            discount: 30,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-          {
-            id: "dummy3",
-            name: "데일리 샌들",
-            brand: "SampleCo",
-            priceSell: 29000,
-            priceOriginal: 29000,
-            discount: 0,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-        ];
-
-        const sampled = shuffleArray(dummyData);
-        setShuffledImages1(sampled);
-        setShuffledImages2(sampled);
-        setBannerImage(dummyData[0].image);
+        console.error("추천 상품 API 호출 실패:", err);
       }
     };
 
