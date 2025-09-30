@@ -75,7 +75,7 @@ export default function CartScreen() {
       const mergedCartItems = cartItemsRaw.map((item: any) => {
         const product = allProducts.find((p: any) => p.id === item.product_id);
 
-        let optionLabel = "옵션 정보 없음";
+        let optionLabel = "옵션없음";
         const options: string[] = [];
 
         if (item.option_type_1 && item.option_1) {
@@ -309,65 +309,79 @@ export default function CartScreen() {
       const types = res.data.product_option_types;
       setOptionTypes(types);
 
-      const optionValues: Record<string, any[]> = {};
-      for (const t of types) {
-        const optRes = await axios.get(`${API_URL}/products/options`, {
-          params: {
-            product_id: currentItem.product_id,
-            product_option_type_id: t.id,
-          },
-        });
-        optionValues[t.option_type] = optRes.data.product_options;
-      }
-      setOptions(optionValues);
-
-      const initialSelected: Record<
-        string,
-        { value: string; id: string; typeId: string }
-      > = {};
-
-      currentItem.options.forEach((opt: any) => {
-        const type = types.find((t: any) => t.option_type === opt.type);
-        if (type) {
-          const match = optionValues[opt.type]?.find(
-            (o: any) => o.option === opt.value
-          );
-          if (match) {
-            initialSelected[opt.type] = {
-              id: match.id,
-              typeId: type.id,
-              value: match.option,
-            };
-          }
-        }
-      });
-
-      setSelected(initialSelected);
-
-      if (Object.keys(initialSelected).length > 0) {
-        const key = Object.values(initialSelected)
-          .map((o) => o.value)
-          .join("-");
-        const label = Object.values(initialSelected)
-          .map((o) => o.value)
-          .join(" / ");
-
+      if (types.length === 0) {
+        // 👉 옵션 타입이 없는 경우: 수량만 조절할 수 있도록 selectedOptions 기본 세팅
         setSelectedOptions([
           {
-            key,
-            label,
+            key: "default",
+            label: "옵션 없음",
             quantity: currentItem.quantity,
             price: currentItem.priceDiscounted,
-            optionType1Id: initialSelected[types[0].option_type]?.typeId,
-            option1Id: initialSelected[types[0].option_type]?.id,
-            optionType2Id: types[1]
-              ? initialSelected[types[1].option_type]?.typeId
-              : undefined,
-            option2Id: types[1]
-              ? initialSelected[types[1].option_type]?.id
-              : undefined,
+            optionType1Id: "",
+            option1Id: "",
           },
         ]);
+      } else {
+        const optionValues: Record<string, any[]> = {};
+        for (const t of types) {
+          const optRes = await axios.get(`${API_URL}/products/options`, {
+            params: {
+              product_id: currentItem.product_id,
+              product_option_type_id: t.id,
+            },
+          });
+          optionValues[t.option_type] = optRes.data.product_options;
+        }
+        setOptions(optionValues);
+
+        const initialSelected: Record<
+          string,
+          { value: string; id: string; typeId: string }
+        > = {};
+
+        currentItem.options.forEach((opt: any) => {
+          const type = types.find((t: any) => t.option_type === opt.type);
+          if (type) {
+            const match = optionValues[opt.type]?.find(
+              (o: any) => o.option === opt.value
+            );
+            if (match) {
+              initialSelected[opt.type] = {
+                id: match.id,
+                typeId: type.id,
+                value: match.option,
+              };
+            }
+          }
+        });
+
+        setSelected(initialSelected);
+
+        if (Object.keys(initialSelected).length > 0) {
+          const key = Object.values(initialSelected)
+            .map((o) => o.value)
+            .join("-");
+          const label = Object.values(initialSelected)
+            .map((o) => o.value)
+            .join(" / ");
+
+          setSelectedOptions([
+            {
+              key,
+              label,
+              quantity: currentItem.quantity,
+              price: currentItem.priceDiscounted,
+              optionType1Id: initialSelected[types[0].option_type]?.typeId,
+              option1Id: initialSelected[types[0].option_type]?.id,
+              optionType2Id: types[1]
+                ? initialSelected[types[1].option_type]?.typeId
+                : undefined,
+              option2Id: types[1]
+                ? initialSelected[types[1].option_type]?.id
+                : undefined,
+            },
+          ]);
+        }
       }
     } catch (err) {
       console.error("옵션 불러오기 실패", err);
@@ -788,128 +802,168 @@ export default function CartScreen() {
         <View style={styles.modalContent}>
           <View style={styles.dragHandle} />
 
-          {optionTypes.map((t) => (
-            <View key={t.id}>
-              <TouchableOpacity
-                style={styles.dropdownBox}
-                onPress={() =>
-                  setIsOptionOpen((prev) => ({
-                    ...prev,
-                    [t.option_type]: !prev[t.option_type],
-                  }))
-                }
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={styles.dropdownText}>
-                    {selected[t.option_type]?.value || "옵션 선택"}
+          {optionTypes.length === 0 ? (
+            // 옵션 없는 경우 → 수량만 조절 UI
+            <View style={{ marginTop: 20 }}>
+              {selectedOptions.map((opt) => (
+                <View key={opt.key} style={styles.selectedRow}>
+                  <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
+                    수량 선택
                   </Text>
-                  <Ionicons
-                    name={
-                      isOptionOpen[t.option_type]
-                        ? "chevron-up"
-                        : "chevron-down"
-                    }
-                    size={18}
-                    color="black"
-                  />
+                  <View style={styles.qtyRow}>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(opt.key, -1)}
+                      style={styles.qtyButton}
+                    >
+                      <Text>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(opt.key, 1)}
+                      style={styles.qtyButton}
+                    >
+                      <Text>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={{ width: 80, textAlign: "right" }}>
+                    {(opt.price * opt.quantity).toLocaleString()}원
+                  </Text>
                 </View>
-              </TouchableOpacity>
-
-              {isOptionOpen[t.option_type] && (
-                <View style={styles.optionScrollContainer}>
-                  <FlatList
-                    data={options[t.option_type] || []}
-                    keyExtractor={(opt) => opt.id}
-                    nestedScrollEnabled
-                    style={{ maxHeight: 200 }}
-                    renderItem={({ item: opt }) => {
-                      const disabled = !opt.is_active;
-                      return (
-                        <TouchableOpacity
-                          key={opt.id}
-                          style={[
-                            styles.optionItem,
-                            selected[t.option_type]?.value === opt.option &&
-                              styles.optionItemSelected,
-                            disabled && { backgroundColor: "#f0f0f0" },
-                          ]}
-                          disabled={disabled}
-                          onPress={() => {
-                            handleSelectOption(
-                              t.option_type,
-                              opt.option,
-                              opt.id,
-                              t.id
-                            );
-                            setIsOptionOpen((prev) => ({
-                              ...prev,
-                              [t.option_type]: false,
-                            }));
-                          }}
-                        >
-                          <View style={styles.optionRow}>
-                            <Text style={{ color: disabled ? "#aaa" : "#000" }}>
-                              {opt.option}
-                            </Text>
-                            {disabled && (
-                              <Text style={{ color: "red", fontSize: 12 }}>
-                                품절
-                              </Text>
-                            )}
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    }}
-                  />
-                </View>
-              )}
+              ))}
             </View>
-          ))}
+          ) : (
+            // 옵션 있는 경우 → 드롭다운 + 선택된 옵션 UI
+            <>
+              {optionTypes.map((t) => (
+                <View key={t.id}>
+                  <TouchableOpacity
+                    style={styles.dropdownBox}
+                    onPress={() =>
+                      setIsOptionOpen((prev) => ({
+                        ...prev,
+                        [t.option_type]: !prev[t.option_type],
+                      }))
+                    }
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={styles.dropdownText}>
+                        {selected[t.option_type]?.value || "옵션 선택"}
+                      </Text>
+                      <Ionicons
+                        name={
+                          isOptionOpen[t.option_type]
+                            ? "chevron-up"
+                            : "chevron-down"
+                        }
+                        size={18}
+                        color="black"
+                      />
+                    </View>
+                  </TouchableOpacity>
 
-          <View style={{ marginTop: 20 }}>
-            {selectedOptions.map((opt) => (
-              <View key={opt.key} style={styles.selectedRow}>
-                <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
-                  {opt.label}
-                </Text>
-                <View style={styles.qtyRow}>
-                  <TouchableOpacity
-                    onPress={() => updateQuantity(opt.key, -1)}
-                    style={styles.qtyButton}
-                  >
-                    <Text>-</Text>
-                  </TouchableOpacity>
-                  <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
-                  <TouchableOpacity
-                    onPress={() => updateQuantity(opt.key, 1)}
-                    style={styles.qtyButton}
-                  >
-                    <Text>+</Text>
-                  </TouchableOpacity>
+                  {isOptionOpen[t.option_type] && (
+                    <View style={styles.optionScrollContainer}>
+                      <FlatList
+                        data={options[t.option_type] || []}
+                        keyExtractor={(opt) => opt.id}
+                        nestedScrollEnabled
+                        style={{ maxHeight: 200 }}
+                        renderItem={({ item: opt }) => {
+                          const disabled = !opt.is_active;
+                          return (
+                            <TouchableOpacity
+                              key={opt.id}
+                              style={[
+                                styles.optionItem,
+                                selected[t.option_type]?.value === opt.option &&
+                                  styles.optionItemSelected,
+                                disabled && { backgroundColor: "#f0f0f0" },
+                              ]}
+                              disabled={disabled}
+                              onPress={() => {
+                                handleSelectOption(
+                                  t.option_type,
+                                  opt.option,
+                                  opt.id,
+                                  t.id
+                                );
+                                setIsOptionOpen((prev) => ({
+                                  ...prev,
+                                  [t.option_type]: false,
+                                }));
+                              }}
+                            >
+                              <View style={styles.optionRow}>
+                                <Text
+                                  style={{ color: disabled ? "#aaa" : "#000" }}
+                                >
+                                  {opt.option}
+                                </Text>
+                                {disabled && (
+                                  <Text style={{ color: "red", fontSize: 12 }}>
+                                    품절
+                                  </Text>
+                                )}
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }}
+                      />
+                    </View>
+                  )}
                 </View>
-                <Text style={{ width: 80, textAlign: "right" }}>
-                  {(opt.price * opt.quantity).toLocaleString()}원
-                </Text>
-                <TouchableOpacity onPress={() => removeOption(opt.key)}>
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      fontFamily: "P-500",
-                      marginLeft: 10,
-                    }}
-                  >
-                    ✕
-                  </Text>
-                </TouchableOpacity>
+              ))}
+
+              <View style={{ marginTop: 20 }}>
+                {selectedOptions.map((opt) => (
+                  <View key={opt.key} style={styles.selectedRow}>
+                    <Text
+                      style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}
+                    >
+                      {opt.label}
+                    </Text>
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        onPress={() => updateQuantity(opt.key, -1)}
+                        style={styles.qtyButton}
+                      >
+                        <Text>-</Text>
+                      </TouchableOpacity>
+                      <Text style={{ marginHorizontal: 10 }}>
+                        {opt.quantity}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => updateQuantity(opt.key, 1)}
+                        style={styles.qtyButton}
+                      >
+                        <Text>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={{ width: 80, textAlign: "right" }}>
+                      {(opt.price * opt.quantity).toLocaleString()}원
+                    </Text>
+                    <TouchableOpacity onPress={() => removeOption(opt.key)}>
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontFamily: "P-500",
+                          marginLeft: 10,
+                        }}
+                      >
+                        ✕
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
 
           <View style={styles.buttonRow}>
             <TouchableOpacity

@@ -1,5 +1,13 @@
 import { useState, useCallback } from "react";
-import { StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Linking,
+} from "react-native";
+import Modal from "react-native-modal";
 import { Text, View } from "@/components/Themed";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,7 +15,10 @@ import type { RootStackParamList } from "../navigation/RootNavigator";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import CustomHeader from "../components/CustomHeader";
+import useLikeStore from "../store/useLikeStore";
+import { useCartStore } from "../store/useCartStore";
 import { useUserIdStore } from "../store/useUserIdStore";
+import AddressListModal from "../screens/AddressListModal";
 import { API_URL } from "@env";
 
 export default function MyScreen() {
@@ -18,7 +29,11 @@ export default function MyScreen() {
 
   const userId = useUserIdStore((s) => s.id);
   const name = useUserIdStore((s) => s.name);
+  const setUser = useUserIdStore((s) => s.setUser);
   const clearUser = useUserIdStore((s) => s.clearUser);
+
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [newName, setNewName] = useState(name ?? "");
 
   useFocusEffect(
     useCallback(() => {
@@ -65,12 +80,46 @@ export default function MyScreen() {
 
       clearUser();
 
+      useLikeStore.getState().reset();
+      useCartStore.getState().reset();
+
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" as never }],
+        routes: [{ name: "Main" as never }],
       });
     } catch (err) {
       console.error("로그아웃 실패:", err);
+    }
+  };
+
+  const handleUpdateName = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("session_token");
+      if (!token) {
+        Alert.alert(
+          "로그인 필요",
+          "로그인이 만료되었습니다. 다시 로그인해주세요."
+        );
+        navigation.navigate("Login");
+        return;
+      }
+
+      await axios.put(
+        `${API_URL}/users`,
+        { name: newName },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setUser({ id: userId!, name: newName, email: null });
+      Alert.alert("성공", "닉네임이 변경되었습니다.");
+      setIsEditModalVisible(false);
+    } catch (err) {
+      console.error("닉네임 수정 실패:", err);
+      Alert.alert("실패", "닉네임 변경 중 오류가 발생했습니다.");
     }
   };
 
@@ -88,13 +137,15 @@ export default function MyScreen() {
         },
       });
 
-      // 요청 성공 후 토큰 삭제
       await SecureStore.deleteItemAsync("session_token");
       clearUser();
 
+      useLikeStore.getState().reset();
+      useCartStore.getState().reset();
+
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" as never }],
+        routes: [{ name: "Main" as never }],
       });
     } catch (err) {
       console.error("탈퇴 실패:", err);
@@ -111,21 +162,48 @@ export default function MyScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
-          <View>
-            <Text style={styles.userId}>{name ? name : "로그인 필요"}</Text>
-            <Text style={styles.linkText}>자세히 보기 &gt;</Text>
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              if (!name) {
+                navigation.navigate("Login");
+              }
+            }}
+            activeOpacity={name ? 1 : 0.7}
+          >
+            <Text style={styles.userId}>
+              {name ? name : "로그인/회원가입 >"}
+            </Text>
+          </TouchableOpacity>
+
+          {name && (
+            <TouchableOpacity
+              onPress={() => {
+                setNewName(name);
+                setIsEditModalVisible(true);
+              }}
+            >
+              <Text style={styles.linkText}>내정보 수정하기 &gt;</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.iconRow}>
           {[
-            { label: "포인트", value: "0P" },
-            { label: "쿠폰", value: `${couponCount}장`, route: "CouponList" },
+            { label: "포인트", value: userId ? "0P" : "0P", route: "Point" },
+            {
+              label: "쿠폰",
+              value: userId ? `${couponCount}장` : "0장",
+              route: "CouponList",
+            },
           ].map((item, idx) => (
             <TouchableOpacity
               key={idx}
               style={styles.iconItem}
               onPress={() => {
+                if (!userId) {
+                  navigation.navigate("Login");
+                  return;
+                }
                 if (item.route) navigation.navigate(item.route as never);
               }}
             >
@@ -141,12 +219,24 @@ export default function MyScreen() {
             { label: "주문 내역", route: "OrderList" },
             { label: "취소/반품/교환 내역" },
             { label: "배송지 관리" },
-            { label: "환불계좌 관리" },
           ].map((item, idx) => (
             <TouchableOpacity
               key={idx}
               style={styles.menuRow}
               onPress={() => {
+                if (!userId) {
+                  navigation.navigate("Login");
+                  return;
+                }
+
+                if (
+                  item.label === "취소/반품/교환 내역" ||
+                  item.label === "배송지 관리"
+                ) {
+                  Alert.alert("준비중입니다");
+                  return;
+                }
+
                 if (item.route) navigation.navigate(item.route as never);
               }}
             >
@@ -157,136 +247,100 @@ export default function MyScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>문의</Text>
-          {["고객센터/공지사항", "상품 문의"].map((label, idx) => (
-            <TouchableOpacity key={idx} style={styles.menuRow}>
+          {["고객센터", "공지사항"].map((label, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.menuRow}
+              onPress={() => {
+                if (label === "공지사항") {
+                  Linking.openURL(
+                    "https://www.notion.so/27c3922f9d1b80b6bd75f3be48875676?source=copy_link"
+                  ).catch((err) => console.error("링크 열기 실패:", err));
+                  return;
+                }
+
+                Alert.alert("준비중입니다");
+              }}
+            >
               <Text style={styles.menuText}>{label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View
-          style={{
-            padding: 16,
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <TouchableOpacity onPress={handleLogout}>
-            <Text style={styles.menuText}>로그아웃</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleDeleteAccount}>
-            <Text style={[styles.menuText, { color: "red" }]}>회원 탈퇴</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View
-          style={{
-            width: "100%",
-            backgroundColor: "#f9f9f9",
-            paddingVertical: 32,
-            paddingHorizontal: 17,
-            marginTop: 10,
-          }}
-        >
-          <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
-            고객센터 1588-1588
-          </Text>
-          <Text
-            style={{
-              marginTop: 15,
-              fontFamily: "P-500",
-              fontSize: 14,
-              color: "#B0B0B0",
-            }}
-          >
-            운영시간 평일 10:00 - 18:00 (토-일, 공휴일 휴무)
-          </Text>
-          <Text style={{ fontFamily: "P-500", fontSize: 14, color: "#B0B0B0" }}>
-            점심시간 평일 13:00 - 14:00
-          </Text>
-          <Text
-            style={{
-              marginTop: 15,
-              fontFamily: "P-500",
-              fontSize: 14,
-            }}
-          >
-            자주 묻는 질문
-          </Text>
-          <Text
-            style={{
-              marginTop: 15,
-              fontFamily: "P-500",
-              fontSize: 14,
-            }}
-          >
-            1:1 문의
-          </Text>
+        {userId && (
           <View
             style={{
-              marginTop: 30,
-              marginBottom: 30,
-              width: "92%",
-              height: 0.7,
-              backgroundColor: "#BCBCBC",
-              alignSelf: "center",
-            }}
-          />
-          <Text style={{ fontFamily: "P-500", fontSize: 14, color: "grey" }}>
-            사업자 정보
-          </Text>
-          <Text
-            style={{
-              marginTop: 25,
-              fontFamily: "P-500",
-              fontSize: 14,
-              color: "grey",
+              padding: 16,
+              flexDirection: "row",
+              justifyContent: "space-between",
             }}
           >
-            법적 고지사항
-          </Text>
-          <View
-            style={{
-              marginTop: 30,
-              marginBottom: 30,
-              width: "92%",
-              height: 0.7,
-              backgroundColor: "#BCBCBC",
-              alignSelf: "center",
-            }}
-          />
-          <Text style={{ fontFamily: "P-500", fontSize: 14, color: "grey" }}>
-            이용약관
-          </Text>
-          <Text
-            style={{
-              marginTop: 20,
-              fontFamily: "P-500",
-              fontSize: 14,
-            }}
-          >
-            개인정보처리방침
-          </Text>
-          <Text
-            style={{
-              marginTop: 20,
-              marginRight: 20,
-              fontFamily: "P-500",
-              fontSize: 14,
-              color: "grey",
-            }}
-          >
-            일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-            통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-            있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-            일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-            통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-            있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-            어쩌구
-          </Text>
-        </View>
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert("로그아웃", "정말 로그아웃 하시겠습니까?", [
+                  { text: "취소", style: "cancel" },
+                  {
+                    text: "로그아웃",
+                    style: "destructive",
+                    onPress: handleLogout,
+                  },
+                ]);
+              }}
+            >
+              <Text style={styles.menuText}>로그아웃</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      <Modal
+        isVisible={isEditModalVisible}
+        onBackdropPress={() => setIsEditModalVisible(false)}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>이름 수정</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="닉네임 입력"
+            value={newName}
+            onChangeText={setNewName}
+          />
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleUpdateName}
+          >
+            <Text style={styles.saveText}>저장</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ marginTop: 20, alignSelf: "flex-end" }}
+            onPress={() =>
+              Alert.alert(
+                "회원 탈퇴",
+                "탈퇴 시 30일이내 재가입이 불가능합니다. 정말 탈퇴하시겠습니까?",
+                [
+                  { text: "취소", style: "cancel" },
+                  {
+                    text: "탈퇴",
+                    style: "destructive",
+                    onPress: handleDeleteAccount,
+                  },
+                ]
+              )
+            }
+          >
+            <Text
+              style={{
+                color: "red",
+                fontSize: 16,
+                fontFamily: "P-500",
+              }}
+            >
+              회원 탈퇴
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -294,7 +348,7 @@ export default function MyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#fff",
   },
   scrollContainer: {
     paddingBottom: 50,
@@ -306,7 +360,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   userId: {
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: "P-600",
   },
   grade: {
@@ -372,4 +426,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "P-500",
   },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+  },
+  modalTitle: { fontSize: 18, fontFamily: "P-600", marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  saveButton: {
+    backgroundColor: "black",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  saveText: { color: "white", fontFamily: "P-600" },
 });

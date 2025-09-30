@@ -72,11 +72,10 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/products?page=1&items_per_page=309`
-        );
+        const response = await axios.get(`${API_URL}/products/recommended`);
+
         if (response.data && Array.isArray(response.data.products)) {
-          const fullData = response.data.products.map((item: any) => ({
+          const mapped = response.data.products.map((item: any) => ({
             id: item.id,
             name: item.name,
             brand: item.category_sub,
@@ -89,61 +88,22 @@ export default function HomeScreen() {
             isActive: item.is_active,
           }));
 
+          setShuffledImages1(mapped);
+
           const getRandomSample = (array: Product[], size: number) => {
             const shuffled = [...array].sort(() => 0.5 - Math.random());
             return shuffled.slice(0, size);
           };
-
-          const sampled = getRandomSample(fullData, 20);
-          setShuffledImages1(sampled);
-          setShuffledImages2(getRandomSample(fullData, 20));
+          setShuffledImages2(getRandomSample(mapped, 20));
 
           const randomBanner =
-            fullData[Math.floor(Math.random() * fullData.length)];
+            mapped[Math.floor(Math.random() * mapped.length)];
           if (randomBanner?.image) {
             setBannerImage(randomBanner.image);
           }
         }
       } catch (err) {
-        console.error("상품 API 호출 실패:", err);
-
-        const dummyData: Product[] = [
-          {
-            id: "dummy1",
-            name: "테스트 스니커즈",
-            brand: "DummyBrand",
-            priceSell: 39000,
-            priceOriginal: 49000,
-            discount: 20,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-          {
-            id: "dummy2",
-            name: "테스트 러닝화",
-            brand: "TestBrand",
-            priceSell: 69000,
-            priceOriginal: 99000,
-            discount: 30,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-          {
-            id: "dummy3",
-            name: "데일리 샌들",
-            brand: "SampleCo",
-            priceSell: 29000,
-            priceOriginal: 29000,
-            discount: 0,
-            image: require("../assets/images/items/shoes1.jpg"),
-            isActive: true,
-          },
-        ];
-
-        const sampled = shuffleArray(dummyData);
-        setShuffledImages1(sampled);
-        setShuffledImages2(sampled);
-        setBannerImage(dummyData[0].image);
+        console.error("추천 상품 API 호출 실패:", err);
       }
     };
 
@@ -250,13 +210,7 @@ export default function HomeScreen() {
                     )}
 
                     <Pressable
-                      onPress={() => {
-                        if (userId) {
-                          toggleLike(item);
-                        } else {
-                          console.warn("로그인이 필요합니다");
-                        }
-                      }}
+                      onPress={() => toggleLike(item)}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -334,13 +288,7 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                     <Pressable
-                      onPress={() => {
-                        if (userId) {
-                          toggleLike(item);
-                        } else {
-                          console.warn("로그인이 필요합니다");
-                        }
-                      }}
+                      onPress={() => toggleLike(item)}
                       style={styles.heartWrapper}
                     >
                       {!likedItems.some((liked) => liked.id === item.id) ? (
@@ -405,119 +353,111 @@ export default function HomeScreen() {
               marginTop: 10,
             }}
           >
-            <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
-              고객센터 1588-1588
-            </Text>
             <Text
               style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-                color: "#B0B0B0",
-              }}
-            >
-              운영시간 평일 10:00 - 18:00 (토-일, 공휴일 휴무)
-            </Text>
-            <Text
-              style={{
-                fontFamily: "P-500",
-                fontSize: 14,
-                color: "#B0B0B0",
-              }}
-            >
-              점심시간 평일 13:00 - 14:00
-            </Text>
-            <Text
-              style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              자주 묻는 질문
-            </Text>
-            <Text
-              style={{
-                marginTop: 15,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              1:1 문의
-            </Text>
-            <View
-              style={{
-                marginTop: 30,
-                marginBottom: 30,
-                width: "92%",
-                height: 0.7,
-                backgroundColor: "#BCBCBC",
-                alignSelf: "center",
-              }}
-            />
-            <Text
-              style={{
-                fontFamily: "P-500",
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
               사업자 정보
             </Text>
+
             <Text
               style={{
-                marginTop: 25,
-                fontFamily: "P-500",
+                marginTop: 15,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              법적 고지사항
+              고객센터{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                010-4089-1315
+              </Text>
             </Text>
-            <View
-              style={{
-                marginTop: 30,
-                marginBottom: 30,
-                width: "92%",
-                height: 0.7,
-                backgroundColor: "#BCBCBC",
-                alignSelf: "center",
-              }}
-            />
+
             <Text
               style={{
-                fontFamily: "P-500",
+                marginTop: 15,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              이용약관
+              메일{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                rackit.biz@gmail.com
+              </Text>
             </Text>
+
             <Text
               style={{
-                marginTop: 20,
-                fontFamily: "P-500",
-                fontSize: 14,
-              }}
-            >
-              개인정보처리방침
-            </Text>
-            <Text
-              style={{
-                marginTop: 20,
-                marginRight: 20,
-                fontFamily: "P-500",
+                marginTop: 10,
+                fontFamily: "P-700",
                 fontSize: 14,
                 color: "grey",
               }}
             >
-              일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-              통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-              있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-              일부 상품의 경우 주식회사 ----는 통신판매의 당사자가 아닌
-              통신판매중개자로서 상품, 상품정보, 거래에 대한 책임이 제한될 수
-              있으므로, 각 상품 페이지에서 구체적인 내용을 확인하시기 바랍니다.
-              어쩌구
+              상호명{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                배드민턴창고 지족점
+              </Text>
+            </Text>
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              대표자{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                정호영
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              사업자등록번호{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                5893500524
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              사업장 소재지{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                대전광역시 유성구 북유성대로 147 4층 (우 : 34078)
+              </Text>
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              통신판매업번호{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                2024-대전유성-1546
+              </Text>
             </Text>
           </View>
         }

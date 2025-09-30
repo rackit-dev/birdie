@@ -14,6 +14,7 @@ import {
   Dimensions,
   useWindowDimensions,
   FlatList,
+  Alert,
 } from "react-native";
 import Modal from "react-native-modal";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -120,6 +121,21 @@ export default function ProductDetail() {
     });
     return payload;
   };
+
+  useEffect(() => {
+    if (product && optionTypes.length === 0) {
+      setSelectedOptions([
+        {
+          key: "default",
+          label: "옵션 없음",
+          quantity: 1,
+          price: product.price_sell,
+          optionType1Id: "",
+          option1Id: "",
+        },
+      ]);
+    }
+  }, [product, optionTypes]);
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -233,10 +249,18 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
+        console.log("=== 옵션 불러오기 시작 ===");
+        console.log("product_id:", id);
+
         const res = await axios.get(`${API_URL}/products/option_types`, {
           params: { product_id: id },
         });
         const types = res.data.product_option_types;
+
+        console.log("=== 옵션 타입 데이터 ===");
+        console.log(types); // 배열 통째로 확인
+        console.log("옵션 타입 개수:", types.length);
+
         setOptionTypes(types);
 
         const optionValues: Record<string, ProductOption[]> = {};
@@ -246,8 +270,26 @@ export default function ProductDetail() {
           });
 
           optionValues[t.option_type] = optRes.data.product_options;
+
+          console.log(
+            `옵션 타입 [${t.option_type}] 옵션들:`,
+            optRes.data.product_options
+          );
         }
         setOptions(optionValues);
+
+        if (types.length === 0 && product) {
+          setSelectedOptions([
+            {
+              key: "default",
+              label: "옵션 없음",
+              quantity: 1,
+              price: product.price_sell,
+              optionType1Id: "",
+              option1Id: "",
+            },
+          ]);
+        }
       } catch (err) {
         console.error("옵션 불러오기 실패", err);
       }
@@ -463,7 +505,7 @@ export default function ProductDetail() {
       case 1:
         return (
           <View style={styles.tabContent}>
-            <Text>추천 상품</Text>
+            <Text>준비중입니다.</Text>
           </View>
         );
       case 2:
@@ -737,14 +779,28 @@ export default function ProductDetail() {
             )}
 
             <TouchableOpacity
-              onPress={() =>
+              onPress={() => {
+                if (!userId) {
+                  Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                    { text: "취소", style: "cancel" },
+                    {
+                      text: "로그인",
+                      onPress: () => {
+                        setShowModal(false);
+                        navigation.navigate("Login");
+                      },
+                    },
+                  ]);
+                  return;
+                }
+
                 navigation.navigate("Qna", {
                   id: product.id,
                   name: product.name,
                   price: product.price_sell,
                   image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
-                })
-              }
+                });
+              }}
               style={{
                 marginTop: 20,
                 borderWidth: 1,
@@ -866,22 +922,24 @@ export default function ProductDetail() {
         </View>
 
         <View style={styles.cardContainer}>
-          <View style={styles.banner}>
-            <Text>첫 구매 20% 쿠폰 받으러 가기 ➤</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.banner}
+            onPress={() => navigation.navigate("CouponList")}
+          >
+            <Text>첫 구매 30% 쿠폰 지급 ➤</Text>
+          </TouchableOpacity>
+
           <View style={styles.earn}>
             <Text style={styles.sectionTitle}>적립</Text>
-            <Text>후기 적립 2,500원</Text>
+            <Text>후기 적립</Text>
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>결제혜택</Text>
-            <Text>카카오페이 x 페이머니 6천원 할인</Text>
-            <Text style={{ marginTop: 15 }}>무이자 혜택 보기</Text>
+            <Text>5만원 이상 구매 시 무료배송</Text>
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>배송</Text>
-            <Text>5만원 이상 구매 시 무료배송</Text>
-            <Text>06.26 도착 예정 · CJ대한통운</Text>
+            <Text>14:00 이전 주문 시 당일 발송 · CJ대한통운</Text>
           </View>
         </View>
 
@@ -911,9 +969,20 @@ export default function ProductDetail() {
       <View style={styles.fixedBuy}>
         <TouchableOpacity
           style={styles.likeButton}
-          onPress={() => {
-            if (userId) toggleLike(product);
-          }}
+          onPress={() =>
+            toggleLike({
+              id: product.id,
+              name: product.name,
+              brand: product.category_sub,
+              priceSell: product.price_sell,
+              priceOriginal: product.price_whole,
+              discount: product.discount_rate,
+              image: {
+                uri: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
+              },
+              isActive: product.is_active ?? false,
+            })
+          }
         >
           {!likedItems.some((liked) => liked.id === product.id) ? (
             <>
@@ -956,147 +1025,186 @@ export default function ProductDetail() {
         <View style={styles.modalContent}>
           <View style={styles.dragHandle} />
 
-          <View>
-            {optionTypes.map((t) => (
-              <View key={t.id}>
-                <TouchableOpacity
-                  style={styles.dropdownBox}
-                  onPress={() =>
-                    setIsOptionOpen((prev) => ({
-                      ...prev,
-                      [t.option_type]: !prev[t.option_type],
-                    }))
-                  }
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>
-                      {selected[t.option_type]?.value || "옵션 선택"}
-                    </Text>
+          {optionTypes.length === 0 ? (
+            // 옵션 없는 경우 → 바로 수량 조절 UI
+            <View style={{ marginTop: 20 }}>
+              {selectedOptions.map((opt) => (
+                <View key={opt.key} style={styles.selectedRow}>
+                  <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
+                    {opt.label}
+                  </Text>
 
-                    <Ionicons
-                      name={
-                        isOptionOpen[t.option_type]
-                          ? "chevron-up"
-                          : "chevron-down"
-                      }
-                      size={18}
-                      color="black"
-                    />
+                  <View style={styles.qtyRow}>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(opt.key, -1)}
+                      style={styles.qtyButton}
+                    >
+                      <Text>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(opt.key, 1)}
+                      style={styles.qtyButton}
+                    >
+                      <Text>+</Text>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
 
-                {isOptionOpen[t.option_type] && (
-                  <View style={styles.optionScrollContainer}>
-                    <FlatList
-                      data={options[t.option_type] || []}
-                      keyExtractor={(opt) => opt.id}
-                      nestedScrollEnabled
-                      style={{ maxHeight: 250 }}
-                      renderItem={({ item: opt }) => {
-                        const disabled = !opt.is_active;
-                        return (
-                          <TouchableOpacity
-                            key={opt.id}
-                            style={[
-                              styles.optionItem,
-                              selected[t.option_type]?.value === opt.option &&
-                                styles.optionItemSelected,
-                              disabled && { backgroundColor: "#f0f0f0" },
-                            ]}
-                            disabled={disabled}
-                            onPress={() => {
-                              handleSelectOption(
-                                t.option_type,
-                                opt.option,
-                                opt.id,
-                                t.id
-                              );
-                              setIsOptionOpen((prev) => ({
-                                ...prev,
-                                [t.option_type]: false,
-                              }));
-                            }}
-                          >
-                            <View
-                              style={{
-                                flexDirection: "row",
-                                justifyContent: "space-between",
+                  <Text style={{ width: 80, textAlign: "right" }}>
+                    {(opt.price * opt.quantity).toLocaleString()}원
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            // 옵션 있는 경우 → 기존 드롭다운 UI
+            <>
+              {optionTypes.map((t) => (
+                <View key={t.id}>
+                  <TouchableOpacity
+                    style={styles.dropdownBox}
+                    onPress={() =>
+                      setIsOptionOpen((prev) => ({
+                        ...prev,
+                        [t.option_type]: !prev[t.option_type],
+                      }))
+                    }
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={styles.dropdownText}>
+                        {selected[t.option_type]?.value ||
+                          `${t.option_type} 선택`}
+                      </Text>
+
+                      <Ionicons
+                        name={
+                          isOptionOpen[t.option_type]
+                            ? "chevron-up"
+                            : "chevron-down"
+                        }
+                        size={18}
+                        color="black"
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {isOptionOpen[t.option_type] && (
+                    <View style={styles.optionScrollContainer}>
+                      <FlatList
+                        data={options[t.option_type] || []}
+                        keyExtractor={(opt) => opt.id}
+                        nestedScrollEnabled
+                        style={{ maxHeight: 250 }}
+                        renderItem={({ item: opt }) => {
+                          const disabled = !opt.is_active;
+                          return (
+                            <TouchableOpacity
+                              key={opt.id}
+                              style={[
+                                styles.optionItem,
+                                selected[t.option_type]?.value === opt.option &&
+                                  styles.optionItemSelected,
+                                disabled && { backgroundColor: "#f0f0f0" },
+                              ]}
+                              disabled={disabled}
+                              onPress={() => {
+                                handleSelectOption(
+                                  t.option_type,
+                                  opt.option,
+                                  opt.id,
+                                  t.id
+                                );
+                                setIsOptionOpen((prev) => ({
+                                  ...prev,
+                                  [t.option_type]: false,
+                                }));
                               }}
                             >
-                              <Text
-                                style={{ color: disabled ? "#aaa" : "#000" }}
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  justifyContent: "space-between",
+                                }}
                               >
-                                {opt.option}
-                              </Text>
-                              {disabled && (
                                 <Text
-                                  style={{
-                                    color: "#878787ff",
-                                    fontSize: 12,
-                                    fontFamily: "P-500",
-                                  }}
+                                  style={{ color: disabled ? "#aaa" : "#000" }}
                                 >
-                                  품절
+                                  {opt.option}
                                 </Text>
-                              )}
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      }}
-                    />
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-
-          <View style={{ marginTop: 20 }}>
-            {selectedOptions.map((opt) => (
-              <View key={opt.key} style={styles.selectedRow}>
-                <Text style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}>
-                  {opt.label}
-                </Text>
-
-                <View style={styles.qtyRow}>
-                  <TouchableOpacity
-                    onPress={() => updateQuantity(opt.key, -1)}
-                    style={styles.qtyButton}
-                  >
-                    <Text>-</Text>
-                  </TouchableOpacity>
-                  <Text style={{ marginHorizontal: 10 }}>{opt.quantity}</Text>
-                  <TouchableOpacity
-                    onPress={() => updateQuantity(opt.key, 1)}
-                    style={styles.qtyButton}
-                  >
-                    <Text>+</Text>
-                  </TouchableOpacity>
+                                {disabled && (
+                                  <Text
+                                    style={{
+                                      color: "#878787ff",
+                                      fontSize: 12,
+                                      fontFamily: "P-500",
+                                    }}
+                                  >
+                                    품절
+                                  </Text>
+                                )}
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }}
+                      />
+                    </View>
+                  )}
                 </View>
+              ))}
 
-                <Text style={{ width: 80, textAlign: "right" }}>
-                  {(opt.price * opt.quantity).toLocaleString()}원
-                </Text>
+              <View style={{ marginTop: 20 }}>
+                {selectedOptions.map((opt) => (
+                  <View key={opt.key} style={styles.selectedRow}>
+                    <Text
+                      style={{ fontSize: 16, fontFamily: "P-500", flex: 1 }}
+                    >
+                      {opt.label}
+                    </Text>
 
-                <TouchableOpacity onPress={() => removeOption(opt.key)}>
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      fontFamily: "P-500",
-                      marginLeft: 10,
-                    }}
-                  >
-                    ✕
-                  </Text>
-                </TouchableOpacity>
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        onPress={() => updateQuantity(opt.key, -1)}
+                        style={styles.qtyButton}
+                      >
+                        <Text>-</Text>
+                      </TouchableOpacity>
+                      <Text style={{ marginHorizontal: 10 }}>
+                        {opt.quantity}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => updateQuantity(opt.key, 1)}
+                        style={styles.qtyButton}
+                      >
+                        <Text>+</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={{ width: 80, textAlign: "right" }}>
+                      {(opt.price * opt.quantity).toLocaleString()}원
+                    </Text>
+
+                    <TouchableOpacity onPress={() => removeOption(opt.key)}>
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontFamily: "P-500",
+                          marginLeft: 10,
+                        }}
+                      >
+                        ✕
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
 
           <Modal
             isVisible={qtyAlertVisible}
@@ -1137,18 +1245,35 @@ export default function ProductDetail() {
               style={styles.cartButton}
               onPress={async () => {
                 try {
-                  if (!userId) return;
+                  if (!userId) {
+                    Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                      { text: "취소", style: "cancel" },
+                      {
+                        text: "로그인",
+                        onPress: () => {
+                          setShowModal(false);
+                          navigation.navigate("Login");
+                        },
+                      },
+                    ]);
+                    return;
+                  }
+
+                  if (selectedOptions.length === 0) {
+                    Alert.alert("옵션을 선택해주세요.");
+                    return;
+                  }
 
                   for (const opt of selectedOptions) {
                     await axios.post(`${API_URL}/cartitems`, {
                       user_id: userId,
                       product_id: product.id,
                       quantity: opt.quantity,
-                      option_type_1_id: opt.optionType1Id,
-                      option_1_id: opt.option1Id,
+                      option_type_1_id: opt.optionType1Id || null,
+                      option_1_id: opt.option1Id || null,
                       is_option_1_active: true,
-                      option_type_2_id: opt.optionType2Id,
-                      option_2_id: opt.option2Id,
+                      option_type_2_id: opt.optionType2Id || null,
+                      option_2_id: opt.option2Id || null,
                       is_option_2_active: true,
                     });
                   }
@@ -1179,6 +1304,26 @@ export default function ProductDetail() {
             <TouchableOpacity
               style={styles.buyButton}
               onPress={() => {
+                if (!userId) {
+                  Alert.alert("로그인이 필요합니다", "로그인 하시겠습니까?", [
+                    { text: "취소", style: "cancel" },
+                    {
+                      text: "로그인",
+                      onPress: () => {
+                        setShowModal(false);
+                        navigation.navigate("Login");
+                      },
+                    },
+                  ]);
+                  return;
+                }
+
+                // TODO: 선택할 옵션 없을 때 예외처리
+                if (selectedOptions.length === 0) {
+                  Alert.alert("옵션을 선택해주세요.");
+                  return;
+                }
+
                 setShowModal(false);
                 navigation.navigate("Purchase", {
                   fromCart: false,
@@ -1187,7 +1332,7 @@ export default function ProductDetail() {
                     brand: product.category_sub,
                     image: `${IMAGE_URL}/products/${product.name}/thumbnail.jpg`,
                     name: product.name.replace(/_/g, " "),
-                    option: opt.label, // 옵션명 (사이즈·컬러 조합)
+                    option: opt.label,
                     quantity: opt.quantity,
                     price: product.price_sell,
                   })),
@@ -1353,6 +1498,11 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     padding: 20,
+    color: "#666",
+    justifyContent: "center",
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 20,
   },
   fixedBuy: {
     position: "absolute",

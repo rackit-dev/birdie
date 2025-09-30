@@ -8,50 +8,37 @@ import { API_URL } from "@env";
 
 const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const setUser = useUserIdStore((state) => state.setUser);
+  const setUser = useUserIdStore((s) => s.setUser);
   const clearUser = useUserIdStore((s) => s.clearUser);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const initAuth = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const token = await SecureStore.getItemAsync("session_token");
-
-      // console.log("token", token);
-
       if (token) {
         try {
           const res = await axios.get(`${API_URL}/users`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          const data = res.data;
-
           setUser({
             id: res.data.id,
             name: res.data.name,
             email: res.data.email,
           });
-
-          navigation.replace("Main");
-
-          // 테스트용
-          // navigation.replace("Login");
         } catch (err) {
-          console.error("유저정보 불러오기 실패:", err);
+          console.error("유저 정보 fetch 실패:", err);
           clearUser();
-          navigation.replace("Login");
         }
       } else {
-        // 테스트용
-        // navigation.replace("Main");
-
         clearUser();
-        navigation.replace("Login");
       }
+
+      navigation.replace("Main");
     };
 
-    checkAuth();
+    initAuth();
   }, []);
 
   return (

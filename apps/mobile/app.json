@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ung26.mobile",
+      "bundleIdentifier": "com.youngs.badminton",
       "buildNumber": "1.0.0",
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -132,7 +132,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ung26.mobile",
+      "package": "com.youngs.badminton",
       "versionCode": 1,
       "intentFilters": [
         {

@@ -19,6 +19,7 @@ type LikeStore = {
   likedItems: Product[];
   fetchLikedItems: () => Promise<void>;
   toggleLike: (item: Product) => Promise<void>;
+  reset: () => void;
 };
 
 const useLikeStore = create<LikeStore>((set, get) => ({
@@ -46,6 +47,7 @@ const useLikeStore = create<LikeStore>((set, get) => ({
           uri: `${IMAGE_URL}/products/${p.name}/thumbnail.jpg`,
         },
         product_like_id: likeIds[index],
+        isActive: p.is_active,
       }));
 
       set({ likedItems: items });
@@ -56,12 +58,20 @@ const useLikeStore = create<LikeStore>((set, get) => ({
 
   toggleLike: async (item) => {
     const userId = useUserIdStore.getState().id;
+    const isLiked = get().likedItems.some((liked) => liked.id === item.id);
+
     if (!userId) {
-      console.error("userId가 없음");
+      if (isLiked) {
+        set({
+          likedItems: get().likedItems.filter((liked) => liked.id !== item.id),
+        });
+      } else {
+        set({
+          likedItems: [...get().likedItems, item],
+        });
+      }
       return;
     }
-
-    const isLiked = get().likedItems.some((liked) => liked.id === item.id);
 
     try {
       if (isLiked) {
@@ -76,11 +86,6 @@ const useLikeStore = create<LikeStore>((set, get) => ({
           likedItems: get().likedItems.filter((liked) => liked.id !== item.id),
         });
       } else {
-        console.log("좋아요 요청 바디", {
-          user_id: userId,
-          product_id: item.id,
-        });
-
         const res = await axios.post(
           `${API_URL}/products/like`,
           {
@@ -92,8 +97,6 @@ const useLikeStore = create<LikeStore>((set, get) => ({
           }
         );
 
-        console.log("좋아요 응답:", res.data);
-
         set({
           likedItems: [
             ...get().likedItems,
@@ -104,6 +107,10 @@ const useLikeStore = create<LikeStore>((set, get) => ({
     } catch (err) {
       console.error("좋아요 토글 실패:", err);
     }
+  },
+
+  reset() {
+    set({ likedItems: [] });
   },
 }));
 

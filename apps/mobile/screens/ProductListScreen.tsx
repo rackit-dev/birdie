@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet, Dimensions } from "react-native";
 import {
   useRoute,
   useNavigation,
@@ -23,6 +23,8 @@ export default function ProductListScreen() {
   const [cartCount, setCartCount] = useState(0);
   const { likedItems, toggleLike, fetchLikedItems } = useLikeStore();
   const userId = useUserIdStore((s) => s.id);
+  const screenWidth = Dimensions.get("window").width;
+  const numColumns = screenWidth > 600 ? 4 : 2;
 
   const categoryMap: Record<string, string> = {
     배드민턴화: "신발",
@@ -121,8 +123,12 @@ export default function ProductListScreen() {
         <Text style={{ padding: 20 }}>해당 조건의 상품이 없습니다.</Text>
       ) : (
         <FlatList
-          data={products}
-          keyExtractor={(item) => item.id}
+          data={[...products].sort((a, b) => {
+            if (a.isActive === false && b.isActive !== false) return 1;
+            if (a.isActive !== false && b.isActive === false) return -1;
+            return 0;
+          })}
+          keyExtractor={(item) => item.id.toString()}
           numColumns={3}
           contentContainerStyle={styles.listContainer}
           columnWrapperStyle={{
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   itemWrapper: {
-    width: "33.333%",
+    flex: 1 / 3,
     alignItems: "center",
     marginBottom: 16,
   },

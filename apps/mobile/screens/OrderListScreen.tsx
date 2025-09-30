@@ -6,6 +6,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -31,13 +32,12 @@ export default function OrderListScreen() {
       if (!userId) return;
 
       try {
-        const res = await axios.get(`${API_URL}/orders`, {
-          params: { page: 1, items_per_page: 50 },
+        // 새 API 사용
+        const res = await axios.get(`${API_URL}/orders/by_user`, {
+          params: { user_id: userId },
         });
 
-        const myOrders = (res.data.orders || []).filter(
-          (o: any) => o.user_id === userId
-        );
+        const myOrders = res.data.orders || [];
 
         const detailed = await Promise.all(
           myOrders.map(async (o: any) => {
@@ -148,14 +148,23 @@ export default function OrderListScreen() {
               )}
 
               <View>
-                <TouchableOpacity style={styles.actionBtnFull}>
+                <TouchableOpacity
+                  style={styles.actionBtnFull}
+                  onPress={() => Alert.alert("준비중입니다.")}
+                >
                   <Text style={styles.actionTextBlue}>후기 작성</Text>
                 </TouchableOpacity>
                 <View style={styles.actionRow}>
-                  <TouchableOpacity style={styles.actionBtn}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => Alert.alert("준비중입니다.")}
+                  >
                     <Text style={styles.actionText}>배송 조회</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionBtn}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => Alert.alert("준비중입니다.")}
+                  >
                     <Text style={styles.actionText}>재구매</Text>
                   </TouchableOpacity>
                 </View>

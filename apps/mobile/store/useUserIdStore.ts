@@ -4,7 +4,7 @@ interface UserState {
   id: string | null;
   name: string | null;
   email: string | null;
-  setUser: (user: { id: string; name: string; email: string }) => void;
+  setUser: (user: { id: string; name: string; email: string | null }) => void;
   clearUser: () => void;
 }
 
