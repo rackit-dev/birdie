@@ -284,12 +284,13 @@ class OrderService:
                 if not iamport_payment_response:
                     raise ValueError
                 
+                now = datetime.now(timezone.utc)
                 order_id = iamport_payment_response.custom_data[1:-1]
                 order = self.order_repo.find_by_id(order_id)
-                if not order:
-                    raise ValueError
+                order.status = "결제완료"
+                order.updated_at = now
+                self.order_repo.update(order)
 
-                now = datetime.now(timezone.utc)
                 payment = Payment(
                     id=self.ulid.generate(),
                     order_id=order_id,
