@@ -505,7 +505,7 @@ export default function ProductDetail() {
       case 1:
         return (
           <View style={styles.tabContent}>
-            <Text>추천 상품</Text>
+            <Text>준비중입니다.</Text>
           </View>
         );
       case 2:
@@ -922,22 +922,24 @@ export default function ProductDetail() {
         </View>
 
         <View style={styles.cardContainer}>
-          <View style={styles.banner}>
-            <Text>첫 구매 20% 쿠폰 받으러 가기 ➤</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.banner}
+            onPress={() => navigation.navigate("CouponList")}
+          >
+            <Text>첫 구매 30% 쿠폰 지급 ➤</Text>
+          </TouchableOpacity>
+
           <View style={styles.earn}>
             <Text style={styles.sectionTitle}>적립</Text>
-            <Text>후기 적립 2,500원</Text>
+            <Text>후기 적립</Text>
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>결제혜택</Text>
-            <Text>카카오페이 x 페이머니 6천원 할인</Text>
-            <Text style={{ marginTop: 15 }}>무이자 혜택 보기</Text>
+            <Text>5만원 이상 구매 시 무료배송</Text>
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>배송</Text>
-            <Text>5만원 이상 구매 시 무료배송</Text>
-            <Text>06.26 도착 예정 · CJ대한통운</Text>
+            <Text>14:00 이전 주문 시 당일 발송 · CJ대한통운</Text>
           </View>
         </View>
 
@@ -1076,7 +1078,8 @@ export default function ProductDetail() {
                       }}
                     >
                       <Text style={styles.dropdownText}>
-                        {selected[t.option_type]?.value || "옵션 선택"}
+                        {selected[t.option_type]?.value ||
+                          `${t.option_type} 선택`}
                       </Text>
 
                       <Ionicons
@@ -1256,7 +1259,6 @@ export default function ProductDetail() {
                     return;
                   }
 
-                  // TODO: 선택할 옵션 없을 때 예외처리
                   if (selectedOptions.length === 0) {
                     Alert.alert("옵션을 선택해주세요.");
                     return;
@@ -1496,6 +1498,11 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     padding: 20,
+    color: "#666",
+    justifyContent: "center",
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 20,
   },
   fixedBuy: {
     position: "absolute",
