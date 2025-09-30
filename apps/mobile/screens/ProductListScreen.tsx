@@ -123,8 +123,12 @@ export default function ProductListScreen() {
         <Text style={{ padding: 20 }}>해당 조건의 상품이 없습니다.</Text>
       ) : (
         <FlatList
-          data={products}
-          keyExtractor={(item) => item.id}
+          data={[...products].sort((a, b) => {
+            if (a.isActive === false && b.isActive !== false) return 1;
+            if (a.isActive !== false && b.isActive === false) return -1;
+            return 0;
+          })}
+          keyExtractor={(item) => item.id.toString()}
           numColumns={3}
           contentContainerStyle={styles.listContainer}
           columnWrapperStyle={{
