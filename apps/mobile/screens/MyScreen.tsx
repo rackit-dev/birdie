@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  Linking,
 } from "react-native";
 import Modal from "react-native-modal";
 import { Text, View } from "@/components/Themed";
@@ -218,7 +219,6 @@ export default function MyScreen() {
             { label: "주문 내역", route: "OrderList" },
             { label: "취소/반품/교환 내역" },
             { label: "배송지 관리" },
-            { label: "환불계좌 관리" },
           ].map((item, idx) => (
             <TouchableOpacity
               key={idx}
@@ -231,8 +231,7 @@ export default function MyScreen() {
 
                 if (
                   item.label === "취소/반품/교환 내역" ||
-                  item.label === "배송지 관리" ||
-                  item.label === "환불계좌 관리"
+                  item.label === "배송지 관리"
                 ) {
                   Alert.alert("준비중입니다");
                   return;
@@ -248,11 +247,18 @@ export default function MyScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>문의</Text>
-          {["고객센터/공지사항"].map((label, idx) => (
+          {["고객센터", "공지사항"].map((label, idx) => (
             <TouchableOpacity
               key={idx}
               style={styles.menuRow}
               onPress={() => {
+                if (label === "공지사항") {
+                  Linking.openURL(
+                    "https://www.notion.so/27c3922f9d1b80b6bd75f3be48875676?source=copy_link"
+                  ).catch((err) => console.error("링크 열기 실패:", err));
+                  return;
+                }
+
                 Alert.alert("준비중입니다");
               }}
             >
