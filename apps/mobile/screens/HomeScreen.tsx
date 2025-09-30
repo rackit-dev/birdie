@@ -393,19 +393,6 @@ export default function HomeScreen() {
               marginTop: 10,
             }}
           >
-            <Text style={{ marginTop: 10, fontFamily: "P-500", fontSize: 16 }}>
-              고객센터 010-4089-1315
-            </Text>
-            <View
-              style={{
-                marginTop: 30,
-                marginBottom: 30,
-                width: "92%",
-                height: 0.7,
-                backgroundColor: "#BCBCBC",
-                alignSelf: "center",
-              }}
-            />
             <Text
               style={{
                 fontFamily: "P-700",
@@ -415,6 +402,21 @@ export default function HomeScreen() {
             >
               사업자 정보
             </Text>
+
+            <Text
+              style={{
+                marginTop: 15,
+                fontFamily: "P-700",
+                fontSize: 14,
+                color: "grey",
+              }}
+            >
+              고객센터{" "}
+              <Text style={{ fontFamily: "P-500", color: "#B0B0B0" }}>
+                010-4089-1315
+              </Text>
+            </Text>
+
             <Text
               style={{
                 marginTop: 15,
