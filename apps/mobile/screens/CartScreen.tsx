@@ -197,7 +197,7 @@ export default function CartScreen() {
         name: item.name,
         option: item.option,
         quantity: item.quantity,
-        price: item.priceDiscounted * item.quantity,
+        price: item.priceDiscounted,
         image: `${IMAGE_URL}/products/${item.name}/thumbnail.jpg`,
       }));
 
