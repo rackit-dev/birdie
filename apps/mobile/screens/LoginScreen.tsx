@@ -2,12 +2,12 @@ import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
 import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as Google from "expo-auth-session/providers/google";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
 import { login } from "@react-native-seoul/kakao-login";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useUserIdStore } from "../store/useUserIdStore";
 import axios from "axios";
 import {
@@ -103,31 +103,36 @@ export default function LoginScreen() {
   };
 
   // 구글
-  const webClientId = GOOGLE_WEB_CLIENT_ID;
-  const androidClientId = GOOGLE_ANDROID_CLIENT_ID;
-  const iosClientId = GOOGLE_IOS_CLIENT_ID;
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId,
-    androidClientId,
-    iosClientId,
-  });
 
   useEffect(() => {
-    const go = async () => {
-      if (response?.type !== "success") return;
-      try {
-        const accessToken = response.authentication?.accessToken ?? "";
-        // console.log("google accessToken", accessToken);
+   GoogleSignin.configure({
+     webClientId: GOOGLE_WEB_CLIENT_ID,
+     scopes: ["profile", "email"],
+     offlineAccess: true,
+     forceCodeForRefreshToken: true,
+   });
+  }, []);
 
-        await exchangeWithServer("GOOGLE", accessToken);
-        navigation.replace("Main");
-      } catch (e: any) {
-        Alert.alert("Google 로그인 실패", e?.message ?? "서버 교환 실패");
-      }
-    };
-    go();
-  }, [response]);
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      console.log("GOOGLE userInfo:", JSON.stringify(userInfo, null, 2));
+
+      const idToken = userInfo.idToken;
+
+      if (!idToken) throw new Error("Google idToken 없음");
+
+      await exchangeWithServer("GOOGLE", `idToken:${idToken}`);
+
+      navigation.replace("Main");
+    } catch (e: any) {
+      const msg =
+        typeof e === "string" ? e : e?.message ? e.message : JSON.stringify(e);
+
+      Alert.alert("Google 로그인 실패", msg);
+    }
+  };
 
   // 애플
   const handleAppleLogin = async () => {
@@ -209,12 +214,8 @@ export default function LoginScreen() {
 
           {/* 구글 */}
           <Pressable
-            onPress={() => promptAsync()}
-            disabled={!request}
-            style={[
-              styles.circleBtn,
-              { backgroundColor: "#ebeaeaff", opacity: request ? 1 : 0.5 },
-            ]}
+            onPress={handleGoogleLogin}
+            style={[styles.circleBtn, { backgroundColor: "#ebeaeaff" }]}
             android_ripple={{
               color: "rgba(230, 230, 230, 0.08)",
               borderless: true,
