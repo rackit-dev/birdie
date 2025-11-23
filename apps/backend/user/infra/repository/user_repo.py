@@ -64,11 +64,13 @@ class UserRepository(IUserRepository):
                     raise ValueError
             elif provider == "GOOGLE":
                 if social_token.startswith("idToken:"):
-                    social_token = social_token.lstrip("idToken:")
-                social_response = requests.get(
-                    url="https://www.googleapis.com/oauth2/v3/userinfo",
-                    headers={"Authorization": f"Bearer {social_token}"}
-                ).json()
+                    social_token = social_token[8:]
+                    social_response = jwt.get_unverified_claims(social_token)
+                else:
+                    social_response = requests.get(
+                        url="https://www.googleapis.com/oauth2/v3/userinfo",
+                        headers={"Authorization": f"Bearer {social_token}"}
+                    ).json()
                 if not social_response['sub'] and social_response['error']:
                     raise ValueError
             elif provider == "APPLE":
