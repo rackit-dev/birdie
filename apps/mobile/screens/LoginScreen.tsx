@@ -1,4 +1,11 @@
-import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  Pressable,
+  Alert,
+  Platform,
+} from "react-native";
 import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import * as AppleAuthentication from "expo-apple-authentication";
@@ -7,6 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import Svg, { Path, G, Defs, ClipPath, Rect } from "react-native-svg";
 import { login } from "@react-native-seoul/kakao-login";
+import * as GoogleAuth from "expo-auth-session/providers/google";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useUserIdStore } from "../store/useUserIdStore";
 import axios from "axios";
@@ -102,35 +110,59 @@ export default function LoginScreen() {
     }
   };
 
-  // 구글
+  /* --------------------------
+   Google 로그인 (iOS용 - expo-auth-session)
+   --------------------------- */
+
+  const [request, response, promptAsync] = GoogleAuth.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+  });
 
   useEffect(() => {
-   GoogleSignin.configure({
-     webClientId: GOOGLE_WEB_CLIENT_ID,
-     scopes: ["profile", "email"],
-     offlineAccess: true,
-     forceCodeForRefreshToken: true,
-   });
+    if (Platform.OS !== "ios") return;
+    if (response?.type !== "success") return;
+
+    const accessToken = response.authentication?.accessToken ?? "";
+
+    exchangeWithServer("GOOGLE", accessToken)
+      .then(() => navigation.replace("Main"))
+      .catch((e) =>
+        Alert.alert("Google 로그인 실패", e?.message ?? "서버 교환 실패")
+      );
+  }, [response]);
+
+  /* --------------------------
+   Google 로그인 (Android용 - GoogleSignin)
+   --------------------------- */
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      GoogleSignin.configure({
+        webClientId: GOOGLE_WEB_CLIENT_ID,
+        offlineAccess: true,
+      });
+    }
   }, []);
 
   const handleGoogleLogin = async () => {
     try {
+      if (Platform.OS === "ios") {
+        // iOS → 기존 expo-auth-session 사용
+        return promptAsync();
+      }
+
+      // Android → GoogleSignin 사용
       await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      console.log("GOOGLE userInfo:", JSON.stringify(userInfo, null, 2));
+      const result = await GoogleSignin.signIn();
 
-      const idToken = userInfo.idToken;
+      if (!result.idToken) throw new Error("Google idToken 없음");
 
-      if (!idToken) throw new Error("Google idToken 없음");
-
-      await exchangeWithServer("GOOGLE", `idToken:${idToken}`);
+      await exchangeWithServer("GOOGLE", `idToken:${result.idToken}`);
 
       navigation.replace("Main");
     } catch (e: any) {
-      const msg =
-        typeof e === "string" ? e : e?.message ? e.message : JSON.stringify(e);
-
-      Alert.alert("Google 로그인 실패", msg);
+      Alert.alert("Google 로그인 실패", e?.message ?? "로그인 실패");
     }
   };
 
