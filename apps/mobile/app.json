@@ -139,7 +139,7 @@
           "action": "VIEW",
           "category": ["DEFAULT", "BROWSABLE"],
           "data": {
-            "scheme": "exampleformanagedexpo"
+            "scheme": "myapp"
           }
         }
       ]

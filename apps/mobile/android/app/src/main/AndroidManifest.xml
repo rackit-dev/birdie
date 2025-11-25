@@ -65,12 +65,20 @@
         <data android:scheme="myapp"/>
         <data android:scheme="exp+mobile"/>
       </intent-filter>
-      <intent-filter data-generated="true">
-        <action android:name="android.intent.action.VIEW"/>
-        <data android:scheme="exampleformanagedexpo"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
-      </intent-filter>
     </activity>
+      <activity
+          android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+          android:exported="true">
+          <intent-filter>
+              <action android:name="android.intent.action.VIEW" />
+              <category android:name="android.intent.category.DEFAULT" />
+              <category android:name="android.intent.category.BROWSABLE" />
+
+              <!-- Redirect URI : kakao{NATIVE_APP_KEY}://oauth -->
+              <data
+                  android:host="oauth"
+                  android:scheme="kakao727bc21c996415be723d5c3d3b0ffb26" />
+          </intent-filter>
+      </activity>
   </application>
 </manifest>
