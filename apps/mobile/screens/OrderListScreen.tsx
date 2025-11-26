@@ -91,10 +91,16 @@ export default function OrderListScreen() {
   };
 
   const renderImage = (item: any) => {
-    if (!item?.product_name) {
-      return `${IMAGE_URL}/products/defaults/no_image.png`;
-    }
-    return `${IMAGE_URL}/products/${item.product_name}/thumbnail.jpg`;
+    const folder = item.product_name
+      ?.trim()
+      ?.replace(/\s+/g, "_") // 공백 → 언더바
+      ?.replace(/__/g, "_"); // 중복 방지(optional)
+
+    const uri = `${IMAGE_URL}/products/${encodeURIComponent(
+      folder
+    )}/thumbnail.jpg`;
+
+    return uri;
   };
 
   return (
